@@ -556,7 +556,7 @@
         const DAILY_PRICE = 9.90;
         const HIGHLIGHT_PRICE = 8.90;
         const MIN_DAYS = 3;
-        const RECOMMENDED_DAYS = 7;
+        const RECOMMENDED_DAYS = 7;        
         
         // Configurações do PushinPay PIX
         // Como a API do PushinPay bloqueia CORS, vamos usar o n8n como proxy
@@ -655,7 +655,7 @@
                 if (anuncioData.id && !anuncioData.id.startsWith('temp_')) {
                     const warningBox = document.getElementById('warningBox');
                     if (warningBox) {
-                        warningBox.textContent = '⚠️ Após o pagamento, seu rascunho será publicado imediatamente.';
+                        warningBox.textContent = '⚠️ Após o pagamento, seu rascunho será publicado imediatamente!';
                     }
                 }
             } else {
