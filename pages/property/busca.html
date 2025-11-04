@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Achei na Ilha - Buscar Imóveis</title>
+    <link rel="icon" type="image/svg+xml" href="../../assets/images/logo-achei-na-ilha.png">
+    <link rel="alternate icon" href="../../assets/images/logo-achei-na-ilha.png">
+    <link rel="stylesheet" href="../../assets/css/header.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        .search-section {
+            background: white;
+            padding: 20px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .search-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #0077B6;
+        }
+
+        .btn-search {
+            background: #0077B6;
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-search:hover {
+            background: #005a8d;
+        }
+
+        .btn-clear {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-clear:hover {
+            background: #c82333;
+        }
+
+        .main-layout {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .sidebar-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0077B6;
+        }
+
+        .filter-section {
+            margin-bottom: 25px;
+        }
+
+        .filter-section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .filter-group {
+            margin-bottom: 15px;
+        }
+
+        .filter-label {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        select, input[type="number"], input[type="range"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            transition: border-color 0.2s;
+        }
+
+        select:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #0077B6;
+        }
+
+        .price-range {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .price-range input {
+            flex: 1;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .checkbox-item label {
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .results-area {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            min-height: 400px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            min-width: 0;
+        }
+
+        .results-count {
+            font-size: 16px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .sort-options {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .sort-select {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .sort-options label {
+            white-space: nowrap;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .ad-banner {
+            background: linear-gradient(135deg, #C9643B, #a5512e);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .ad-banner.visible {
+            display: block;
+        }
+
+        .listings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+            min-height: 200px;
+        }
+
+        .listing-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 16px;
+            min-height: 200px;
+        }
+
+        .listing-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border-color: #0077B6;
+        }
+
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            overflow: hidden;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .carousel-images {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+        }
+
+        .carousel-image {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .carousel-image.active {
+            opacity: 1;
+        }
+
+        .listing-image-fallback {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #e0e0e0, #f5f5f5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+
+        .carousel-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+
+        .carousel-button.prev {
+            left: 10px;
+        }
+
+        .carousel-button.next {
+            right: 10px;
+        }
+
+        .carousel-container:hover .carousel-button {
+            opacity: 1;
+        }
+
+        .carousel-button:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .listing-content {
+            padding: 16px;
+        }
+
+        .listing-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .listing-emoji {
+            font-size: 18px;
+            margin-right: 8px;
+        }
+
+        .listing-price {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0077B6;
+            margin-bottom: 8px;
+        }
+
+        .listing-location {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .listing-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .detail-item {
+            display: inline-block;
+            padding: 2px 6px;
+            background: #e8f4fd;
+            color: #0077B6;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .listing-type {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #f0f0f0;
+            color: #666;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Bottom navigation removido - funcionalidades movidas para header e botão flutuante */
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .sidebar {
+                position: static;
+                order: 2;
+            }
+
+            .results-area {
+                order: 1;
+            }
+
+            .search-bar {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .btn-search {
+                width: 100%;
+            }
+
+            .listings-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .results-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .sort-options {
+                width: 100%;
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-layout {
+                padding: 0 10px;
+            }
+
+            .sidebar {
+                padding: 15px;
+            }
+
+            .results-area {
+                padding: 15px;
+            }
+
+            .filter-section {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header será carregado via JavaScript -->
+    <div id="header-container"></div>
+
+    <div class="search-section">
+        <div class="search-container">
+            <div class="search-bar">
+                <input type="text" id="searchInput" class="search-input" placeholder="Buscar por título, localização...">
+                <button class="btn-search" onclick="buscarImoveis()">Buscar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <div class="sidebar">
+            <h3 class="sidebar-title">Filtros</h3>
+            
+            <div class="filter-section">
+                <h4 class="filter-section-title">Categoria</h4>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="filterVenda" value="venda">
+                        <label for="filterVenda">Venda</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="filterAluguel" value="aluguel">
+                        <label for="filterAluguel">Aluguel</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h4 class="filter-section-title">Tipo de Imóvel</h4>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="filterCasa" value="casa">
+                        <label for="filterCasa">Casa</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="filterApartamento" value="apartamento">
+                        <label for="filterApartamento">Apartamento</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="filterTerreno" value="terreno">
+                        <label for="filterTerreno">Terreno</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="filterComercial" value="comercial">
+                        <label for="filterComercial">Comercial</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h4 class="filter-section-title">Faixa de Preço</h4>
+                <div class="filter-group">
+                    <label class="filter-label">Valor Mínimo</label>
+                    <input type="number" id="filterMinPrice" placeholder="R$ 0">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Valor Máximo</label>
+                    <input type="number" id="filterMaxPrice" placeholder="R$ 999999">
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h4 class="filter-section-title">Localização</h4>
+                <div class="filter-group">
+                    <label class="filter-label">Bairro</label>
+                    <select id="filterBairro">
+                        <option value="">Todos os bairros</option>
+                        <option value="centro">Centro</option>
+                        <option value="praia">Praia</option>
+                        <option value="residencial">Residencial</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h4 class="filter-section-title">Quartos</h4>
+                <div class="filter-group">
+                    <label class="filter-label">Mínimo de Quartos</label>
+                    <select id="filterQuartos">
+                        <option value="">Qualquer</option>
+                        <option value="1">1+</option>
+                        <option value="2">2+</option>
+                        <option value="3">3+</option>
+                        <option value="4">4+</option>
+                        <option value="5">5+</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h4 class="filter-section-title">Banheiros</h4>
+                <div class="filter-group">
+                    <label class="filter-label">Mínimo de Banheiros</label>
+                    <select id="filterBanheiros">
+                        <option value="">Qualquer</option>
+                        <option value="1">1+</option>
+                        <option value="2">2+</option>
+                        <option value="3">3+</option>
+                        <option value="4">4+</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h4 class="filter-section-title">Garagem</h4>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="filterTemGaragem" value="tem-garagem">
+                        <label for="filterTemGaragem">Com Garagem</label>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Mínimo de Vagas</label>
+                    <select id="filterVagasGaragem">
+                        <option value="">Qualquer</option>
+                        <option value="1">1+</option>
+                        <option value="2">2+</option>
+                        <option value="3">3+</option>
+                        <option value="4">4+</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h4 class="filter-section-title">Características</h4>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="filterPiscina" value="piscina">
+                        <label for="filterPiscina">🏊 Com Piscina</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="filterVistaMar" value="vista-mar">
+                        <label for="filterVistaMar">🌅 Vista para o Mar</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="filterChurrasqueira" value="churrasqueira">
+                        <label for="filterChurrasqueira">🔥 Churrasqueira</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="filterRoca" value="roca">
+                        <label for="filterRoca">🌾 Área de Roça</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="filterFesta" value="area-festa">
+                        <label for="filterFesta">🎉 Área para Festa</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="filterVaranda" value="varanda">
+                        <label for="filterVaranda">🏡 Varanda Grande</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="filterQuintal" value="quintal">
+                        <label for="filterQuintal">🌳 Quintal Espaçoso</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="filterCoco" value="coqueiros">
+                        <label for="filterCoco">🌴 Coqueiros</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="filterPoco" value="poco">
+                        <label for="filterPoco">💧 Poço Artesiano</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="filterCasaVerao" value="casa-verao">
+                        <label for="filterCasaVerao">🏖️ Casa de Verão</label>
+                    </div>
+                </div>
+            </div>
+
+            <button id="clearFiltersBtn" class="btn-clear" onclick="limparFiltros()" style="width: 100%; margin-top: 20px; display: none;">
+                Limpar Filtros
+            </button>
+        </div>
+
+        <div class="results-area">
+            <div class="results-header">
+                <div class="results-count" id="resultsCount">Encontrados 0 imóveis</div>
+                <div class="sort-options">
+                    <label for="sortSelect">Ordenar por:</label>
+                    <select id="sortSelect" class="sort-select" onchange="ordenarResultados()">
+                        <option value="relevancia">Relevância</option>
+                        <option value="preco-menor">Menor Preço</option>
+                        <option value="preco-maior">Maior Preço</option>
+                        <option value="mais-recente">Mais Recente</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="adBanner" class="ad-banner">
+                <h3>Publicidade Local</h3>
+                <p>Espaço reservado para anúncios de comércios locais</p>
+            </div>
+
+            <div id="listingsContainer" class="listings-grid"></div>
+
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div class="empty-state-icon">🏠</div>
+                <h2>Nenhum imóvel encontrado</h2>
+                <p>Tente ajustar os filtros ou criar um novo anúncio</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom navigation removido - funcionalidades movidas para header e botão flutuante -->
+
+    <script>
+        // URL da imagem padrão para anúncios sem imagens
+        const IMAGEM_PADRAO = 'https://images.tcdn.com.br/img/img_prod/734896/patch_cord_cat6_amarelo_sohoplus_50_centimetros_2525_1_546d22ba08fae4a55e7ad243dfdc8b90.jpeg';
+        
+        const anunciosExemplo = [
+            {
+                id: 1,
+                titulo: "Casa de Praia com Vista para o Mar",
+                preco: 850000,
+                localizacao: "Praia do Centro",
+                tipo: "casa",
+                categoria: "venda",
+                emoji: "🏖️",
+                quartos: 4,
+                banheiros: 3,
+                garagem: true,
+                vagasGaragem: 2,
+                caracteristicas: ["piscina", "vista-mar", "churrasqueira"],
+                imagens: [
+                    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400",
+                    "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400",
+                    "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400"
+                ],
+                videos: [
+                    "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4"
+                ],
+                descricao: "Linda casa de praia com vista panorâmica para o mar. Possui 4 quartos, 3 banheiros, sala ampla, cozinha completa e área de lazer com churrasqueira.",
+                likes: 12,
+                comentarios: [],
+                anunciante: {
+                    nome: "João Silva",
+                    email: "joao.silva@email.com",
+                    telefone: "71996755745"
+                }
+            },
+            {
+                id: 2,
+                titulo: "Apartamento Moderno 2 Quartos",
+                preco: 2500,
+                localizacao: "Centro da Ilha",
+                tipo: "apartamento",
+                categoria: "aluguel",
+                emoji: "🏢",
+                quartos: 2,
+                banheiros: 1,
+                garagem: true,
+                vagasGaragem: 1,
+                caracteristicas: ["quintal", "coqueiros"],
+                imagens: [
+                    "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400",
+                    "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400"
+                ],
+                videos: [],
+                descricao: "Apartamento moderno e bem localizado no centro da ilha. 2 quartos com armários, banheiro social, sala integrada com cozinha americana.",
+                likes: 8,
+                comentarios: [],
+                anunciante: {
+                    nome: "Maria Santos",
+                    email: "maria.santos@email.com",
+                    telefone: "71996755745"
+                }
+            },
+            {
+                id: 3,
+                titulo: "Terreno com 500m² Próximo à Praia",
+                preco: 350000,
+                localizacao: "Praia Grande",
+                tipo: "terreno",
+                categoria: "venda",
+                emoji: "🏝️",
+                quartos: 0,
+                banheiros: 0,
+                garagem: false,
+                vagasGaragem: 0,
+                caracteristicas: ["roca", "poco"],
+                imagens: [
+                    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400"
+                ],
+                videos: [],
+                descricao: "Excelente terreno plano com 500m², localizado a apenas 200 metros da Praia Grande. Documentação em dia, área residencial consolidada.",
+                likes: 5,
+                comentarios: [],
+                anunciante: {
+                    nome: "Carlos Oliveira",
+                    email: "carlos.oliveira@email.com",
+                    telefone: "71996755745"
+                }
+            },
+            {
+                id: 4,
+                titulo: "Casa 3 Quartos com Piscina",
+                preco: 4500,
+                localizacao: "Bairro das Palmeiras",
+                tipo: "casa",
+                categoria: "aluguel",
+                emoji: "🏊",
+                quartos: 3,
+                banheiros: 2,
+                garagem: true,
+                vagasGaragem: 2,
+                caracteristicas: ["piscina"],
+                imagens: [
+                    "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400",
+                    "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400",
+                    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400",
+                    "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400"
+                ],
+                videos: [
+                    "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4"
+                ],
+                descricao: "Casa espaçosa com 3 quartos, sendo 1 suíte, área de lazer completa com piscina, churrasqueira e espaço gourmet.",
+                likes: 15,
+                comentarios: [],
+                anunciante: {
+                    nome: "Ana Costa",
+                    email: "ana.costa@email.com",
+                    telefone: "71996755745"
+                }
+            },
+            {
+                id: 5,
+                titulo: "Loja Comercial no Centro",
+                preco: 3000,
+                localizacao: "Rua Principal",
+                tipo: "comercial",
+                categoria: "aluguel",
+                emoji: "🏪",
+                quartos: 0,
+                banheiros: 1,
+                garagem: false,
+                vagasGaragem: 0,
+                caracteristicas: [],
+                imagens: [
+                    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400"
+                ],
+                videos: [],
+                descricao: "Loja comercial em ponto estratégico na rua principal. Ótima para diversos tipos de negócio. 80m² com banheiro e espaço para estoque.",
+                likes: 3,
+                comentarios: [],
+                anunciante: {
+                    nome: "Roberto Lima",
+                    email: "roberto.lima@email.com",
+                    telefone: "71996755745"
+                }
+            },
+            {
+                id: 6,
+                titulo: "Cobertura Duplex Vista Mar",
+                preco: 1200000,
+                localizacao: "Orla da Praia",
+                tipo: "apartamento",
+                categoria: "venda",
+                emoji: "🌅",
+                quartos: 3,
+                banheiros: 3,
+                garagem: true,
+                vagasGaragem: 2,
+                caracteristicas: ["vista-mar"],
+                imagens: [
+                    "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400",
+                    "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400",
+                    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400"
+                ],
+                videos: [
+                    "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4"
+                ],
+                descricao: "Cobertura duplex de alto padrão com vista privilegiada para o mar. 3 suítes, sala de estar e jantar, cozinha planejada.",
+                likes: 25,
+                comentarios: [],
+                anunciante: {
+                    nome: "Fernanda Alves",
+                    email: "fernanda.alves@email.com",
+                    telefone: "71996755745"
+                }
+            }
+        ];
+
+        let todosAnuncios = [...anunciosExemplo];
+
+        async function carregarAnunciosDoSupabase() {
+            try {
+                // Verificar se Supabase está disponível
+                if (typeof window.supabase === 'undefined') {
+                    return;
+                }
+
+                // Obter authService se disponível
+                let supabaseClient = null;
+                if (typeof window.authService !== 'undefined' && window.authService) {
+                    if (window.authService.isInitialized) {
+                        supabaseClient = window.authService.getSupabase();
+                    }
+                }
+
+                // Se não conseguiu pelo authService, criar cliente direto
+                if (!supabaseClient && typeof window.supabase !== 'undefined') {
+                    supabaseClient = window.supabase.createClient(
+                        'https://svgmuxdxxrapepbodbgv.supabase.co',
+                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2Z211eGR4eHJhcGVwYm9kYmd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0MTU2MTQsImV4cCI6MjA3Njk5MTYxNH0.U0rQ8-EXC6b0dkcCQBoE-VuNjNgNQREvcs3fWfZ1UGM'
+                    );
+                }
+
+                if (!supabaseClient) {
+                    return;
+                }
+
+                // Buscar anúncios publicados do Supabase
+                // Apenas anúncios que estão:
+                // - ativo = true
+                // - status = 'publicado'
+                // - data_fim_publicacao >= NOW() (não expirou) ou data_fim_publicacao IS NULL
+                const agora = new Date().toISOString();
+                
+                const { data: anunciosDB, error } = await supabaseClient
+                    .from('anuncios')
+                    .select(`
+                        *,
+                        imagens_anuncio:imagens_anuncio(url, principal, ordem)
+                    `)
+                    .eq('ativo', true)
+                    .eq('status', 'publicado')
+                    .or(`data_fim_publicacao.is.null,data_fim_publicacao.gte.${agora}`)
+                    .order('criado_em', { ascending: false });
+
+                if (error) {
+                    return;
+                }
+
+                if (anunciosDB && anunciosDB.length > 0) {
+                    // Converter formato do banco para formato usado na página
+                    const anunciosFormatados = anunciosDB.map(anuncio => {
+                        // Obter primeira imagem principal
+                        const imagemPrincipal = anuncio.imagens_anuncio && anuncio.imagens_anuncio.length > 0
+                            ? anuncio.imagens_anuncio.find(img => img.principal) || anuncio.imagens_anuncio[0]
+                            : null;
+                        
+                        // Preparar array de imagens (usar imagem padrão se não tiver)
+                        const imagens = anuncio.imagens_anuncio && anuncio.imagens_anuncio.length > 0
+                            ? anuncio.imagens_anuncio
+                                .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
+                                .map(img => img.url)
+                            : [IMAGEM_PADRAO];
+
+                        return {
+                            id: anuncio.id,
+                            titulo: anuncio.titulo,
+                            preco: parseFloat(anuncio.valor),
+                            localizacao: anuncio.endereco || anuncio.bairro || anuncio.cidade || 'Localização não informada',
+                            tipo: anuncio.tipo_imovel,
+                            categoria: anuncio.categoria,
+                            emoji: anuncio.emoji || '🏠',
+                            quartos: anuncio.quartos || 0,
+                            banheiros: anuncio.banheiros || 0,
+                            garagem: (anuncio.vagas_garagem && anuncio.vagas_garagem > 0) || false,
+                            vagasGaragem: anuncio.vagas_garagem || 0,
+                            caracteristicas: anuncio.caracteristicas || [],
+                            imagens: imagens,
+                            criado_em: anuncio.criado_em
+                        };
+                    });
+
+                    // Adicionar aos anúncios existentes (substituir ou mesclar)
+                    todosAnuncios = [...anunciosExemplo, ...anunciosFormatados];
+                    // Aplicar filtros novamente para atualizar a lista
+                    aplicarFiltros();
+                } else {
+                }
+            } catch (error) {
+            }
+        }
+
+        function carregarAnunciosSalvos() {
+            const anunciosSalvos = localStorage.getItem('anuncios');
+            if (anunciosSalvos) {
+                try {
+                    const anuncios = JSON.parse(anunciosSalvos);
+                    todosAnuncios = [...anunciosExemplo, ...anuncios];
+                } catch (e) {
+                }
+            }
+        }
+
+        function renderizarAnuncios(anuncios) {
+            const container = document.getElementById('listingsContainer');
+            const emptyState = document.getElementById('emptyState');
+
+            if (!container) {
+                return;
+            }
+
+            if (anuncios.length === 0) {
+                container.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            container.style.display = 'grid';
+            emptyState.style.display = 'none';
+
+            container.innerHTML = anuncios.map(anuncio => `
+                <div class="listing-card" onclick="verDetalhes('${anuncio.id}')">
+                    <div class="carousel-container">
+                        <div class="carousel-images">
+                            ${anuncio.imagens && anuncio.imagens.length > 0 
+                                ? anuncio.imagens.map((img, index) => 
+                                    `<img src="${img}" alt="${anuncio.titulo}" class="carousel-image ${index === 0 ? 'active' : ''}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='${IMAGEM_PADRAO}'">`
+                                  ).join('')
+                                : `<img src="${IMAGEM_PADRAO}" alt="${anuncio.titulo}" class="carousel-image active" style="width: 100%; height: 100%; object-fit: cover;">`
+                            }
+                        </div>
+                        ${anuncio.imagens && anuncio.imagens.length > 1 ? `
+                            <button class="carousel-button prev" onclick="event.stopPropagation(); navigateCarousel(this.closest('.carousel-container'), -1)">‹</button>
+                            <button class="carousel-button next" onclick="event.stopPropagation(); navigateCarousel(this.closest('.carousel-container'), 1)">›</button>
+                        ` : ''}
+                    </div>
+                    <div class="listing-content">
+                        <h3 class="listing-title">
+                            <span class="listing-emoji">${anuncio.emoji || '🏠'}</span>
+                            ${anuncio.titulo}
+                        </h3>
+                        <div class="listing-price">R$ ${anuncio.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        <div class="listing-location">📍 ${anuncio.localizacao}</div>
+                        <div class="listing-details">
+                            ${anuncio.quartos > 0 ? `<span class="detail-item">🛏️ ${anuncio.quartos} quarto${anuncio.quartos > 1 ? 's' : ''}</span>` : ''}
+                            ${anuncio.banheiros > 0 ? `<span class="detail-item">🚿 ${anuncio.banheiros} banheiro${anuncio.banheiros > 1 ? 's' : ''}</span>` : ''}
+                            ${anuncio.garagem ? `<span class="detail-item">🚗 ${anuncio.vagasGaragem} vaga${anuncio.vagasGaragem > 1 ? 's' : ''}</span>` : ''}
+                        </div>
+                        <span class="listing-type">${anuncio.categoria === 'venda' ? 'Venda' : 'Aluguel'} • ${anuncio.tipo}</span>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Inicializar carrosséis após renderizar
+            setTimeout(() => {
+                document.querySelectorAll('.carousel-container').forEach(container => {
+                    startCarousel(container);
+                    addSwipeSupport(container);
+                });
+            }, 100);
+        }
+
+        function buscarImoveis() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            // Aplicar filtros + busca
+            aplicarFiltros();
+        }
+
+        function verDetalhes(id) {
+            // Salvar ID como string (pode ser UUID ou número)
+            localStorage.setItem('anuncioSelecionado', id);
+            window.location.href = 'detalhes.html';
+        }
+
+        // Funções do carrossel
+        function navigateCarousel(container, direction) {
+            const images = container.querySelectorAll('.carousel-image');
+            const activeImage = container.querySelector('.carousel-image.active');
+            let currentIndex = Array.from(images).indexOf(activeImage);
+            
+            // Remover classe active da imagem atual
+            activeImage.classList.remove('active');
+            
+            // Calcular próximo índice
+            currentIndex += direction;
+            
+            // Loop infinito
+            if (currentIndex >= images.length) {
+                currentIndex = 0;
+            } else if (currentIndex < 0) {
+                currentIndex = images.length - 1;
+            }
+            
+            // Adicionar classe active à nova imagem
+            images[currentIndex].classList.add('active');
+        }
+
+        function startCarousel(container) {
+            const images = container.querySelectorAll('.carousel-image');
+            if (images.length <= 1) return;
+            
+            // Limpar interval anterior se existir
+            if (container.carouselInterval) {
+                clearInterval(container.carouselInterval);
+            }
+            
+            // Iniciar carrossel automático
+            container.carouselInterval = setInterval(() => {
+                navigateCarousel(container, 1);
+            }, 3000);
+        }
+
+        function stopCarousel(container) {
+            if (container.carouselInterval) {
+                clearInterval(container.carouselInterval);
+                container.carouselInterval = null;
+            }
+        }
+
+        // Touch/swipe support
+        function addSwipeSupport(container) {
+            let startX = 0;
+            let startY = 0;
+            let isScrolling = false;
+            
+            container.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                isScrolling = false;
+            });
+            
+            container.addEventListener('touchmove', (e) => {
+                if (!startX || !startY) return;
+                
+                const currentX = e.touches[0].clientX;
+                const currentY = e.touches[0].clientY;
+                const diffX = Math.abs(currentX - startX);
+                const diffY = Math.abs(currentY - startY);
+                
+                if (diffY > diffX) {
+                    isScrolling = true;
+                }
+            });
+            
+            container.addEventListener('touchend', (e) => {
+                if (!startX || !startY || isScrolling) return;
+                
+                const endX = e.changedTouches[0].clientX;
+                const diffX = startX - endX;
+                
+                if (Math.abs(diffX) > 50) {
+                    if (diffX > 0) {
+                        navigateCarousel(container, 1); // Swipe left = next
+                    } else {
+                        navigateCarousel(container, -1); // Swipe right = prev
+                    }
+                }
+                
+                startX = 0;
+                startY = 0;
+            });
+        }
+
+        function verificarPlanoPublicidade() {
+            const plano = localStorage.getItem('planoEscolhido');
+            const adBanner = document.getElementById('adBanner');
+
+            if (plano) {
+                const planoData = JSON.parse(plano);
+                if (planoData.incluiAds) {
+                    adBanner.classList.add('visible');
+                }
+            } else {
+                adBanner.classList.add('visible');
+            }
+        }
+
+        // Função removida - funcionalidade movida para assets/js/header-auth.js
+
+        document.getElementById('searchInput').addEventListener('input', buscarImoveis);
+
+        // Adicionar event listeners para filtro automático
+        function adicionarEventListenersFiltros() {
+            // Filtros de categoria
+            document.getElementById('filterVenda').addEventListener('change', aplicarFiltros);
+            document.getElementById('filterAluguel').addEventListener('change', aplicarFiltros);
+            
+            // Filtros de tipo
+            document.getElementById('filterCasa').addEventListener('change', aplicarFiltros);
+            document.getElementById('filterApartamento').addEventListener('change', aplicarFiltros);
+            document.getElementById('filterTerreno').addEventListener('change', aplicarFiltros);
+            document.getElementById('filterComercial').addEventListener('change', aplicarFiltros);
+            
+            // Filtros de preço
+            document.getElementById('filterMinPrice').addEventListener('input', aplicarFiltros);
+            document.getElementById('filterMaxPrice').addEventListener('input', aplicarFiltros);
+            
+            // Filtro de bairro
+            document.getElementById('filterBairro').addEventListener('change', aplicarFiltros);
+            
+            // Novos filtros de quartos e banheiros
+            document.getElementById('filterQuartos').addEventListener('change', aplicarFiltros);
+            document.getElementById('filterBanheiros').addEventListener('change', aplicarFiltros);
+            
+            // Filtros de garagem
+            document.getElementById('filterTemGaragem').addEventListener('change', aplicarFiltros);
+            document.getElementById('filterVagasGaragem').addEventListener('change', aplicarFiltros);
+            
+            // Filtros de características
+            document.getElementById('filterPiscina').addEventListener('change', aplicarFiltros);
+            document.getElementById('filterVistaMar').addEventListener('change', aplicarFiltros);
+            document.getElementById('filterChurrasqueira').addEventListener('change', aplicarFiltros);
+            document.getElementById('filterRoca').addEventListener('change', aplicarFiltros);
+            document.getElementById('filterFesta').addEventListener('change', aplicarFiltros);
+            document.getElementById('filterVaranda').addEventListener('change', aplicarFiltros);
+            document.getElementById('filterQuintal').addEventListener('change', aplicarFiltros);
+            document.getElementById('filterCoco').addEventListener('change', aplicarFiltros);
+            document.getElementById('filterPoco').addEventListener('change', aplicarFiltros);
+            document.getElementById('filterCasaVerao').addEventListener('change', aplicarFiltros);
+        }
+
+        // Funções de autenticação serão carregadas do assets/js/header-auth.js
+
+        function aplicarFiltros() {
+            const categoria = getCheckboxValues(['filterVenda', 'filterAluguel']);
+            const tipo = getCheckboxValues(['filterCasa', 'filterApartamento', 'filterTerreno', 'filterComercial']);
+            const precoMin = parseFloat(document.getElementById('filterMinPrice').value) || 0;
+            const precoMax = parseFloat(document.getElementById('filterMaxPrice').value) || Infinity;
+            const bairro = document.getElementById('filterBairro').value;
+            const quartosMin = parseInt(document.getElementById('filterQuartos').value) || 0;
+            const banheirosMin = parseInt(document.getElementById('filterBanheiros').value) || 0;
+            const temGaragem = document.getElementById('filterTemGaragem').checked;
+            const vagasMin = parseInt(document.getElementById('filterVagasGaragem').value) || 0;
+            const caracteristicas = getCheckboxValues(['filterPiscina', 'filterVistaMar', 'filterChurrasqueira', 'filterRoca', 'filterFesta', 'filterVaranda', 'filterQuintal', 'filterCoco', 'filterPoco', 'filterCasaVerao']);
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            const filtrados = todosAnuncios.filter(anuncio => {
+                const matchCategoria = categoria.length === 0 || categoria.includes(anuncio.categoria);
+                const matchTipo = tipo.length === 0 || tipo.includes(anuncio.tipo);
+                const matchPreco = anuncio.preco >= precoMin && anuncio.preco <= precoMax;
+                const matchBairro = !bairro || anuncio.localizacao.toLowerCase().includes(bairro.toLowerCase());
+                const matchQuartos = quartosMin === 0 || (anuncio.quartos && anuncio.quartos >= quartosMin);
+                const matchBanheiros = banheirosMin === 0 || (anuncio.banheiros && anuncio.banheiros >= banheirosMin);
+                const matchGaragem = !temGaragem || (anuncio.garagem === true);
+                const matchVagas = vagasMin === 0 || (anuncio.vagasGaragem && anuncio.vagasGaragem >= vagasMin);
+                const matchSearch = !searchTerm || anuncio.titulo.toLowerCase().includes(searchTerm) ||
+                                  anuncio.localizacao.toLowerCase().includes(searchTerm);
+                
+                // Verificar características
+                const matchCaracteristicas = caracteristicas.length === 0 || 
+                    (anuncio.caracteristicas && caracteristicas.every(carac => anuncio.caracteristicas.includes(carac)));
+
+                return matchCategoria && matchTipo && matchPreco && matchBairro && matchQuartos && 
+                       matchBanheiros && matchGaragem && matchVagas && matchCaracteristicas && matchSearch;
+            });
+
+            renderizarAnuncios(filtrados);
+            atualizarContador(filtrados.length);
+            
+            // Mostrar/esconder botão de limpar filtros
+            const clearBtn = document.getElementById('clearFiltersBtn');
+            const temFiltrosAtivos = categoria.length > 0 || tipo.length > 0 || 
+                                   precoMin > 0 || precoMax < Infinity || 
+                                   bairro !== '' || quartosMin > 0 || banheirosMin > 0 ||
+                                   temGaragem || vagasMin > 0 || caracteristicas.length > 0 || searchTerm !== '';
+            
+            if (temFiltrosAtivos) {
+                clearBtn.style.display = 'block';
+            } else {
+                clearBtn.style.display = 'none';
+            }
+        }
+
+        function limparFiltros() {
+            // Limpar todos os checkboxes
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // Limpar campos de preço
+            document.getElementById('filterMinPrice').value = '';
+            document.getElementById('filterMaxPrice').value = '';
+            
+            // Limpar selects
+            document.getElementById('filterBairro').value = '';
+            document.getElementById('filterQuartos').value = '';
+            document.getElementById('filterBanheiros').value = '';
+            document.getElementById('filterVagasGaragem').value = '';
+            
+            // Limpar campo de busca
+            document.getElementById('searchInput').value = '';
+            
+            // Aplicar filtros (que agora mostrará todos os resultados)
+            aplicarFiltros();
+        }
+
+        function getCheckboxValues(ids) {
+            return ids.filter(id => document.getElementById(id).checked).map(id => document.getElementById(id).value);
+        }
+
+        function ordenarResultados() {
+            const sortBy = document.getElementById('sortSelect').value;
+            const container = document.getElementById('listingsContainer');
+            const cards = Array.from(container.children);
+
+            cards.sort((a, b) => {
+                const precoA = parseFloat(a.querySelector('.listing-price').textContent.replace(/[^\d]/g, ''));
+                const precoB = parseFloat(b.querySelector('.listing-price').textContent.replace(/[^\d]/g, ''));
+
+                switch(sortBy) {
+                    case 'preco-menor':
+                        return precoA - precoB;
+                    case 'preco-maior':
+                        return precoB - precoA;
+                    case 'mais-recente':
+                        return 0; // Implementar lógica de data se necessário
+                    default:
+                        return 0;
+                }
+            });
+
+            cards.forEach(card => container.appendChild(card));
+        }
+
+        function atualizarContador(total) {
+            const contador = document.getElementById('resultsCount');
+            if (contador) {
+                contador.textContent = `Encontrados ${total} imóveis`;
+            }
+        }
+
+        window.addEventListener('load', async function() {
+            carregarAnunciosSalvos();
+            adicionarEventListenersFiltros();
+            
+            // Aguardar um pouco para garantir que scripts estão carregados
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Carregar anúncios do Supabase
+            await carregarAnunciosDoSupabase();
+            
+            // Aplicar filtros
+            aplicarFiltros();
+        });
+
+        // Carregar header dinamicamente
+        function loadHeader() {
+            fetch('../../components/header-component.html')
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('header-container').innerHTML = html;
+                    
+                    // Aguardar o header ser renderizado antes de carregar os scripts
+                    setTimeout(() => {
+                        // Carregar scripts na ordem correta
+                        loadAuthScripts();
+                    }, 100);
+                })
+                .catch(error => {
+                });
+        }
+
+        // Carregar scripts de autenticação na ordem correta
+        function loadAuthScripts() {
+            // Verificar se Supabase CDN já está carregado
+            if (typeof window.supabase === 'undefined') {
+                const supabaseCDN = document.createElement('script');
+                supabaseCDN.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+                supabaseCDN.onload = function() {
+                    loadAuthService();
+                };
+                document.head.appendChild(supabaseCDN);
+            } else {
+                loadAuthService();
+            }
+        }
+
+        function loadAuthService() {
+            // Verificar se auth-service já está carregado
+            if (typeof window.authService === 'undefined') {
+                const authServiceScript = document.createElement('script');
+                authServiceScript.src = '../../assets/js/supabase-auth-service.js';
+                authServiceScript.onload = function() {
+                    loadHeaderAuth();
+                };
+                document.head.appendChild(authServiceScript);
+            } else {
+                loadHeaderAuth();
+            }
+        }
+
+        function loadHeaderAuth() {
+            // Verificar se header-auth já está carregado
+            if (!document.querySelector('script[src*="header-auth.js"]')) {
+                const headerAuthScript = document.createElement('script');
+                headerAuthScript.src = '../../assets/js/header-auth.js';
+                headerAuthScript.onload = function() {
+                    // Forçar verificação após carregar
+                    setTimeout(() => {
+                        if (typeof checkUserLogin === 'function') {
+                            checkUserLogin();
+                        }
+                    }, 500);
+                };
+                document.head.appendChild(headerAuthScript);
+            } else {
+                // Script já está carregado, apenas verificar
+                setTimeout(() => {
+                    if (typeof checkUserLogin === 'function') {
+                        checkUserLogin();
+                    }
+                }, 500);
+            }
+        }
+
+        // Carregar header quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            loadHeader();
+        });
+    </script>
+</body>
+</html>

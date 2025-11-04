@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmar E-mail - Achei na Ilha</title>
+    <link rel="icon" type="image/svg+xml" href="../../assets/images/logo-achei-na-ilha.png">
+    <link rel="alternate icon" href="../../assets/images/logo-achei-na-ilha.png">
+    <link rel="stylesheet" href="../../assets/css/header.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            animation: pulse 2s infinite;
+        }
+
+        .icon::before {
+            content: '📧';
+            font-size: 40px;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .email-info {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .email-info h3 {
+            color: #495057;
+            font-size: 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .email-info h3::before {
+            content: '📬';
+            margin-right: 8px;
+        }
+
+        .email-address {
+            font-family: monospace;
+            background: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #495057;
+            word-break: break-all;
+        }
+
+        .steps {
+            text-align: left;
+            margin: 30px 0;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .step-description {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .buttons {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 14px;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #495057;
+            border: 1px solid #dee2e6;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .btn::before {
+            margin-right: 8px;
+        }
+
+        .btn-check-email::before {
+            content: '📧';
+        }
+
+        .btn-login::before {
+            content: '🔐';
+        }
+
+        .btn-home::before {
+            content: '🏠';
+        }
+
+        .status-message {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 500;
+            display: none;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon"></div>
+        
+        <h1>Confirme seu E-mail</h1>
+        <p class="subtitle">
+            Quase lá! Enviamos um link de confirmação para seu e-mail.
+        </p>
+
+        <div class="email-info" id="emailInfo">
+            <h3>E-mail de confirmação enviado para:</h3>
+            <div class="email-address" id="emailAddress">Carregando...</div>
+        </div>
+
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <div class="step-title">Verifique sua caixa de entrada</div>
+                    <div class="step-description">
+                        Procure por um e-mail do "Achei na Ilha" com o assunto "Confirme sua conta"
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <div class="step-title">Clique no link de confirmação</div>
+                    <div class="step-description">
+                        Abra o e-mail e clique no botão "Confirmar Conta" ou no link fornecido
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <div class="step-title">Faça login e comece a anunciar</div>
+                    <div class="step-description">
+                        Após confirmar, volte aqui e faça login para acessar sua conta
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-message" id="statusMessage"></div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <span>Verificando status...</span>
+        </div>
+
+        <!--<div class="buttons">
+            <button class="btn btn-primary btn-check-email" onclick="checkEmailStatus()">
+                Verificar Status
+            </button>
+            <a href="../auth/login.html" class="btn btn-secondary btn-login">
+                Fazer Login
+            </a>
+            <a href="../../index.html" class="btn btn-secondary btn-home">
+                Página Inicial
+            </a>
+        </div> -->
+    </div>
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../../assets/js/supabase-auth-service.js"></script>
+
+    <script>
+        let authService;
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Aguardar authService estar disponível
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                if (window.authService) {
+                    authService = window.authService;
+                    
+                    // Verificar se veio do link de confirmação do Supabase
+                    await verificarConfirmacaoEmail();
+                    
+                    loadUserEmail();
+                } else {
+                    showStatus('Erro ao carregar sistema de autenticação', 'error');
+                }
+            } catch (error) {
+                showStatus('Erro ao inicializar página', 'error');
+            }
+        });
+
+        async function verificarConfirmacaoEmail() {
+            try {
+                // Verificar se há tokens na URL (vem do Supabase após confirmação)
+                const urlParams = new URLSearchParams(window.location.search);
+                const confirmed = urlParams.get('confirmed');
+                const access_token = urlParams.get('access_token');
+                const refresh_token = urlParams.get('refresh_token');
+                const type = urlParams.get('type');
+                const email = urlParams.get('email') || localStorage.getItem('pendingEmail');
+                // Se veio do redirecionamento do Supabase após confirmação
+                if (confirmed === 'true' || (access_token && type === 'signup')) {
+                    // Se há tokens na URL, processar a sessão
+                    if (access_token && refresh_token) {
+                        if (!authService.isInitialized) {
+                            await authService.initialize();
+                        }
+                        
+                        // Tentar fazer login com os tokens
+                        try {
+                            const { data, error } = await authService.supabase.auth.setSession({
+                                access_token,
+                                refresh_token
+                            });
+                            
+                            if (error) {
+                            } else {
+                            }
+                        } catch (error) {
+                        }
+                    }
+                    
+                    // Limpar parâmetros sensíveis da URL
+                    const cleanUrl = window.location.pathname + (email ? `?email=${encodeURIComponent(email)}` : '');
+                    window.history.replaceState({}, '', cleanUrl);
+                    
+                    // Aguardar um pouco para garantir que a sessão foi processada
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    // Verificar se o usuário está realmente confirmado
+                    const user = authService.getCurrentUser();
+                    if (user && user.email_confirmed_at) {
+                        // Email confirmado com sucesso!
+                        showStatus('✅ E-mail confirmado com sucesso! Você pode fazer login agora.', 'success');
+                        
+                        // Limpar email pendente do localStorage
+                        localStorage.removeItem('pendingEmail');
+                        
+                        // Aguardar um pouco para garantir que o perfil foi criado
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        
+                        // Redirecionar para login após 3 segundos
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 3000);
+                    } else {
+                        // Verificar novamente após mais tempo
+                        setTimeout(async () => {
+                            const user2 = authService.getCurrentUser();
+                            if (user2 && user2.email_confirmed_at) {
+                                showStatus('✅ E-mail confirmado com sucesso! Você pode fazer login agora.', 'success');
+                                localStorage.removeItem('pendingEmail');
+                                setTimeout(() => {
+                                    window.location.href = 'login.html';
+                                }, 3000);
+                            } else {
+                                showStatus('⏳ Aguardando confirmação do e-mail. Verifique sua caixa de entrada.', 'info');
+                            }
+                        }, 2000);
+                    }
+                }
+            } catch (error) {
+                // Não mostrar erro para o usuário, apenas continuar normalmente
+            }
+        }
+
+        function loadUserEmail() {
+            try {
+                // Tentar obter email da URL ou localStorage
+                const urlParams = new URLSearchParams(window.location.search);
+                const email = urlParams.get('email') || localStorage.getItem('pendingEmail');
+                
+                if (email) {
+                    document.getElementById('emailAddress').textContent = email;
+                } else {
+                    document.getElementById('emailAddress').textContent = 'E-mail não encontrado';
+                }
+            } catch (error) {
+                document.getElementById('emailAddress').textContent = 'E-mail não encontrado';
+            }
+        }
+
+        async function checkEmailStatus() {
+            const loading = document.getElementById('loading');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            try {
+                loading.style.display = 'flex';
+                statusMessage.style.display = 'none';
+
+                // Verificar se o usuário está logado (email confirmado)
+                const user = authService.getCurrentUser();
+                if (user && user.email_confirmed_at) {
+                    showStatus('✅ E-mail confirmado com sucesso! Você pode fazer login agora.', 'success');
+                    
+                    // Limpar email pendente do localStorage
+                    localStorage.removeItem('pendingEmail');
+                    
+                    // Redirecionar para login após 3 segundos
+                    setTimeout(() => {
+                        window.location.href = '../auth/login.html';
+                    }, 3000);
+                } else if (user && !user.email_confirmed_at) {
+                    showStatus('⏳ E-mail ainda não foi confirmado. Verifique sua caixa de entrada.', 'info');
+                } else {
+                    showStatus('ℹ️ Aguardando confirmação do e-mail. Verifique sua caixa de entrada.', 'info');
+                }
+            } catch (error) {
+                showStatus('Erro ao verificar status do e-mail. Tente novamente.', 'error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message status-${type}`;
+            statusMessage.style.display = 'block';
+        }
+
+        // Verificar automaticamente a cada 30 segundos
+        setInterval(() => {
+            if (authService && authService.getCurrentUser()) {
+                checkEmailStatus();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
+
+

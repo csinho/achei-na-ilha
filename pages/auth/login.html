@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Achei na Ilha - Entrar</title>
+    <link rel="stylesheet" href="../../assets/css/header.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-logo {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #333333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #0077B6;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: #0077B6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #005a8d;
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .link-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .link {
+            color: #0077B6;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .link:hover {
+            text-decoration: underline;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+
+        .message.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+
+        .divider {
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e0e0e0;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 15px;
+            position: relative;
+            color: #999;
+            font-size: 14px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 25px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header será carregado via JavaScript -->
+    <div id="header-container"></div>
+
+    <div class="container">
+        <div class="form-header">
+            <div class="form-logo">🏝️🔍</div>
+            <h1>Entrar</h1>
+            <p class="subtitle">Acesse sua conta no Achei na Ilha</p>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" name="email" required placeholder="seu@email.com">
+            </div>
+
+            <div class="form-group">
+                <label for="senha">Senha</label>
+                <input type="password" id="senha" name="senha" required placeholder="Digite sua senha">
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="submitBtn">
+                Entrar
+            </button>
+        </form>
+
+        <div class="divider">
+            <span>ou</span>
+        </div>
+
+        <div class="link-container">
+            <a href="cadastro.html" class="link">Criar nova conta</a>
+        </div>
+    </div>
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../../assets/js/supabase-auth-service.js"></script>
+    <script src="../../assets/js/supabase-config.js"></script>
+
+    <script>
+        const form = document.getElementById('loginForm');
+        const messageDiv = document.getElementById('message');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value.trim();
+            const senha = document.getElementById('senha').value;
+
+            if (!email || !senha) {
+                showMessage('Por favor, preencha todos os campos', 'error');
+                return;
+            }
+
+            if (!validateEmail(email)) {
+                showMessage('Por favor, insira um e-mail válido', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Entrando...';
+
+            try {
+                // Verificar se o AuthService está disponível
+                if (typeof authService === 'undefined') {
+                    throw new Error('Serviço de autenticação não está disponível');
+                }
+
+                // Aguardar inicialização do serviço
+                if (!authService.isInitialized) {
+                    await authService.initialize();
+                }
+
+                // Fazer login usando o serviço
+                const result = await authService.signIn(email, senha);
+
+                if (result.success) {
+                    // Buscar perfil do usuário
+                    const userProfile = await authService.getCurrentUserProfile();
+                    
+                    if (userProfile) {
+                        showMessage('Login realizado com sucesso!', 'success');
+
+                        // Atualizar header antes de redirecionar
+                        if (typeof window.updateHeaderLogin === 'function') {
+                            await window.updateHeaderLogin();
+                        } else if (typeof checkUserLogin === 'function') {
+                            await checkUserLogin();
+                        }
+
+                        setTimeout(() => {
+                            // Todos os usuários são anunciantes, redirecionar para busca
+                            window.location.href = '../property/busca.html';
+                        }, 1500);
+                    } else {
+                        throw new Error('Erro ao carregar perfil do usuário');
+                    }
+                } else {
+                    throw result.error;
+                }
+            } catch (error) {
+                let errorMessage = 'Erro ao fazer login. Tente novamente.';
+                
+                if (error.message?.includes('Invalid login credentials') || 
+                    error.message?.includes('Invalid email or password')) {
+                    errorMessage = 'E-mail ou senha incorretos.';
+                } else if (error.message?.includes('Email not confirmed')) {
+                    errorMessage = 'Por favor, confirme seu e-mail antes de fazer login.';
+                } else if (error.message?.includes('Too many requests')) {
+                    errorMessage = 'Muitas tentativas. Tente novamente em alguns minutos.';
+                } else if (error.message?.includes('User not found')) {
+                    errorMessage = 'Usuário não encontrado.';
+                }
+                
+                showMessage(errorMessage, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Entrar';
+            }
+        });
+
+        // Função para verificar se o usuário tem um plano ativo
+        async function checkUserPlan(userId) {
+            try {
+                const supabase = authService.getSupabase();
+                if (!supabase) {
+                    throw new Error('Supabase não disponível');
+                }
+
+                const { data: assinatura, error } = await supabase
+                    .from('assinaturas')
+                    .select('*')
+                    .eq('usuario_id', userId)
+                    .eq('status', 'ativa')
+                    .single();
+
+                if (assinatura && !error) {
+                    // Usuário tem plano ativo, redirecionar para meus anúncios
+                    window.location.href = '../user/meus-anuncios.html';
+                } else {
+                    // Usuário não tem plano, redirecionar para escolha de plano
+                    window.location.href = '../user/escolha-plano.html';
+                }
+            } catch (error) {
+                // Em caso de erro, redirecionar para escolha de plano
+                window.location.href = '../user/escolha-plano.html';
+            }
+        }
+
+        function showMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.className = 'message ' + type;
+            messageDiv.style.display = 'block';
+        }
+
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        // Funções de autenticação serão carregadas do assets/js/header-auth.js
+
+        window.addEventListener('load', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('sessao') === 'expirada') {
+                showMessage('Sua sessão expirou. Por favor, faça login novamente.', 'error');
+            }
+            // checkUserLogin será chamado pelo assets/js/header-auth.js
+        });
+
+        // Carregar header dinamicamente
+        function loadHeader() {
+            fetch('../../components/header-component.html')
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('header-container').innerHTML = html;
+                    
+                    // Aguardar o header ser renderizado antes de carregar os scripts
+                    setTimeout(() => {
+                        loadAuthScripts();
+                    }, 100);
+                })
+                .catch(error => {
+                });
+        }
+
+        // Carregar scripts de autenticação na ordem correta
+        function loadAuthScripts() {
+            // Verificar se Supabase CDN já está carregado
+            if (typeof window.supabase === 'undefined') {
+                const supabaseCDN = document.createElement('script');
+                supabaseCDN.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+                supabaseCDN.onload = function() {
+                    loadAuthService();
+                };
+                document.head.appendChild(supabaseCDN);
+            } else {
+                loadAuthService();
+            }
+        }
+
+        function loadAuthService() {
+            // Verificar se auth-service já está carregado
+            if (typeof window.authService === 'undefined') {
+                const authServiceScript = document.createElement('script');
+                authServiceScript.src = '../../assets/js/supabase-auth-service.js';
+                authServiceScript.onload = function() {
+                    loadHeaderAuth();
+                };
+                document.head.appendChild(authServiceScript);
+            } else {
+                loadHeaderAuth();
+            }
+        }
+
+        function loadHeaderAuth() {
+            // Verificar se header-auth já está carregado
+            if (!document.querySelector('script[src*="header-auth.js"]')) {
+                const headerAuthScript = document.createElement('script');
+                headerAuthScript.src = '../../assets/js/header-auth.js';
+                headerAuthScript.onload = function() {
+                    // Forçar verificação após carregar
+                    setTimeout(() => {
+                        if (typeof checkUserLogin === 'function') {
+                            checkUserLogin();
+                        }
+                    }, 500);
+                };
+                document.head.appendChild(headerAuthScript);
+            } else {
+                // Script já está carregado, apenas verificar
+                setTimeout(() => {
+                    if (typeof checkUserLogin === 'function') {
+                        checkUserLogin();
+                    }
+                }, 500);
+            }
+        }
+
+        // Carregar header quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            loadHeader();
+        });
+    </script>
+</body>
+</html>

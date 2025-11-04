@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Achei na Ilha - Novo Anúncio</title>
+    <link rel="icon" type="image/svg+xml" href="../../assets/images/logo-achei-na-ilha.png">
+    <link rel="alternate icon" href="../../assets/images/logo-achei-na-ilha.png">
+    <link rel="stylesheet" href="../../assets/css/header.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding-bottom: 100px;
+        }
+
+        .main-content {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-title {
+            font-size: 28px;
+            color: #333333;
+            margin-bottom: 10px;
+        }
+
+        .form-subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            color: #333333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #0077B6;
+            box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .file-upload {
+            border: 2px dashed #e0e0e0;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload:hover {
+            border-color: #0077B6;
+            background: #f5f9fc;
+        }
+
+        .file-upload input {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .upload-text {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .file-list {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .btn-remove {
+            background: #c62828;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .limit-info {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .limit-warning {
+            color: #f57c00;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .checkbox-item:hover {
+            background: #e9ecef;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .checkbox-item label {
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .btn-primary {
+            background: #0077B6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #005a8d;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 119, 182, 0.3);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(108, 117, 125, 0.3);
+        }
+
+        .form-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .form-actions .btn {
+            margin-top: 0;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+
+        .message.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+
+        .plan-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border-left: 4px solid #0077B6;
+        }
+
+        .plan-info-title {
+            font-weight: 700;
+            color: #0077B6;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .form-card {
+                padding: 25px;
+            }
+
+            .form-title {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header será carregado via JavaScript -->
+    <div id="header-container"></div>
+
+    <div class="main-content">
+        <div class="form-card">
+            <h1 class="form-title">Criar Novo Anúncio</h1>
+            <p class="form-subtitle">Preencha as informações do seu imóvel</p>
+
+            <div id="message" class="message"></div>
+
+            <form id="anuncioForm">
+                <div class="form-group">
+                    <label>Escolha um ícone para o anúncio</label>
+                    <select id="emoji">
+                        <option value="🏠">🏠 Casa</option>
+                        <option value="🏖️">🏖️ Praia</option>
+                        <option value="🏢">🏢 Prédio</option>
+                        <option value="🏝️">🏝️ Ilha</option>
+                        <option value="🏊">🏊 Piscina</option>
+                        <option value="🌅">🌅 Vista Mar</option>
+                        <option value="🏪">🏪 Comercial</option>
+                        <option value="🌴">🌴 Palmeiras</option>
+                        <option value="🏡">🏡 Chácara</option>
+                        <option value="🌊">🌊 Orla</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="titulo">Título do Imóvel *</label>
+                    <input type="text" id="titulo" required placeholder="Ex: Casa de praia com vista para o mar">
+                </div>
+
+                <div class="form-group">
+                    <label for="descricao">Descrição *</label>
+                    <textarea id="descricao" required placeholder="Descreva as características do imóvel..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="categoria">Categoria *</label>
+                    <select id="categoria" required>
+                        <option value="">Selecione</option>
+                        <option value="venda">Venda</option>
+                        <option value="aluguel">Aluguel</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="tipoImovel">Tipo do Imóvel *</label>
+                    <select id="tipoImovel" required>
+                        <option value="">Selecione</option>
+                        <option value="casa">Casa</option>
+                        <option value="apartamento">Apartamento</option>
+                        <option value="terreno">Terreno</option>
+                        <option value="comercial">Comercial</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="localizacao">Localização *</label>
+                    <input type="text" id="localizacao" required placeholder="Ex: Praia do Centro">
+                </div>
+
+                <div class="form-group">
+                    <label for="valor">Valor (R$) *</label>
+                    <input type="text" id="valor" required placeholder="0,00" min="0" maxlength="20">
+                </div>
+
+                <div class="form-group">
+                    <label for="quartos">Número de Quartos *</label>
+                    <select id="quartos" required>
+                        <option value="">Selecione</option>
+                        <option value="0">0 (Terreno/Comercial)</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6+</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="banheiros">Número de Banheiros *</label>
+                    <select id="banheiros" required>
+                        <option value="">Selecione</option>
+                        <option value="0">0 (Terreno)</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5+</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="garagem">Possui Garagem?</label>
+                    <select id="garagem">
+                        <option value="false">Não</option>
+                        <option value="true">Sim</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="vagasGroup" style="display: none;">
+                    <label for="vagasGaragem">Número de Vagas na Garagem</label>
+                    <select id="vagasGaragem">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5+</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Características Especiais</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="caracPiscina" value="piscina">
+                            <label for="caracPiscina">🏊 Com Piscina</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="caracVistaMar" value="vista-mar">
+                            <label for="caracVistaMar">🌅 Vista para o Mar</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="caracChurrasqueira" value="churrasqueira">
+                            <label for="caracChurrasqueira">🔥 Churrasqueira</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="caracRoca" value="roca">
+                            <label for="caracRoca">🌾 Área de Roça</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="caracFesta" value="area-festa">
+                            <label for="caracFesta">🎉 Área para Festa</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="caracVaranda" value="varanda">
+                            <label for="caracVaranda">🏡 Varanda Grande</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="caracQuintal" value="quintal">
+                            <label for="caracQuintal">🌳 Quintal Espaçoso</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="caracCoco" value="coqueiros">
+                            <label for="caracCoco">🌴 Coqueiros</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="caracPoco" value="poco">
+                            <label for="caracPoco">💧 Poço Artesiano</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="caracCasa" value="casa-verao">
+                            <label for="caracCasa">🏖️ Casa de Verão</label>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="form-group">
+                    <label>Imagens do Imóvel</label>
+                    <div class="file-upload" onclick="document.getElementById('imageInput').click()">
+                        <div class="upload-icon">📷</div>
+                        <div class="upload-text">Clique para adicionar imagens</div>
+                        <input type="file" id="imageInput" accept="image/*" multiple>
+                    </div>
+                    <div class="limit-info" id="imageLimit"></div>
+                    <div class="file-list" id="imageList"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Vídeos do Imóvel</label>
+                    <div class="file-upload" onclick="document.getElementById('videoInput').click()">
+                        <div class="upload-icon">🎥</div>
+                        <div class="upload-text">Clique para adicionar vídeos</div>
+                        <input type="file" id="videoInput" accept="video/*" multiple>
+                    </div>
+                    <div class="limit-info" id="videoLimit"></div>
+                    <div class="file-list" id="videoList"></div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="btnDraft" onclick="salvarRascunho()">
+                        💾 Salvar como Rascunho
+                    </button>
+                    <button type="button" class="btn btn-primary" id="btnPublish" onclick="publicarAnuncio()">
+                        🚀 Publicar Anúncio
+                    </button>
+                    <button type="button" class="btn btn-primary" id="btnSaveChanges" onclick="salvarAlteracoes()" style="display: none;">
+                        💾 Salvar alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let imagensSelecionadas = [];
+        let videosSelecionados = [];
+        const MAX_IMAGENS = 20; // Limite padrão
+        const MAX_VIDEOS = 5; // Limite padrão
+
+        function atualizarLimites() {
+            document.getElementById('imageLimit').innerHTML = `
+                <span class="${imagensSelecionadas.length >= MAX_IMAGENS ? 'limit-warning' : ''}">
+                    ${imagensSelecionadas.length} / ${MAX_IMAGENS} imagens
+                </span>
+            `;
+
+            document.getElementById('videoLimit').innerHTML = `
+                <span class="${videosSelecionados.length >= MAX_VIDEOS ? 'limit-warning' : ''}">
+                    ${videosSelecionados.length} / ${MAX_VIDEOS} vídeos
+                </span>
+            `;
+        }
+
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+
+            files.forEach(file => {
+                if (imagensSelecionadas.length >= MAX_IMAGENS) {
+                    showMessage(`Limite de ${MAX_IMAGENS} imagens atingido`, 'error');
+                    return;
+                }
+
+                imagensSelecionadas.push(file);
+            });
+
+            renderizarImagensSelecionadas();
+            atualizarLimites();
+            e.target.value = '';
+        });
+
+        document.getElementById('videoInput').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+
+            files.forEach(file => {
+                if (videosSelecionados.length >= MAX_VIDEOS) {
+                    showMessage(`Limite de ${MAX_VIDEOS} vídeos atingido`, 'error');
+                    return;
+                }
+
+                videosSelecionados.push(file);
+            });
+
+            renderizarVideosSelecionados();
+            atualizarLimites();
+            e.target.value = '';
+        });
+
+        // Controlar exibição do campo de vagas baseado na seleção de garagem
+            document.getElementById('garagem').addEventListener('change', function() {
+                const vagasGroup = document.getElementById('vagasGroup');
+                if (this.value === 'true') {
+                    vagasGroup.style.display = 'block';
+                    document.getElementById('vagasGaragem').value = '1'; // Inicia com 1 vaga
+                } else {
+                    vagasGroup.style.display = 'none';
+                    document.getElementById('vagasGaragem').value = '0';
+                }
+            });
+
+        function renderizarImagensSelecionadas() {
+            const container = document.getElementById('imageList');
+            container.innerHTML = imagensSelecionadas.map((file, index) => `
+                <div class="file-item">
+                    <span>📷 ${file.name}</span>
+                    <button type="button" class="btn-remove" onclick="removerImagem(${index})">Remover</button>
+                </div>
+            `).join('');
+        }
+
+        function renderizarVideosSelecionados() {
+            const container = document.getElementById('videoList');
+            container.innerHTML = videosSelecionados.map((file, index) => `
+                <div class="file-item">
+                    <span>🎥 ${file.name}</span>
+                    <button type="button" class="btn-remove" onclick="removerVideo(${index})">Remover</button>
+                </div>
+            `).join('');
+        }
+
+        function removerImagem(index) {
+            imagensSelecionadas.splice(index, 1);
+            renderizarImagensSelecionadas();
+            atualizarLimites();
+        }
+
+        function removerVideo(index) {
+            videosSelecionados.splice(index, 1);
+            renderizarVideosSelecionados();
+            atualizarLimites();
+        }
+
+        // Desabilitar submit padrão do form
+        document.getElementById('anuncioForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+        });
+
+        function validarFormulario() {
+            // Validação dos campos
+            const garagem = document.getElementById('garagem').value === 'true';
+            const vagasGaragem = parseInt(document.getElementById('vagasGaragem').value);
+            
+            if (garagem && vagasGaragem === 0) {
+                showMessage('Selecione o número de vagas na garagem', 'error');
+                return false;
+            }
+
+            // Validar campos obrigatórios
+            if (!document.getElementById('titulo').value ||
+                !document.getElementById('descricao').value ||
+                !document.getElementById('categoria').value ||
+                !document.getElementById('valor').value || 
+                converterMoedaParaNumero(document.getElementById('valor').value) <= 0) {
+                showMessage('Por favor, preencha todos os campos obrigatórios', 'error');
+                return false;
+            }
+
+            return true;
+        }
+
+        function coletarDadosAnuncio() {
+            return {
+                id: anuncioEditandoId || 'temp_' + Date.now(),
+                titulo: document.getElementById('titulo').value,
+                descricao: document.getElementById('descricao').value,
+                categoria: document.getElementById('categoria').value,
+                tipo: document.getElementById('tipoImovel').value,
+                localizacao: document.getElementById('localizacao').value,
+                preco: converterMoedaParaNumero(document.getElementById('valor').value),
+                emoji: document.getElementById('emoji').value,
+                quartos: parseInt(document.getElementById('quartos').value),
+                banheiros: parseInt(document.getElementById('banheiros').value),
+                garagem: document.getElementById('garagem').value === 'true',
+                vagasGaragem: parseInt(document.getElementById('vagasGaragem').value),
+                caracteristicas: getCaracteristicasSelecionadas(),
+                imagens: imagensSelecionadas,
+                videos: videosSelecionados,
+                imagensCount: imagensSelecionadas.length,
+                videosCount: videosSelecionados.length,
+                usuarioEmail: getUsuarioEmail(),
+                criadoEm: new Date().toISOString(),
+                status: 'rascunho' // ou 'publicado'
+            };
+        }
+
+        async function salvarRascunho() {
+            if (!validarFormulario()) return;
+
+            const btnDraft = document.getElementById('btnDraft');
+            btnDraft.disabled = true;
+            btnDraft.textContent = '💾 Salvando...';
+
+            try {
+                // Obter authService
+                let service = null;
+                if (typeof window.authService !== 'undefined') {
+                    service = window.authService;
+                } else if (typeof authService !== 'undefined') {
+                    service = authService;
+                }
+
+                if (!service) {
+                    // Tentar encontrar service
+                    let attempts = 0;
+                    while (!service && attempts < 10) {
+                        if (typeof window.authService !== 'undefined') {
+                            service = window.authService;
+                        } else if (typeof authService !== 'undefined') {
+                            service = authService;
+                        }
+                        if (!service) {
+                            await new Promise(resolve => setTimeout(resolve, 300));
+                            attempts++;
+                        }
+                    }
+                }
+
+                if (!service || !service.isInitialized) {
+                    if (service && !service.isInitialized) {
+                        await service.initialize();
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    } else {
+                        throw new Error('AuthService não disponível');
+                    }
+                }
+
+                const user = await service.getCurrentUser();
+                if (!user) {
+                    throw new Error('Usuário não logado');
+                }
+
+                const supabase = service.getSupabase();
+                if (!supabase) {
+                    throw new Error('Supabase não disponível');
+                }
+
+                const dadosAnuncio = coletarDadosAnuncio();
+                
+                // Mapear dados do formulário para o banco de dados
+                const anuncioData = {
+                    usuario_id: user.id,
+                    titulo: dadosAnuncio.titulo,
+                    descricao: dadosAnuncio.descricao,
+                    tipo_imovel: dadosAnuncio.tipo,
+                    categoria: dadosAnuncio.categoria,
+                    valor: dadosAnuncio.preco,
+                    endereco: dadosAnuncio.localizacao || '',
+                    bairro: null, // Pode ser adicionado depois se necessário
+                    cidade: 'Ilha',
+                    estado: 'BA',
+                    cep: null,
+                    area_terreno: null,
+                    area_construida: null,
+                    quartos: dadosAnuncio.quartos || null,
+                    banheiros: dadosAnuncio.banheiros || null,
+                    vagas_garagem: dadosAnuncio.vagasGaragem || null,
+                    emoji: dadosAnuncio.emoji || null,
+                    caracteristicas: dadosAnuncio.caracteristicas || [],
+                    ativo: false // Rascunho não está ativo
+                };
+
+                // Adicionar campo status se existir na tabela
+                try {
+                    anuncioData.status = 'rascunho';
+                } catch (e) {
+                }
+
+                // Verificar se é edição ou novo anúncio
+                let data, error;
+                if (anuncioEditandoId) {
+                    // Atualizar anúncio existente
+                    const { data: updatedData, error: updateError } = await supabase
+                        .from('anuncios')
+                        .update(anuncioData)
+                        .eq('id', anuncioEditandoId)
+                        .select()
+                        .single();
+                    data = updatedData;
+                    error = updateError;
+                } else {
+                    // Criar novo anúncio
+                    const { data: insertedData, error: insertError } = await supabase
+                        .from('anuncios')
+                        .insert([anuncioData])
+                        .select()
+                        .single();
+                    data = insertedData;
+                    error = insertError;
+                }
+
+                if (error) {
+                    throw error;
+                }
+                showMessage('Rascunho salvo com sucesso!', 'success');
+
+                setTimeout(() => {
+                    window.location.href = '../user/meus-anuncios.html';
+                }, 1500);
+            } catch (error) {
+                showMessage('Erro ao salvar rascunho: ' + (error.message || 'Erro desconhecido'), 'error');
+            } finally {
+                btnDraft.disabled = false;
+                btnDraft.textContent = '💾 Salvar como Rascunho';
+            }
+        }
+
+        async function publicarAnuncio() {
+            if (!validarFormulario()) return;
+
+            const btnPublish = document.getElementById('btnPublish');
+            btnPublish.disabled = true;
+            btnPublish.textContent = '⏳ Preparando...';
+
+            try {
+                const novoAnuncio = coletarDadosAnuncio();
+                novoAnuncio.status = 'pendente_pagamento';
+
+                // Salvar dados do anúncio para a página de pagamento
+                localStorage.setItem('pendingAnnouncement', JSON.stringify({
+                    id: novoAnuncio.id,
+                    titulo: novoAnuncio.titulo,
+                    preco: novoAnuncio.preco,
+                    dados: novoAnuncio
+                }));
+
+                // Redirecionar para página de pagamento
+                window.location.href = '../payment/pagamento.html';
+            } catch (error) {
+                showMessage('Erro ao preparar publicação', 'error');
+                btnPublish.disabled = false;
+                btnPublish.textContent = '🚀 Publicar Anúncio';
+            }
+        }
+
+        function getUsuarioEmail() {
+            const usuarioLogado = localStorage.getItem('usuarioLogado');
+            if (usuarioLogado) {
+                return JSON.parse(usuarioLogado).email;
+            }
+            return 'anonimo@email.com';
+        }
+
+        function getCaracteristicasSelecionadas() {
+            const caracteristicas = [];
+            const checkboxes = [
+                'caracPiscina',
+                'caracVistaMar', 
+                'caracChurrasqueira',
+                'caracRoca',
+                'caracFesta',
+                'caracVaranda',
+                'caracQuintal',
+                'caracCoco',
+                'caracPoco',
+                'caracCasa'
+            ];
+            
+            checkboxes.forEach(id => {
+                const checkbox = document.getElementById(id);
+                if (checkbox && checkbox.checked) {
+                    caracteristicas.push(checkbox.value);
+                }
+            });
+            
+            return caracteristicas;
+        }
+
+        // Função para formatar valor como moeda brasileira
+        function formatarMoeda(valor) {
+            // Remove tudo que não é dígito
+            valor = valor.replace(/\D/g, '');
+            
+            // Se estiver vazio, retorna 0,00
+            if (valor === '') {
+                return '0,00';
+            }
+            
+            // Converte para número e divide por 100 para ter centavos
+            const numero = parseInt(valor) / 100;
+            
+            // Formata como moeda brasileira
+            return numero.toLocaleString('pt-BR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        // Função para converter valor formatado de volta para número
+        function converterMoedaParaNumero(valorFormatado) {
+            // Remove tudo que não é dígito
+            const apenasNumeros = valorFormatado.replace(/\D/g, '');
+            
+            // Divide por 100 para ter o valor real (pois os 2 últimos dígitos são centavos)
+            return parseFloat(apenasNumeros) / 100;
+        }
+
+        // Aplicar máscara de moeda no campo de valor
+        function aplicarMascaraMoeda() {
+            const campoValor = document.getElementById('valor');
+            
+            if (campoValor) {
+                // Aplicar máscara enquanto digita
+                campoValor.addEventListener('input', function(e) {
+                    const valor = e.target.value;
+                    const valorFormatado = formatarMoeda(valor);
+                    e.target.value = valorFormatado;
+                });
+
+                // Aplicar máscara ao perder o foco (caso não tenha aplicado)
+                campoValor.addEventListener('blur', function(e) {
+                    if (e.target.value) {
+                        const valorFormatado = formatarMoeda(e.target.value);
+                        e.target.value = valorFormatado;
+                    }
+                });
+
+                // Permitir apenas números e alguns caracteres durante a digitação
+                campoValor.addEventListener('keypress', function(e) {
+                    // Permite apenas números
+                    if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter'].includes(e.key)) {
+                        e.preventDefault();
+                    }
+                });
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = 'message ' + type;
+            messageDiv.style.display = 'block';
+
+            setTimeout(() => {
+                if (type !== 'success') {
+                    messageDiv.style.display = 'none';
+                }
+            }, 5000);
+        }
+
+        async function verificarPermissao() {
+            // PRIMEIRO: Verificar token no localStorage (mais rápido e confiável)
+            let tokenFound = false;
+            
+            // Tentar diferentes padrões de chave do Supabase
+            const possibleKeys = [
+                ...Object.keys(localStorage).filter(key => key.includes('supabase') && key.includes('auth-token')),
+                ...Object.keys(localStorage).filter(key => key.includes('sb-') && key.includes('auth-token')),
+                ...Object.keys(localStorage).filter(key => key.startsWith('sb-svgmuxdxxrapepbodbgv-auth-token'))
+            ];
+            
+            for (const key of possibleKeys) {
+                try {
+                    const tokenData = JSON.parse(localStorage.getItem(key));
+                    if (tokenData && tokenData.access_token) {
+                        tokenFound = true;
+                        break;
+                    }
+                } catch (e) {
+                    // Continuar tentando outras chaves
+                }
+            }
+            
+            // Também verificar se há alguma chave que contenha dados de sessão
+            if (!tokenFound) {
+                const sessionKeys = Object.keys(localStorage).filter(key => 
+                    key.includes('supabase') || 
+                    (key.includes('sb-') && key.includes('auth'))
+                );
+                
+                for (const key of sessionKeys) {
+                    try {
+                        const data = localStorage.getItem(key);
+                        if (data && (data.includes('access_token') || data.includes('refresh_token'))) {
+                            tokenFound = true;
+                            break;
+                        }
+                    } catch (e) {
+                        // Continuar
+                    }
+                }
+            }
+            
+            if (tokenFound) {
+                return;
+            }
+            
+            // SEGUNDO: Verificar via authService (aguardar mais tempo)
+            let service = null;
+            let attempts = 0;
+            const maxAttempts = 10; // Mais tentativas
+            
+            // Tentar encontrar o service com várias tentativas
+            while (!service && attempts < maxAttempts) {
+                if (typeof window.authService !== 'undefined') {
+                    service = window.authService;
+                } else if (typeof authService !== 'undefined') {
+                    service = authService;
+                }
+                
+                if (!service) {
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    attempts++;
+                }
+            }
+            
+            if (service) {
+                try {
+                    if (!service.isInitialized) {
+                        await service.initialize();
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                    
+                    // Aguardar um pouco mais para garantir que está pronto
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    const user = await service.getCurrentUser();
+                    
+                    if (user) {
+                        return;
+                    } else {
+                    }
+                } catch (error) {
+                }
+            } else {
+            }
+            
+            // Se chegou aqui, verificar uma última vez se há token
+            // (pode ter sido salvo enquanto aguardávamos)
+            const finalCheck = Object.keys(localStorage).find(key => 
+                (key.includes('supabase') || key.includes('sb-')) && 
+                (key.includes('auth-token') || key.includes('auth'))
+            );
+            
+            if (finalCheck) {
+                try {
+                    const data = localStorage.getItem(finalCheck);
+                    if (data && (data.includes('access_token') || data.includes('refresh_token'))) {
+                        return;
+                    }
+                } catch (e) {
+                    // Ignorar
+                }
+            }
+            
+            // ÚLTIMA VERIFICAÇÃO: Se o botão "Anunciar" está visível no header, deve estar logado
+            const btnAnnounce = document.getElementById('btnAnnounce');
+            if (btnAnnounce && !btnAnnounce.classList.contains('hidden')) {
+                return;
+            }
+            
+            // Se chegou aqui, realmente não está logado
+            window.location.href = '../auth/login.html';
+        }
+
+        // Funções de autenticação serão carregadas do assets/js/header-auth.js
+
+        // Variável global para armazenar ID do anúncio sendo editado
+        let anuncioEditandoId = null;
+
+        async function carregarAnuncioParaEdicao() {
+            // Verificar se há ID na URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const anuncioId = urlParams.get('id');
+            
+            if (!anuncioId) {
+                return;
+            }
+            anuncioEditandoId = anuncioId;
+
+            try {
+                let service = null;
+                if (typeof window.authService !== 'undefined') {
+                    service = window.authService;
+                } else if (typeof authService !== 'undefined') {
+                    service = authService;
+                }
+
+                if (!service || !service.isInitialized) {
+                    if (service && !service.isInitialized) {
+                        await service.initialize();
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    } else {
+                        throw new Error('AuthService não disponível');
+                    }
+                }
+
+                const supabase = service.getSupabase();
+                if (!supabase) {
+                    throw new Error('Supabase não disponível');
+                }
+
+                // Buscar anúncio
+                const { data: anuncio, error } = await supabase
+                    .from('anuncios')
+                    .select('*')
+                    .eq('id', anuncioId)
+                    .single();
+
+                if (error || !anuncio) {
+                    throw new Error('Anúncio não encontrado');
+                }
+
+                // Preencher formulário com dados do anúncio
+                document.getElementById('titulo').value = anuncio.titulo || '';
+                document.getElementById('descricao').value = anuncio.descricao || '';
+                document.getElementById('categoria').value = anuncio.categoria || '';
+                document.getElementById('tipoImovel').value = anuncio.tipo_imovel || '';
+                document.getElementById('localizacao').value = anuncio.endereco || '';
+                document.getElementById('emoji').value = anuncio.emoji || '🏠';
+                
+                // Formatar valor para exibição
+                if (anuncio.valor) {
+                    const valorFormatado = anuncio.valor.toLocaleString('pt-BR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                    document.getElementById('valor').value = valorFormatado;
+                }
+
+                document.getElementById('quartos').value = anuncio.quartos || '';
+                document.getElementById('banheiros').value = anuncio.banheiros || '';
+                
+                // Garagem
+                if (anuncio.vagas_garagem && anuncio.vagas_garagem > 0) {
+                    document.getElementById('garagem').value = 'true';
+                    document.getElementById('vagasGroup').style.display = 'block';
+                    document.getElementById('vagasGaragem').value = anuncio.vagas_garagem || 1;
+                } else {
+                    document.getElementById('garagem').value = 'false';
+                    document.getElementById('vagasGroup').style.display = 'none';
+                }
+
+                // Características
+                if (anuncio.caracteristicas && Array.isArray(anuncio.caracteristicas)) {
+                    anuncio.caracteristicas.forEach(carac => {
+                        const checkbox = document.getElementById(`carac${carac.charAt(0).toUpperCase() + carac.slice(1).replace(/-/g, '')}`);
+                        if (checkbox) {
+                            checkbox.checked = true;
+                        }
+                    });
+                }
+
+                // Atualizar título da página
+                document.querySelector('.form-title').textContent = 'Editar Anúncio';
+                document.querySelector('.form-subtitle').textContent = 'Atualize as informações do seu imóvel';
+
+                // Atualizar visibilidade dos botões
+                atualizarVisibilidadeBotoes();
+
+                showMessage('Anúncio carregado para edição', 'success');
+            } catch (error) {
+                showMessage('Erro ao carregar anúncio: ' + (error.message || 'Erro desconhecido'), 'error');
+            }
+        }
+
+        // Função para atualizar visibilidade dos botões baseado no modo de edição
+        function atualizarVisibilidadeBotoes() {
+            const btnDraft = document.getElementById('btnDraft');
+            const btnPublish = document.getElementById('btnPublish');
+            const btnSaveChanges = document.getElementById('btnSaveChanges');
+            
+            if (anuncioEditandoId) {
+                // Modo edição: mostrar apenas "Salvar alterações"
+                if (btnDraft) btnDraft.style.display = 'none';
+                if (btnPublish) btnPublish.style.display = 'none';
+                if (btnSaveChanges) btnSaveChanges.style.display = 'inline-block';
+            } else {
+                // Modo criação: mostrar "Salvar como Rascunho" e "Publicar Anúncio"
+                if (btnDraft) btnDraft.style.display = 'inline-block';
+                if (btnPublish) btnPublish.style.display = 'inline-block';
+                if (btnSaveChanges) btnSaveChanges.style.display = 'none';
+            }
+        }
+
+        // Função para salvar alterações quando editando
+        async function salvarAlteracoes() {
+            if (!validarFormulario()) return;
+
+            const btnSaveChanges = document.getElementById('btnSaveChanges');
+            btnSaveChanges.disabled = true;
+            btnSaveChanges.textContent = '⏳ Salvando...';
+
+            try {
+                let service = null;
+                if (typeof window.authService !== 'undefined') {
+                    service = window.authService;
+                } else if (typeof authService !== 'undefined') {
+                    service = authService;
+                }
+
+                if (!service || !service.isInitialized) {
+                    if (service && !service.isInitialized) {
+                        await service.initialize();
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    } else {
+                        throw new Error('AuthService não disponível');
+                    }
+                }
+
+                const supabase = service.getSupabase();
+                if (!supabase) {
+                    throw new Error('Supabase não disponível');
+                }
+
+                const dadosAnuncio = coletarDadosAnuncio();
+                
+                // Preparar dados para atualização
+                const anuncioData = {
+                    titulo: dadosAnuncio.titulo,
+                    descricao: dadosAnuncio.descricao,
+                    tipo_imovel: dadosAnuncio.tipo,
+                    categoria: dadosAnuncio.categoria,
+                    valor: dadosAnuncio.preco,
+                    endereco: dadosAnuncio.localizacao || '',
+                    quartos: dadosAnuncio.quartos || null,
+                    banheiros: dadosAnuncio.banheiros || null,
+                    vagas_garagem: dadosAnuncio.vagasGaragem || null,
+                    emoji: dadosAnuncio.emoji || null,
+                    caracteristicas: dadosAnuncio.caracteristicas || []
+                };
+
+                // Atualizar anúncio existente
+                const { data, error } = await supabase
+                    .from('anuncios')
+                    .update(anuncioData)
+                    .eq('id', anuncioEditandoId)
+                    .select()
+                    .single();
+
+                if (error) {
+                    throw error;
+                }
+
+                showMessage('Alterações salvas com sucesso!', 'success');
+
+                setTimeout(() => {
+                    window.location.href = '../user/meus-anuncios.html';
+                }, 1500);
+            } catch (error) {
+                showMessage('Erro ao salvar alterações: ' + (error.message || 'Erro desconhecido'), 'error');
+            } finally {
+                btnSaveChanges.disabled = false;
+                btnSaveChanges.textContent = '💾 Salvar alterações';
+            }
+        }
+
+        window.addEventListener('load', async function() {
+            // Aplicar máscara de moeda no campo de valor
+            aplicarMascaraMoeda();
+            
+            // Aguardar um pouco antes de verificar (para dar tempo do header carregar)
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            await verificarPermissao();
+            atualizarLimites();
+            
+            // Carregar anúncio se estiver editando
+            await carregarAnuncioParaEdicao();
+            
+            // Atualizar visibilidade dos botões após carregar
+            atualizarVisibilidadeBotoes();
+            
+            // Forçar atualização do header após tudo carregar
+            setTimeout(async () => {
+                if (typeof window.updateHeaderLogin === 'function') {
+                    await window.updateHeaderLogin();
+                }
+            }, 2000);
+        });
+
+        // Também aplicar quando o DOM estiver pronto
+        document.addEventListener('DOMContentLoaded', function() {
+            aplicarMascaraMoeda();
+        });
+
+        // Carregar header dinamicamente
+        function loadHeader() {
+            fetch('../../components/header-component.html')
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('header-container').innerHTML = html;
+                    
+                    // Aguardar o header ser renderizado antes de carregar os scripts
+                    setTimeout(() => {
+                        loadAuthScripts();
+                    }, 100);
+                })
+                .catch(error => {
+                });
+        }
+
+        // Carregar scripts de autenticação na ordem correta
+        function loadAuthScripts() {
+            // Verificar se Supabase CDN já está carregado
+            if (typeof window.supabase === 'undefined') {
+                const supabaseCDN = document.createElement('script');
+                supabaseCDN.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+                supabaseCDN.onload = function() {
+                    loadAuthService();
+                };
+                document.head.appendChild(supabaseCDN);
+            } else {
+                loadAuthService();
+            }
+        }
+
+        function loadAuthService() {
+            // Verificar se auth-service já está carregado
+            if (typeof window.authService === 'undefined') {
+                const authServiceScript = document.createElement('script');
+                authServiceScript.src = '../../assets/js/supabase-auth-service.js';
+                authServiceScript.onload = function() {
+                    loadHeaderAuth();
+                };
+                document.head.appendChild(authServiceScript);
+            } else {
+                loadHeaderAuth();
+            }
+        }
+
+        function loadHeaderAuth() {
+            // Verificar se header-auth já está carregado
+            if (!document.querySelector('script[src*="header-auth.js"]')) {
+                const headerAuthScript = document.createElement('script');
+                headerAuthScript.src = '../../assets/js/header-auth.js';
+                headerAuthScript.onload = function() {
+                    // Forçar verificação após carregar
+                    setTimeout(async () => {
+                        if (typeof checkUserLogin === 'function') {
+                            await checkUserLogin();
+                        }
+                        // Forçar atualização do header também
+                        if (typeof window.updateHeaderLogin === 'function') {
+                            await window.updateHeaderLogin();
+                        }
+                    }, 500);
+                };
+                document.head.appendChild(headerAuthScript);
+            } else {
+                // Script já está carregado, apenas verificar
+                setTimeout(async () => {
+                    if (typeof checkUserLogin === 'function') {
+                        await checkUserLogin();
+                    }
+                    // Forçar atualização do header também
+                    if (typeof window.updateHeaderLogin === 'function') {
+                        await window.updateHeaderLogin();
+                    }
+                }, 500);
+            }
+        }
+
+        // Carregar header quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            loadHeader();
+        });
+    </script>
+</body>
+</html>
+

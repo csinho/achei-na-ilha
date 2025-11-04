@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Achei na Ilha - Escolha seu Plano</title>
+    <link rel="icon" type="image/svg+xml" href="../../assets/images/logo-achei-na-ilha.png">
+    <link rel="alternate icon" href="../../assets/images/logo-achei-na-ilha.png">
+    <link rel="stylesheet" href="../../assets/css/header.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 40px 20px;
+            padding-top: 80px; /* Espaço para o header */
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        h1 {
+            color: #333333;
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .message {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .plans-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .plan-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            border: 2px solid transparent;
+        }
+
+        .plan-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .plan-card.popular {
+            border-color: #ff6b35;
+            transform: scale(1.05);
+        }
+
+        .plan-card.popular:hover {
+            transform: scale(1.05) translateY(-5px);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            background: #ff6b35;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .plan-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .plan-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .plan-price {
+            font-size: 36px;
+            font-weight: 700;
+            color: #0077B6;
+            margin-bottom: 15px;
+        }
+
+        .plan-price span {
+            font-size: 18px;
+            color: #666;
+        }
+
+        .plan-description {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 25px;
+        }
+
+        .plan-features {
+            list-style: none;
+            text-align: left;
+            margin-bottom: 30px;
+        }
+
+        .plan-features li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .plan-features li::before {
+            content: "✓";
+            color: #28a745;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .plan-features li.cross::before {
+            content: "✗";
+            color: #dc3545;
+        }
+
+        .plan-button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .plan-button.primary {
+            background: #0077B6;
+            color: white;
+        }
+
+        .plan-button.primary:hover {
+            background: #005a8d;
+        }
+
+        .plan-button.secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #dee2e6;
+        }
+
+        .plan-button.secondary:hover {
+            background: #e9ecef;
+        }
+
+        .skip-link {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .skip-link a {
+            color: #0077B6;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .skip-link a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .plans-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Escolha seu Plano</h1>
+            <p class="subtitle">Selecione o plano ideal para anunciar seus imóveis na ilha</p>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <div class="plans-container">
+            <div class="plan-card">
+                <div class="plan-icon">🦐</div>
+                <h2 class="plan-name">Pititinga</h2>
+                <div class="plan-price">R$ 24,90<span>/mês</span></div>
+                <p class="plan-description">Plano para começar</p>
+                <ul class="plan-features">
+                    <li>Até 3 anúncios ativos</li>
+                    <li>Até 5 imagens por anúncio</li>
+                    <li>Sem vídeos</li>
+                    <li class="cross">Exibe publicidade</li>
+                    <li>Suporte básico</li>
+                </ul>
+                <button class="plan-button secondary" onclick="selecionarPlano('pititinga', 24.90)">Escolher Plano</button>
+            </div>
+
+            <div class="plan-card popular">
+                <div class="popular-badge">MAIS POPULAR</div>
+                <div class="plan-icon">🦀</div>
+                <h2 class="plan-name">Caranguejo</h2>
+                <div class="plan-price">R$ 45,90<span>/mês</span></div>
+                <p class="plan-description">Ideal para anunciantes regulares</p>
+                <ul class="plan-features">
+                    <li>Até 10 anúncios ativos</li>
+                    <li>Até 10 imagens por anúncio</li>
+                    <li>Até 2 vídeos por anúncio</li>
+                    <li>Sem publicidade</li>
+                    <li>Suporte prioritário</li>
+                </ul>
+                <button class="plan-button primary" onclick="selecionarPlano('caranguejo', 45.90)">Escolher Plano</button>
+            </div>
+
+            <div class="plan-card">
+                <div class="plan-icon">🦞</div>
+                <h2 class="plan-name">Lagosta</h2>
+                <div class="plan-price">R$ 99,90<span>/mês</span></div>
+                <p class="plan-description">Plano premium com destaque</p>
+                <ul class="plan-features">
+                    <li>Até 20 anúncios ativos</li>
+                    <li>Até 15 imagens por anúncio</li>
+                    <li>Até 4 vídeos por anúncio</li>
+                    <li>Sem publicidade</li>
+                    <li>Destaque nos resultados</li>
+                </ul>
+                <button class="plan-button secondary" onclick="selecionarPlano('lagosta', 99.90)">Escolher Plano</button>
+            </div>
+        </div>
+
+        <div class="skip-link">
+            <a href="../property/busca.html">Pular por enquanto e explorar imóveis</a>
+        </div>
+    </div>
+
+    <script>
+        function selecionarPlano(nomePlano, valor) {
+            const plano = {
+                nome: nomePlano,
+                valor: valor,
+                dataSelecao: new Date().toISOString()
+            };
+
+            localStorage.setItem('planoEscolhido', JSON.stringify(plano));
+
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = `Plano ${nomePlano.charAt(0).toUpperCase() + nomePlano.slice(1)} selecionado com sucesso!`;
+            messageDiv.className = 'message success';
+            messageDiv.style.display = 'block';
+
+            setTimeout(() => {
+                const usuarioLogado = localStorage.getItem('usuarioLogado');
+                if (usuarioLogado) {
+                    const userData = JSON.parse(usuarioLogado);
+                    if (userData.tipoUsuario === 'anunciante') {
+                        window.location.href = 'meus-anuncios.html';
+                    } else {
+                        window.location.href = '../property/busca.html';
+                    }
+                } else {
+                    window.location.href = '../property/busca.html';
+                }
+            }, 1500);
+        }
+
+        function carregarPlanoAtual() {
+            const planoStr = localStorage.getItem('planoEscolhido');
+            if (planoStr) {
+                const plano = JSON.parse(planoStr);
+                const messageDiv = document.getElementById('message');
+                messageDiv.textContent = `Seu plano atual: ${plano.nome.charAt(0).toUpperCase() + plano.nome.slice(1)}`;
+                messageDiv.className = 'message success';
+                messageDiv.style.display = 'block';
+            }
+        }
+
+    </script>
+</body>
+</html>

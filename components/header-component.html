@@ -1,0 +1,36 @@
+<!-- Header Component - Buscas da Ilha -->
+<header class="header">
+    <div class="header-content">
+        <a href="/index.html" class="logo">
+            <img src="/assets/images/logo-achei-na-ilha.png" alt="Achei na Ilha" class="logo-icon" />
+        </a>
+        <nav class="nav-links">
+            <a href="/pages/property/novo-anuncio.html" class="btn-announce hidden" id="btnAnnounce">Anunciar</a>
+            <a href="/pages/user/meus-anuncios.html" class="nav-link hidden" id="btnMeusAnuncios">Meus Anúncios</a>
+            <a href="/pages/auth/login.html" class="btn-login" id="btnLogin">Entrar</a>
+            <div class="user-menu hidden" id="userMenu">
+                <div class="user-info" onclick="toggleUserDropdown()">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Usuário</div>
+                        <div class="user-type" id="userType">Visitante</div>
+                    </div>                    
+                </div>
+                <div class="user-dropdown hidden" id="userDropdown">
+                    <a href="/pages/user/meus-anuncios.html" class="dropdown-item">
+                        <span class="dropdown-icon">📋</span>
+                        <span>Meus Anúncios</span>
+                    </a>
+                    <a href="/pages/user/configuracoes.html" class="dropdown-item">
+                        <span class="dropdown-icon">⚙️</span>
+                        <span>Conta</span>
+                    </a>
+                    <button class="dropdown-item logout-item" onclick="logout()">
+                        <span class="dropdown-icon">🚪</span>
+                        <span>Sair</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </div>
+</header>

@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamento - Achei na Ilha</title>
+    <link rel="icon" type="image/svg+xml" href="../../assets/images/logo-achei-na-ilha.png">
+    <link rel="alternate icon" href="../../assets/images/logo-achei-na-ilha.png">
+    <link rel="stylesheet" href="../../assets/css/header.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .page-title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 40px;
+        }
+
+        .page-title h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .page-title p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .payment-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .calculator-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .summary-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 100px;
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .days-input-wrapper {
+            position: relative;
+        }
+
+        .days-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+
+        .days-input:focus {
+            outline: none;
+            border-color: #0077B6;
+        }
+
+        .days-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .days-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .days-btn:hover {
+            border-color: #0077B6;
+            color: #0077B6;
+        }
+
+        .days-btn.recommended {
+            background: #e3f2fd;
+            border-color: #0077B6;
+            color: #0077B6;
+        }
+
+        .days-btn.active {
+            background: #0077B6;
+            color: white;
+            border-color: #0077B6;
+        }
+
+        .days-help {
+            font-size: 12px;
+            color: #666;
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        .highlight-option {
+            margin-top: 30px;
+            padding: 20px;
+            background: #fff9e6;
+            border: 2px solid #ffd700;
+            border-radius: 8px;
+        }
+
+        .highlight-option label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .highlight-checkbox {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            cursor: pointer;
+        }
+
+        .highlight-info {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #666;
+            padding-left: 32px;
+        }
+
+        .price-breakdown {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .price-row:last-child {
+            border-bottom: none;
+        }
+
+        .price-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .price-value {
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .price-total {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #0077B6;
+        }
+
+        .price-total .price-label {
+            font-size: 18px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .price-total .price-value {
+            font-size: 24px;
+            color: #0077B6;
+        }
+
+        .announcement-info {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4caf50;
+        }
+
+        .announcement-info h4 {
+            color: #2e7d32;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .announcement-info p {
+            color: #666;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .payment-methods {
+            margin-top: 30px;
+        }
+
+        .payment-method {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .payment-method:hover {
+            border-color: #0077B6;
+        }
+
+        .payment-method input[type="radio"] {
+            margin-right: 12px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .payment-method label {
+            flex: 1;
+            cursor: pointer;
+            font-weight: 500;
+            color: #333;
+            margin: 0;
+        }
+
+        .payment-icon {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        .btn-pay {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .btn-pay:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-pay:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #856404;
+        }
+
+        @media (max-width: 768px) {
+            .payment-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-section {
+                position: relative;
+                top: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div id="header-container"></div>
+
+    <div class="container">
+        <div class="page-title">
+            <h1>💰 Pagamento do Anúncio</h1>
+            <p>Escolha a duração e personalize seu anúncio</p>
+        </div>
+
+        <div class="payment-wrapper">
+            <!-- Calculadora -->
+            <div class="calculator-section">
+                <h2 class="section-title">📊 Calculadora de Preço</h2>
+
+                <div class="form-group">
+                    <label>Quantidade de Dias</label>
+                    <div class="days-input-wrapper">
+                        <input 
+                            type="number" 
+                            id="daysInput" 
+                            class="days-input" 
+                            min="3" 
+                            value="7"
+                            required
+                        >
+                    </div>
+                    <div class="days-buttons">
+                        <button type="button" class="days-btn" data-days="3">Mínimo (3 dias)</button>
+                        <button type="button" class="days-btn recommended active" data-days="7">Recomendado (7 dias)</button>
+                        <button type="button" class="days-btn" data-days="14">14 dias</button>
+                        <button type="button" class="days-btn" data-days="30">30 dias</button>
+                    </div>
+                    <p class="days-help">Mínimo de 3 dias. Recomendamos 7 dias para melhor alcance.</p>
+                </div>
+
+                <div class="highlight-option">
+                    <label>
+                        <input 
+                            type="checkbox" 
+                            id="highlightCheckbox" 
+                            class="highlight-checkbox"
+                        >
+                        <span>⭐ Adicionar ao Destaque</span>
+                    </label>
+                    <div class="highlight-info">
+                        Seu anúncio ficará em destaque por 3 dias. Aparecerá no topo das buscas!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumo -->
+            <div class="summary-section">
+                <h2 class="section-title">📋 Resumo do Pedido</h2>
+
+                <div class="announcement-info" id="announcementInfo">
+                    <h4>📝 Anúncio:</h4>
+                    <p id="announcementTitle">Carregando...</p>
+                </div>
+
+                <div class="price-breakdown">
+                    <div class="price-row">
+                        <span class="price-label">Publicação (por dia)</span>
+                        <span class="price-value" id="dailyPrice">R$ 9,90</span>
+                    </div>
+                    <div class="price-row">
+                        <span class="price-label">Dias selecionados</span>
+                        <span class="price-value" id="daysSelected">7 dias</span>
+                    </div>
+                    <div class="price-row" id="highlightRow" style="display: none;">
+                        <span class="price-label">⭐ Destaque (3 dias)</span>
+                        <span class="price-value" id="highlightPrice">R$ 8,90</span>
+                    </div>
+                    <div class="price-row price-total">
+                        <span class="price-label">Total</span>
+                        <span class="price-value" id="totalPrice">R$ 69,30</span>
+                    </div>
+                </div>
+
+                <div class="payment-methods">
+                    <h3 style="margin-bottom: 15px; font-size: 16px;">Forma de Pagamento</h3>
+                    <div class="payment-method">
+                        <input type="radio" id="paymentPix" name="paymentMethod" value="pix" checked>
+                        <label for="paymentPix">
+                            <span class="payment-icon">💳</span>
+                            PIX - Aprovação Imediata
+                        </label>
+                    </div>
+                    <div class="payment-method">
+                        <input type="radio" id="paymentCard" name="paymentMethod" value="card">
+                        <label for="paymentCard">
+                            <span class="payment-icon">💳</span>
+                            Cartão de Crédito
+                        </label>
+                    </div>
+                </div>
+
+                <button class="btn-pay" id="btnPay" onclick="processPayment()">
+                    💳 Finalizar Pagamento
+                </button>
+
+                <div class="warning-box" id="warningBox">
+                    ⚠️ Após o pagamento, seu anúncio será publicado imediatamente.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../../assets/js/supabase-auth-service.js"></script>
+    <script src="../../assets/js/header-auth.js"></script>
+
+    <script>
+        // Esconder botão flutuante na página de pagamento
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const floatingBtn = document.getElementById('floatingAnnounceBtn');
+                if (floatingBtn) {
+                    floatingBtn.style.display = 'none';
+                }
+            }, 1000);
+        });
+
+        let authService;
+        const DAILY_PRICE = 9.90;
+        const HIGHLIGHT_PRICE = 8.90;
+        const MIN_DAYS = 3;
+        const RECOMMENDED_DAYS = 7;
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Carregar header
+                const headerResponse = await fetch('../../components/header-component.html');
+                const headerHTML = await headerResponse.text();
+                document.getElementById('header-container').innerHTML = headerHTML;
+
+                // Aguardar authService
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                if (window.authService) {
+                    authService = window.authService;
+                    await checkAuth();
+                    loadAnnouncementInfo();
+                    setupCalculators();
+                } else {
+                    alert('Erro ao carregar serviço de autenticação');
+                }
+            } catch (error) {
+            }
+        });
+
+        async function checkAuth() {
+            if (!authService) {
+                // Verificar token como fallback
+                const tokenKey = Object.keys(localStorage).find(key => 
+                    (key.includes('supabase') || key.includes('sb-')) && 
+                    key.includes('auth-token')
+                );
+                if (tokenKey) {
+                    try {
+                        const tokenData = JSON.parse(localStorage.getItem(tokenKey));
+                        if (tokenData && tokenData.access_token) {
+                            return true;
+                        }
+                    } catch (e) {
+                        // Ignorar
+                    }
+                }
+                alert('Você precisa estar logado para publicar um anúncio');
+                window.location.href = '../../pages/auth/login.html';
+                return false;
+            }
+            
+            // Aguardar inicialização se necessário
+            if (!authService.isInitialized) {
+                await authService.initialize();
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+            
+            const user = await authService.getCurrentUser();
+            if (!user) {
+                // Verificar token como fallback
+                const tokenKey = Object.keys(localStorage).find(key => 
+                    (key.includes('supabase') || key.includes('sb-')) && 
+                    key.includes('auth-token')
+                );
+                if (tokenKey) {
+                    try {
+                        const tokenData = JSON.parse(localStorage.getItem(tokenKey));
+                        if (tokenData && tokenData.access_token) {
+                            return true;
+                        }
+                    } catch (e) {
+                        // Ignorar
+                    }
+                }
+                alert('Você precisa estar logado para publicar um anúncio');
+                window.location.href = '../../pages/auth/login.html';
+                return false;
+            }
+            return true;
+        }
+
+        function loadAnnouncementInfo() {
+            // Tentar obter dados do anúncio da sessão ou localStorage
+            const anuncioData = JSON.parse(localStorage.getItem('pendingAnnouncement') || '{}');
+            
+            if (anuncioData.titulo) {
+                document.getElementById('announcementTitle').textContent = anuncioData.titulo;
+                
+                // Se é um rascunho existente, mostrar mensagem diferente
+                if (anuncioData.id && !anuncioData.id.startsWith('temp_')) {
+                    const warningBox = document.getElementById('warningBox');
+                    if (warningBox) {
+                        warningBox.textContent = '⚠️ Após o pagamento, seu rascunho será publicado imediatamente.';
+                    }
+                }
+            } else {
+                document.getElementById('announcementTitle').textContent = 'Informações não disponíveis';
+            }
+        }
+
+        function setupCalculators() {
+            const daysInput = document.getElementById('daysInput');
+            const highlightCheckbox = document.getElementById('highlightCheckbox');
+            const daysButtons = document.querySelectorAll('.days-btn');
+
+            // Botões de dias rápidos
+            daysButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const days = parseInt(btn.dataset.days);
+                    daysInput.value = days;
+                    
+                    // Atualizar botões ativos
+                    daysButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    calculatePrice();
+                });
+            });
+
+            // Input manual
+            daysInput.addEventListener('input', () => {
+                const value = parseInt(daysInput.value) || MIN_DAYS;
+                
+                if (value < MIN_DAYS) {
+                    daysInput.value = MIN_DAYS;
+                }
+                
+                // Atualizar botões ativos
+                daysButtons.forEach(btn => {
+                    if (parseInt(btn.dataset.days) === parseInt(daysInput.value)) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                calculatePrice();
+            });
+
+            // Checkbox de destaque
+            highlightCheckbox.addEventListener('change', () => {
+                calculatePrice();
+            });
+
+            // Calcular preço inicial
+            calculatePrice();
+        }
+
+        function calculatePrice() {
+            const days = parseInt(document.getElementById('daysInput').value) || MIN_DAYS;
+            const hasHighlight = document.getElementById('highlightCheckbox').checked;
+
+            const basePrice = days * DAILY_PRICE;
+            const highlightPrice = hasHighlight ? HIGHLIGHT_PRICE : 0;
+            const total = basePrice + highlightPrice;
+
+            // Atualizar exibição
+            document.getElementById('daysSelected').textContent = `${days} ${days === 1 ? 'dia' : 'dias'}`;
+            
+            if (hasHighlight) {
+                document.getElementById('highlightRow').style.display = 'flex';
+                document.getElementById('highlightPrice').textContent = `R$ ${HIGHLIGHT_PRICE.toFixed(2).replace('.', ',')}`;
+            } else {
+                document.getElementById('highlightRow').style.display = 'none';
+            }
+
+            document.getElementById('totalPrice').textContent = formatCurrency(total);
+        }
+
+        function formatCurrency(value) {
+            return `R$ ${value.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
+        }
+
+        async function processPayment() {
+            try {
+                if (!await checkAuth()) return;
+
+                const btnPay = document.getElementById('btnPay');
+                btnPay.disabled = true;
+                btnPay.textContent = '⏳ Processando...';
+
+                const days = parseInt(document.getElementById('daysInput').value) || MIN_DAYS;
+                const hasHighlight = document.getElementById('highlightCheckbox').checked;
+                const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+
+                // Calcular valores
+                const basePrice = days * DAILY_PRICE;
+                const highlightPrice = hasHighlight ? HIGHLIGHT_PRICE : 0;
+                const total = basePrice + highlightPrice;
+
+                // Obter dados do anúncio
+                const anuncioData = JSON.parse(localStorage.getItem('pendingAnnouncement') || '{}');
+                
+                if (!anuncioData.id) {
+                    throw new Error('Dados do anúncio não encontrados');
+                }
+
+                // Aqui você integraria com o gateway de pagamento (PIX, Cartão, etc.)
+                // Por enquanto, vamos simular o pagamento e salvar os dados
+                // Simular processamento
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Salvar anúncio no banco de dados
+                const supabase = authService.getSupabase();
+                if (!supabase) {
+                    throw new Error('Supabase não disponível');
+                }
+
+                const user = await authService.getCurrentUser();
+                if (!user) {
+                    throw new Error('Usuário não logado');
+                }
+
+                const dadosCompletos = anuncioData.dados || {};
+                
+                // Verificar se é um anúncio existente (rascunho) ou novo
+                const anuncioId = anuncioData.id || anuncioData.dados?.id;
+                
+                // Preparar dados de atualização/publicação
+                const updateData = {
+                    ativo: true, // Publicado está ativo
+                    status: 'publicado'
+                };
+
+                // Adicionar campos de pagamento (se existirem na tabela)
+                try {
+                    updateData.dias_publicacao = days;
+                    updateData.valor_pagamento = total;
+                    updateData.em_destaque = hasHighlight;
+                    updateData.data_inicio_publicacao = new Date().toISOString();
+                    updateData.data_fim_publicacao = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+                    if (hasHighlight) {
+                        updateData.data_fim_destaque = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+                    }
+                    updateData.forma_pagamento = paymentMethod;
+                    updateData.transacao_id = 'simulado_' + Date.now(); // TODO: Substituir por ID real do gateway
+                } catch (e) {
+                }
+
+                let data;
+                let error;
+
+                // Se tem ID válido (UUID, não temp_), atualizar anúncio existente (rascunho)
+                if (anuncioId && typeof anuncioId === 'string' && !anuncioId.startsWith('temp_') && anuncioId.length > 10) {
+                    const { data: updatedData, error: updateError } = await supabase
+                        .from('anuncios')
+                        .update(updateData)
+                        .eq('id', anuncioId)
+                        .select()
+                        .single();
+
+                    data = updatedData;
+                    error = updateError;
+                } else {
+                    // Se não tem ID válido, criar novo anúncio
+                    const anuncioDataDB = {
+                        usuario_id: user.id,
+                        titulo: dadosCompletos.titulo,
+                        descricao: dadosCompletos.descricao,
+                        tipo_imovel: dadosCompletos.tipo,
+                        categoria: dadosCompletos.categoria,
+                        valor: dadosCompletos.preco,
+                        endereco: dadosCompletos.localizacao || '',
+                        bairro: null,
+                        cidade: 'Ilha',
+                        estado: 'BA',
+                        cep: null,
+                        area_terreno: null,
+                        area_construida: null,
+                        quartos: dadosCompletos.quartos || null,
+                        banheiros: dadosCompletos.banheiros || null,
+                        vagas_garagem: dadosCompletos.vagasGaragem || null,
+                        emoji: dadosCompletos.emoji || null,
+                        caracteristicas: dadosCompletos.caracteristicas || [],
+                        ...updateData
+                    };
+
+                    const { data: insertedData, error: insertError } = await supabase
+                        .from('anuncios')
+                        .insert([anuncioDataDB])
+                        .select()
+                        .single();
+
+                    data = insertedData;
+                    error = insertError;
+                }
+
+                if (error) {
+                    throw new Error('Erro ao salvar anúncio: ' + error.message);
+                }
+                alert('✅ Pagamento processado com sucesso! Seu anúncio foi publicado.');
+                
+                // Limpar dados pendentes
+                localStorage.removeItem('pendingAnnouncement');
+                
+                // Redirecionar
+                window.location.href = '../../pages/user/meus-anuncios.html';
+
+            } catch (error) {
+                alert('Erro ao processar pagamento: ' + error.message);
+                
+                const btnPay = document.getElementById('btnPay');
+                btnPay.disabled = false;
+                btnPay.textContent = '💳 Finalizar Pagamento';
+            }
+        }
+    </script>
+</body>
+</html>
