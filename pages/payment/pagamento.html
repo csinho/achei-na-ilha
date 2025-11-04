@@ -559,9 +559,11 @@
         const RECOMMENDED_DAYS = 7;
         
         // Configurações do PushinPay PIX
+        // Como a API do PushinPay bloqueia CORS, vamos usar o n8n como proxy
         const PUSHINPAY_API_KEY = 'a04770e3-1bbf-4913-bf47-3fc05a440873|1tPtzIVtY6njf5LIgJ2GDK8zME2pQ8DNwZAe6reA91526390';
-        const PUSHINPAY_API_URL = 'https://api.pushinpay.com.br'; // Verificar URL exata na documentação
-        const N8N_WEBHOOK_URL = 'https://hooks.upcaodigital.com.br/webhook/acheinailha';
+        const N8N_PIX_CREATE_URL = 'https://hooks.upcaodigital.com.br/webhook/criar-pix'; // Endpoint no n8n para criar PIX
+        const N8N_PIX_CHECK_URL = 'https://hooks.upcaodigital.com.br/webhook/verificar-pix'; // Endpoint no n8n para verificar PIX
+        const N8N_WEBHOOK_URL = 'https://hooks.upcaodigital.com.br/webhook/acheinailha'; // Webhook de confirmação
         
         // Variáveis globais para controle do PIX
         let pixCheckInterval = null;
@@ -832,14 +834,16 @@
                     }
                 };
 
-                // Fazer requisição para criar PIX
-                const pixResponse = await fetch(`${PUSHINPAY_API_URL}/pix/qrcode`, {
+                // Fazer requisição para criar PIX via n8n (proxy para evitar CORS)
+                const pixResponse = await fetch(N8N_PIX_CREATE_URL, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${PUSHINPAY_API_KEY}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(pixData)
+                    body: JSON.stringify({
+                        api_key: PUSHINPAY_API_KEY,
+                        pix_data: pixData
+                    })
                 });
 
                 if (!pixResponse.ok) {
@@ -849,14 +853,22 @@
 
                 const pixResult = await pixResponse.json();
 
+                // Verificar se houve erro na resposta
+                if (pixResult.error || !pixResult.success) {
+                    throw new Error(pixResult.error || 'Erro ao criar PIX');
+                }
+
+                // Obter dados (pode estar em pixResult.data se vier do n8n)
+                const resultData = pixResult.data || pixResult;
+
                 // Verificar se a resposta contém o QR Code
-                if (!pixResult.qr_code && !pixResult.qrcode && !pixResult.pix_code) {
+                if (!resultData.qr_code && !resultData.qrcode && !resultData.pix_code) {
                     throw new Error('Resposta do PIX inválida. QR Code não encontrado.');
                 }
 
                 // Obter dados do PIX
-                const pixCode = pixResult.qr_code || pixResult.qrcode || pixResult.pix_code;
-                const pixId = pixResult.id || pixResult.transaction_id || pixResult.pix_id;
+                const pixCode = resultData.qr_code || resultData.qrcode || resultData.pix_code;
+                const pixId = resultData.id || resultData.transaction_id || resultData.pix_id || pixResult.id;
                 
                 // Salvar ID da transação no anúncio (status pendente)
                 try {
@@ -958,15 +970,18 @@
             }
         }
 
-        // Verificar status do pagamento PIX
+        // Verificar status do pagamento PIX via n8n (proxy para evitar CORS)
         async function checkPixStatus(pixId) {
             try {
-                const response = await fetch(`${PUSHINPAY_API_URL}/pix/${pixId}`, {
-                    method: 'GET',
+                const response = await fetch(N8N_PIX_CHECK_URL, {
+                    method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${PUSHINPAY_API_KEY}`,
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    body: JSON.stringify({
+                        api_key: PUSHINPAY_API_KEY,
+                        pix_id: pixId
+                    })
                 });
 
                 if (!response.ok) {
@@ -975,14 +990,22 @@
 
                 const pixData = await response.json();
                 
+                // Verificar se houve erro
+                if (pixData.error || !pixData.success) {
+                    return { paid: false, status: 'error', data: null };
+                }
+                
+                // Obter dados (pode estar em pixData.data se vier do n8n)
+                const resultData = pixData.data || pixData;
+                
                 // Verificar status (pode variar: 'paid', 'pago', 'approved', etc.)
-                const status = pixData.status || pixData.payment_status;
+                const status = resultData.status || resultData.payment_status;
                 const isPaid = status === 'paid' || status === 'pago' || status === 'approved' || status === 'aprovado';
                 
                 return {
                     paid: isPaid,
                     status: status,
-                    data: pixData
+                    data: resultData
                 };
             } catch (error) {
                 return { paid: false, status: 'error', data: null };
