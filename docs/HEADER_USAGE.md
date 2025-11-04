@@ -57,7 +57,7 @@ Sistema de header centralizado que pode ser reutilizado em todas as páginas do 
                 document.head.appendChild(script);
             })
             .catch(error => {
-                console.error('Erro ao carregar header:', error);
+                // Erro ao carregar header
             });
     }
 
@@ -181,7 +181,7 @@ Sistema de header centralizado que pode ser reutilizado em todas as páginas do 
                     document.head.appendChild(script);
                 })
                 .catch(error => {
-                    console.error('Erro ao carregar header:', error);
+                    // Erro ao carregar header
                 });
         }
 

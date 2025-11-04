@@ -7,6 +7,11 @@
     <link rel="icon" type="image/svg+xml" href="../../assets/images/logo-achei-na-ilha.png">
     <link rel="alternate icon" href="../../assets/images/logo-achei-na-ilha.png">
     <link rel="stylesheet" href="../../assets/css/header.css">
+    
+    <!-- Carregar Supabase primeiro -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Carregar configuração do Supabase -->
+    <script src="../../assets/js/supabase-config.js"></script>
     <style>
         * {
             margin: 0;
@@ -221,10 +226,102 @@
             color: #c62828;
         }
 
+        .status-aprovada {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-aguardando-aprovacao {
+            background: #ffeaa7;
+            color: #d63031;
+        }
+
         .publicidade-actions {
             display: flex;
             gap: 10px;
             flex-direction: column;
+        }
+
+        #buscaPublicidade:focus {
+            outline: none;
+            border-color: #0077B6;
+            box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.1);
+        }
+
+        #buscaPublicidade::placeholder {
+            color: #999;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px 30px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .modal-close-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .modal-body {
+            padding: 30px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .days-btn-publicidade:hover {
+            background: #f0f0f0 !important;
+            border-color: #0077B6 !important;
+        }
+
+        .days-btn-publicidade.active:hover {
+            background: #005a8d !important;
+            border-color: #005a8d !important;
+        }
+
+        label[for*="paymentMethod"]:has(input:checked) {
+            border-color: #0077B6 !important;
+            background: #e8f4fd !important;
         }
 
         .message {
@@ -258,6 +355,28 @@
             margin-bottom: 15px;
         }
 
+        .banner-item {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-secondary:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
         @media (max-width: 768px) {
             .publicidade-card {
                 grid-template-columns: 1fr;
@@ -270,8 +389,8 @@
     </style>
 </head>
 <body>
-    <!-- Header será carregado via JavaScript -->
-    <div id="header-container"></div>
+    <!-- Header não necessário na página admin -->
+    <div id="header-container" style="display: none;"></div>
 
     <div class="main-content">
         <div class="dashboard">
@@ -300,12 +419,87 @@
             </div>
         </div>
 
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 20px;">
+            <div>
+                <h1 style="color: #333; font-size: 28px; margin: 0;">Painel Administrativo</h1>
+                <p style="color: #666; margin-top: 5px;">Gerencie publicidades e configurações do sistema</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="abrirModalNovaPublicidade()" class="btn btn-primary" style="padding: 10px 20px; font-size: 14px;">
+                    ➕ Nova Publicidade
+                </button>
+                <button onclick="fazerLogoutAdmin()" class="btn btn-danger" style="padding: 10px 20px; font-size: 14px;">
+                    🚪 Sair
+                </button>
+            </div>
+        </div>
+
         <div class="section-card">
             <h2 class="section-title">
+                <span>📋</span>
+                Gerenciar Publicidades
+            </h2>
+            <p class="section-subtitle">Aprovar, pausar ou remover publicidades</p>
+
+            <!-- Campo de Busca -->
+            <div style="margin-bottom: 20px;">
+                <input 
+                    type="text" 
+                    id="buscaPublicidade" 
+                    placeholder="🔍 Buscar publicidade por título..." 
+                    style="width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; transition: border-color 0.3s ease;"
+                    oninput="filtrarPublicidades()"
+                >
+            </div>
+
+            <div id="publicidadesList" class="publicidades-list"></div>
+
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div class="empty-icon">📭</div>
+                <p>Nenhuma publicidade cadastrada ainda</p>
+            </div>
+
+            <div id="emptySearchState" class="empty-state" style="display: none;">
+                <div class="empty-icon">🔍</div>
+                <p>Nenhuma publicidade encontrada com o termo pesquisado</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Nova Publicidade -->
+    <div id="modalNovaPublicidade" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="section-title" style="margin: 0;">
                 <span>➕</span>
                 Nova Publicidade
             </h2>
-            <p class="section-subtitle">Criar uma nova publicidade para exibir no app</p>
+                <button onclick="fecharModalNovaPublicidade()" class="modal-close-btn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: background 0.2s;">
+                    ×
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <p class="section-subtitle" style="margin-bottom: 20px;">Criar uma nova publicidade para exibir no app</p>
+
+                <!-- Especificações de Tamanhos -->
+                <div style="background: #e8f4fd; border-left: 4px solid #0077B6; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: #0077B6; margin-bottom: 15px; font-size: 18px;">📐 Especificações de Tamanhos</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                        <div>
+                            <strong style="color: #333;">Banner Principal:</strong>
+                            <ul style="margin: 8px 0 0 20px; color: #666; font-size: 14px;">
+                                <li>Dimensões ideais: <strong>1280 × 420px</strong></li>
+                                <li>Proporção: <strong>3.05:1</strong></li>
+                                <li>Formato: <strong>Horizontal</strong></li>
+                                <li>Máximo: <strong>3 banners</strong></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <p style="margin: 0; color: #666; font-size: 14px;">
+                        📄 Para mais detalhes, consulte a <a href="../../docs/ESPECIFICACOES_PUBLICIDADES.md" target="_blank" style="color: #0077B6; text-decoration: underline;">documentação completa de especificações</a>
+                    </p>
+                </div>
 
             <div id="message" class="message"></div>
 
@@ -323,78 +517,1184 @@
                 <div class="form-group">
                     <label for="linkExterno">Link Externo</label>
                     <input type="url" id="linkExterno" placeholder="https://exemplo.com">
+                        <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">O link abrirá em uma nova aba do navegador</small>
                 </div>
 
+                    <!-- Banners Principais -->
                 <div class="form-group">
-                    <label for="imagemUrl">URL da Imagem</label>
-                    <input type="url" id="imagemUrl" placeholder="https://exemplo.com/imagem.jpg">
+                        <label>
+                            🎯 Banners Principais (Slider Central)
+                            <span style="color: #666; font-weight: normal; font-size: 12px;">(Máximo: 3 banners)</span>
+                        </label>
+                        <div id="mainBannersContainer">
+                            <div class="banner-item" data-type="main" data-index="0">
+                                <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                                    <input type="url" class="banner-image-input" placeholder="URL da imagem (1280 × 420px)" style="flex: 1;">
+                                    <span style="color: #666; font-size: 14px;">OU</span>
+                                    <input type="file" class="banner-file-input" accept="image/*" style="display: none;" onchange="handleFileUpload(this, 'main')">
+                                    <button type="button" class="btn btn-secondary btn-small" onclick="this.previousElementSibling.click()" style="padding: 8px 12px;">
+                                        📤 Upload
+                                    </button>
+                                    <button type="button" class="btn btn-danger btn-small" onclick="removerBanner(this)" style="padding: 8px 12px;">🗑</button>
+                                </div>
+                                <input type="url" class="banner-link-input" placeholder="Link do banner (opcional - usa link externo se vazio)" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #e0e0e0; border-radius: 4px;">
+                                <div class="banner-preview" style="display: none; margin-top: 10px;">
+                                    <img src="" alt="Preview" style="max-width: 100%; max-height: 150px; border-radius: 8px; border: 1px solid #e0e0e0;">
+                                </div>
+                                <div class="banner-upload-status" style="display: none; margin-top: 5px; color: #666; font-size: 12px;"></div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-small" onclick="adicionarBanner('main')" id="addMainBannerBtn" style="margin-top: 10px;">
+                            ➕ Adicionar Banner Principal
+                        </button>
+                        <div id="mainBannersCount" style="color: #666; font-size: 12px; margin-top: 5px;">1 / 3 banners</div>
                 </div>
 
+
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                        <button type="button" onclick="fecharModalNovaPublicidade()" class="btn btn-secondary">
+                            Cancelar
+                        </button>
                 <button type="submit" class="btn btn-primary">
                     Criar Publicidade
                 </button>
+                    </div>
             </form>
+            </div>
+        </div>
         </div>
 
-        <div class="section-card">
-            <h2 class="section-title">
-                <span>📋</span>
-                Gerenciar Publicidades
+    <!-- Modal de Pagamento de Publicidade -->
+    <div id="modalPagamentoPublicidade" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2 class="section-title" style="margin: 0;">
+                    <span>💳</span>
+                    Pagamento da Publicidade
             </h2>
-            <p class="section-subtitle">Aprovar, pausar ou remover publicidades</p>
+                <button onclick="fecharModalPagamento()" class="modal-close-btn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: background 0.2s;">
+                    ×
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div id="paymentMessage" class="message" style="display: none;"></div>
 
-            <div id="publicidadesList" class="publicidades-list"></div>
+                <div style="margin-bottom: 30px;">
+                    <h3 style="color: #333; margin-bottom: 10px;" id="paymentTitle">Carregando...</h3>
+                    <p style="color: #666; font-size: 14px;">Escolha a quantidade de dias para publicação</p>
+            </div>
 
-            <div id="emptyState" class="empty-state" style="display: none;">
-                <div class="empty-icon">📭</div>
-                <p>Nenhuma publicidade cadastrada ainda</p>
+                <!-- Calculadora -->
+                <div style="background: #f9f9f9; border-radius: 12px; padding: 25px; margin-bottom: 25px;">
+                    <h3 style="color: #333; margin-bottom: 20px; font-size: 18px;">📊 Calculadora de Preço</h3>
+                    
+                    <div class="form-group">
+                        <label style="display: block; margin-bottom: 10px; color: #333; font-weight: 600;">Quantidade de Dias</label>
+                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
+                            <input 
+                                type="number" 
+                                id="publicidadeDaysInput" 
+                                min="7" 
+                                max="30"
+                                value="30"
+                                required
+                                style="width: 100px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; text-align: center;"
+                            >
+                            <span style="color: #666;">dias</span>
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
+                            <button type="button" class="days-btn-publicidade" data-days="7" style="padding: 8px 16px; border: 2px solid #e0e0e0; background: white; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s;">7 dias</button>
+                            <button type="button" class="days-btn-publicidade" data-days="14" style="padding: 8px 16px; border: 2px solid #e0e0e0; background: white; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s;">14 dias</button>
+                            <button type="button" class="days-btn-publicidade active" data-days="30" style="padding: 8px 16px; border: 2px solid #0077B6; background: #0077B6; color: white; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s;">30 dias</button>
+                        </div>
+                        <p style="color: #666; font-size: 12px; margin-top: 10px;">Mínimo: 7 dias | Máximo: 30 dias</p>
+                    </div>
+
+                    <!-- Resumo do Preço -->
+                    <div style="background: white; border-radius: 8px; padding: 20px; margin-top: 20px; border: 2px solid #e0e0e0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: #666;">Valor por mês (30 dias):</span>
+                            <span style="color: #333; font-weight: 600;">R$ 59,90</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: #666;">Dias selecionados:</span>
+                            <span style="color: #333; font-weight: 600;" id="publicidadeDaysSelected">30 dias</span>
+                        </div>
+                        <div style="border-top: 2px solid #e0e0e0; padding-top: 15px; margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: #333; font-weight: 700; font-size: 18px;">Total:</span>
+                            <span style="color: #0077B6; font-weight: 700; font-size: 24px;" id="publicidadeTotalPrice">R$ 59,90</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Métodos de Pagamento -->
+                <div style="margin-bottom: 25px;">
+                    <h3 style="color: #333; margin-bottom: 15px; font-size: 18px;">💳 Método de Pagamento</h3>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <label style="flex: 1; min-width: 150px; padding: 15px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.2s;">
+                            <input type="radio" name="publicidadePaymentMethod" value="pix" checked style="margin-right: 8px;">
+                            <span>PIX</span>
+                        </label>
+                        <label style="flex: 1; min-width: 150px; padding: 15px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.2s;">
+                            <input type="radio" name="publicidadePaymentMethod" value="cartao" style="margin-right: 8px;">
+                            <span>Cartão de Crédito</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" onclick="fecharModalPagamento()" class="btn btn-secondary">
+                        Cancelar
+                    </button>
+                    <button type="button" id="btnPagarPublicidade" onclick="processarPagamentoPublicidade()" class="btn btn-primary">
+                        💳 Efetuar Pagamento
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Editar Publicidade -->
+    <div id="modalEditarPublicidade" class="modal-overlay" style="display: none;" data-publicidade-id="">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="section-title" style="margin: 0;">
+                    <span>✏️</span>
+                    Editar Publicidade
+                </h2>
+                <button onclick="fecharModalEditarPublicidade()" class="modal-close-btn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: background 0.2s;">
+                    ×
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div id="editMessage" class="message" style="display: none;"></div>
+
+                <form id="editPublicidadeForm">
+                    <div class="form-group">
+                        <label for="editTitulo">Título da Publicidade *</label>
+                        <input type="text" id="editTitulo" required placeholder="Ex: Restaurante do Pescador">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editDescricao">Descrição *</label>
+                        <textarea id="editDescricao" required placeholder="Descreva a publicidade..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editLinkExterno">Link Externo</label>
+                        <input type="url" id="editLinkExterno" placeholder="https://exemplo.com">
+                        <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">O link abrirá em uma nova aba do navegador</small>
+                    </div>
+
+                    <!-- Banners Principais -->
+                    <div class="form-group">
+                        <label>
+                            🎯 Banners Principais (Slider Central)
+                            <span style="color: #666; font-weight: normal; font-size: 12px;">(Máximo: 3 banners)</span>
+                        </label>
+                        <div id="editMainBannersContainer">
+                            <!-- Banners serão inseridos via JavaScript -->
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-small" onclick="adicionarBannerEdit('main')" id="addEditMainBannerBtn" style="margin-top: 10px;">
+                            ➕ Adicionar Banner Principal
+                        </button>
+                        <div id="editMainBannersCount" style="color: #666; font-size: 12px; margin-top: 5px;">0 / 3 banners</div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                        <button type="button" onclick="fecharModalEditarPublicidade()" class="btn btn-secondary">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação Customizado -->
+    <div id="modalConfirmacao" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 class="section-title" style="margin: 0;">
+                    <span id="confirmIcon">⚠️</span>
+                    <span id="confirmTitle">Confirmar Ação</span>
+                </h2>
+            </div>
+            
+            <div class="modal-body">
+                <p id="confirmMessage" style="color: #333; font-size: 16px; line-height: 1.6; margin-bottom: 25px;"></p>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" id="confirmCancelBtn" class="btn btn-secondary">
+                        Cancelar
+                    </button>
+                    <button type="button" id="confirmOkBtn" class="btn btn-primary">
+                        Confirmar
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        function carregarEstatisticas() {
-            const publicidades = obterPublicidades();
+        // ===== VERIFICAÇÃO DE LOGIN ADMIN =====
+        function verificarAdminLogado() {
+            const adminLogado = localStorage.getItem('adminLogado');
+            if (!adminLogado) {
+                // Não está logado, redirecionar para login
+                window.location.href = 'login.html';
+                return false;
+            }
+
+            try {
+                const adminData = JSON.parse(adminLogado);
+                // Verificar se os dados básicos existem
+                if (!adminData.id || !adminData.email) {
+                    localStorage.removeItem('adminLogado');
+                    window.location.href = 'login.html';
+                    return false;
+                }
+                return true;
+            } catch (e) {
+                localStorage.removeItem('adminLogado');
+                window.location.href = 'login.html';
+                return false;
+            }
+        }
+
+        async function verificarAdminAtivo() {
+            try {
+                const adminLogado = localStorage.getItem('adminLogado');
+                if (!adminLogado) {
+                    window.location.href = 'login.html';
+                    return false;
+                }
+
+                const adminData = JSON.parse(adminLogado);
+                const supabase = await obterSupabaseClient();
+                
+                if (supabase) {
+                    const { data, error } = await supabase
+                        .from('admin')
+                        .select('id, email, nome, ativo')
+                        .eq('id', adminData.id)
+                        .eq('ativo', true)
+                        .single();
+
+                    if (error || !data) {
+                        // Admin não encontrado ou inativo
+                        localStorage.removeItem('adminLogado');
+                        window.location.href = 'login.html';
+                        return false;
+                    }
+                }
+
+                return true;
+            } catch (e) {
+                localStorage.removeItem('adminLogado');
+                window.location.href = 'login.html';
+                return false;
+            }
+        }
+
+        // Sistema de confirmação customizado
+        let confirmResolve = null;
+        let confirmOverlayHandler = null;
+
+        function showConfirm(title, message, icon = '⚠️', okText = 'Confirmar', cancelText = 'Cancelar') {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('modalConfirmacao');
+                const titleEl = document.getElementById('confirmTitle');
+                const messageEl = document.getElementById('confirmMessage');
+                const iconEl = document.getElementById('confirmIcon');
+                const okBtn = document.getElementById('confirmOkBtn');
+                const cancelBtn = document.getElementById('confirmCancelBtn');
+
+                // Armazenar resolve para usar nos handlers
+                confirmResolve = resolve;
+
+                titleEl.textContent = title;
+                messageEl.textContent = message;
+                iconEl.textContent = icon;
+                okBtn.textContent = okText;
+                cancelBtn.textContent = cancelText;
+
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+
+                // Remover handlers anteriores se existirem
+                const newOkBtn = okBtn.cloneNode(true);
+                const newCancelBtn = cancelBtn.cloneNode(true);
+                okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+                cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+                // Função para fechar modal
+                const closeModal = (result) => {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                    if (confirmResolve) {
+                        confirmResolve(result);
+                        confirmResolve = null;
+                    }
+                    // Remover overlay handler
+                    if (confirmOverlayHandler) {
+                        modal.removeEventListener('click', confirmOverlayHandler);
+                        confirmOverlayHandler = null;
+                    }
+                };
+
+                // Adicionar novos listeners
+                newOkBtn.addEventListener('click', () => closeModal(true));
+                newCancelBtn.addEventListener('click', () => closeModal(false));
+
+                // Fechar ao clicar no overlay
+                confirmOverlayHandler = function(e) {
+                    if (e.target === modal) {
+                        closeModal(false);
+                    }
+                };
+                modal.addEventListener('click', confirmOverlayHandler);
+
+                // Fechar com ESC
+                const escHandler = function(e) {
+                    if (e.key === 'Escape' && modal.style.display === 'flex') {
+                        closeModal(false);
+                        document.removeEventListener('keydown', escHandler);
+                    }
+                };
+                document.addEventListener('keydown', escHandler);
+            });
+        }
+
+        async function fazerLogoutAdmin() {
+            const confirmed = await showConfirm(
+                'Confirmar Saída',
+                'Deseja sair do painel administrativo?',
+                '🚪',
+                'Sair',
+                'Cancelar'
+            );
+            
+            if (confirmed) {
+                localStorage.removeItem('adminLogado');
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Variável global para armazenar ID da publicidade em pagamento
+        let publicidadePagamentoId = null;
+
+        // Flag para evitar múltiplos event listeners
+        let calculadoraPublicidadeConfigurada = false;
+
+        // Constantes de preço
+        const PUBLICIDADE_PRECO_MES = 59.90;
+        const PUBLICIDADE_DIAS_MIN = 7;
+        const PUBLICIDADE_DIAS_MAX = 30;
+        const PUBLICIDADE_PRECO_DIA = PUBLICIDADE_PRECO_MES / PUBLICIDADE_DIAS_MAX; // R$ 1,997 por dia
+
+        // Funções para controlar o modal de criação
+        function abrirModalNovaPublicidade() {
+            const modal = document.getElementById('modalNovaPublicidade');
+            if (modal) {
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden'; // Prevenir scroll do body
+            }
+        }
+
+        function fecharModalNovaPublicidade() {
+            const modal = document.getElementById('modalNovaPublicidade');
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto'; // Restaurar scroll do body
+                
+                // Limpar formulário ao fechar
+                const form = document.getElementById('publicidadeForm');
+                if (form) {
+                    form.reset();
+                }
+                
+                // Limpar campos específicos
+                document.getElementById('titulo').value = '';
+                document.getElementById('descricao').value = '';
+                document.getElementById('linkExterno').value = '';
+                
+                // Resetar banners (incluindo o campo de link)
+                document.getElementById('mainBannersContainer').innerHTML = `
+                    <div class="banner-item" data-type="main" data-index="0">
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                            <input type="url" class="banner-image-input" placeholder="URL da imagem (1280 × 420px)" style="flex: 1;">
+                            <span style="color: #666; font-size: 14px;">OU</span>
+                            <input type="file" class="banner-file-input" accept="image/*" style="display: none;" onchange="handleFileUpload(this, 'main')">
+                            <button type="button" class="btn btn-secondary btn-small" onclick="this.previousElementSibling.click()" style="padding: 8px 12px;">
+                                📤 Upload
+                            </button>
+                            <button type="button" class="btn btn-danger btn-small" onclick="removerBanner(this)" style="padding: 8px 12px;">🗑</button>
+                        </div>
+                        <input type="url" class="banner-link-input" placeholder="Link do banner (opcional - usa link externo se vazio)" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #e0e0e0; border-radius: 4px;">
+                        <div class="banner-preview" style="display: none; margin-top: 10px;">
+                            <img src="" alt="Preview" style="max-width: 100%; max-height: 150px; border-radius: 8px; border: 1px solid #e0e0e0;">
+                        </div>
+                        <div class="banner-upload-status" style="display: none; margin-top: 5px; color: #666; font-size: 12px;"></div>
+                    </div>
+                `;
+                atualizarContadores();
+                
+                // Limpar mensagens
+                const message = document.getElementById('message');
+                if (message) {
+                    message.style.display = 'none';
+                    message.textContent = '';
+                    message.className = 'message';
+                }
+            }
+        }
+
+        // Funções para controlar o modal de pagamento
+        function abrirModalPagamento(publicidadeId, titulo) {
+            publicidadePagamentoId = publicidadeId;
+            const modal = document.getElementById('modalPagamentoPublicidade');
+            const titleEl = document.getElementById('paymentTitle');
+            
+            if (modal) {
+                if (titleEl) {
+                    titleEl.textContent = titulo || 'Publicidade';
+                }
+                
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+                
+                // Inicializar calculadora
+                setupCalculadoraPublicidade();
+                calcularPrecoPublicidade();
+            }
+        }
+
+        function fecharModalPagamento() {
+            const modal = document.getElementById('modalPagamentoPublicidade');
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+                publicidadePagamentoId = null;
+                
+                // Limpar mensagens
+                const message = document.getElementById('paymentMessage');
+                if (message) {
+                    message.style.display = 'none';
+                    message.textContent = '';
+                    message.className = 'message';
+                }
+                
+                // Resetar calculadora para próxima vez
+                calculadoraPublicidadeConfigurada = false;
+            }
+        }
+
+        // Funções para controlar o modal de edição
+        function abrirModalEditarPublicidade() {
+            const modal = document.getElementById('modalEditarPublicidade');
+            if (modal) {
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function fecharModalEditarPublicidade() {
+            const modal = document.getElementById('modalEditarPublicidade');
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+                
+                // Limpar formulário
+                const form = document.getElementById('editPublicidadeForm');
+                if (form) {
+                    form.reset();
+                }
+                
+                // Limpar mensagens
+                const message = document.getElementById('editMessage');
+                if (message) {
+                    message.style.display = 'none';
+                    message.textContent = '';
+                    message.className = 'message';
+                }
+                
+                // Limpar ID
+                modal.dataset.publicidadeId = '';
+            }
+        }
+
+        // Função para adicionar banner no modal de edição
+        function adicionarBannerEdit(tipo, imagemUrl = '', linkUrl = '') {
+            const container = 'editMainBannersContainer';
+            const containerEl = document.getElementById(container);
+            const currentCount = containerEl.querySelectorAll('.banner-item').length;
+
+            if (currentCount >= 3) {
+                showEditMessage('Máximo de 3 banners principais permitidos', 'error');
+                return;
+            }
+
+            const bannerItem = document.createElement('div');
+            bannerItem.className = 'banner-item';
+            bannerItem.setAttribute('data-type', 'main');
+            bannerItem.setAttribute('data-index', currentCount);
+            bannerItem.innerHTML = `
+                <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                    <input type="url" class="banner-image-input" placeholder="URL da imagem (1280 × 420px)" value="${imagemUrl}" style="flex: 1;">
+                    <span style="color: #666; font-size: 14px;">OU</span>
+                    <input type="file" class="banner-file-input" accept="image/*" style="display: none;" onchange="handleFileUpload(this, 'main')">
+                    <button type="button" class="btn btn-secondary btn-small" onclick="this.previousElementSibling.click()" style="padding: 8px 12px;">
+                        📤 Upload
+                    </button>
+                    <button type="button" class="btn btn-danger btn-small" onclick="removerBanner(this)" style="padding: 8px 12px;">🗑</button>
+                </div>
+                <input type="url" class="banner-link-input" placeholder="Link do banner (opcional - usa link externo se vazio)" value="${linkUrl}" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #e0e0e0; border-radius: 4px;">
+                <div class="banner-preview" style="display: ${imagemUrl ? 'block' : 'none'}; margin-top: 10px;">
+                    <img src="${imagemUrl}" alt="Preview" style="max-width: 100%; max-height: 150px; border-radius: 8px; border: 1px solid #e0e0e0;">
+                </div>
+                <div class="banner-upload-status" style="display: none; margin-top: 5px; color: #666; font-size: 12px;"></div>
+            `;
+
+            containerEl.appendChild(bannerItem);
+            
+            // Configurar preview se houver imagem
+            if (imagemUrl) {
+                const imageInput = bannerItem.querySelector('.banner-image-input');
+                imageInput.addEventListener('input', function() {
+                    const preview = bannerItem.querySelector('.banner-preview');
+                    const previewImg = bannerItem.querySelector('.banner-preview img');
+                    if (this.value) {
+                        previewImg.src = this.value;
+                        preview.style.display = 'block';
+                    } else {
+                        preview.style.display = 'none';
+                    }
+                });
+            }
+
+            atualizarContadoresEdit();
+        }
+
+        function atualizarContadoresEdit() {
+            const mainBanners = document.querySelectorAll('#editMainBannersContainer .banner-item').length;
+            document.getElementById('editMainBannersCount').textContent = `${mainBanners} / 3 banners`;
+            document.getElementById('addEditMainBannerBtn').disabled = mainBanners >= 3;
+        }
+
+        function showEditMessage(text, type) {
+            const messageDiv = document.getElementById('editMessage');
+            if (messageDiv) {
+                messageDiv.textContent = text;
+                messageDiv.className = 'message ' + type;
+                messageDiv.style.display = 'block';
+
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Coletar banners do formulário de edição
+        function coletarBannersEdit() {
+            const mainBanners = [];
+            const linkPadrao = document.getElementById('editLinkExterno').value || '';
+
+            document.querySelectorAll('#editMainBannersContainer .banner-item').forEach((item) => {
+                const imageInput = item.querySelector('.banner-image-input');
+                const linkInput = item.querySelector('.banner-link-input');
+                
+                if (imageInput && imageInput.value.trim()) {
+                    const linkBanner = linkInput && linkInput.value.trim() 
+                        ? linkInput.value.trim() 
+                        : linkPadrao;
+                    
+                    mainBanners.push({
+                        imagem: imageInput.value.trim(),
+                        link: linkBanner || '',
+                        ativo: true
+                    });
+                }
+            });
+
+            return { mainBanners };
+        }
+
+        // Submeter formulário de edição
+        document.getElementById('editPublicidadeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const modal = document.getElementById('modalEditarPublicidade');
+            const publicidadeId = modal.dataset.publicidadeId;
+
+            if (!publicidadeId) {
+                showEditMessage('Erro: ID da publicidade não encontrado', 'error');
+                return;
+            }
+
+            const banners = coletarBannersEdit();
+
+            if (banners.mainBanners.length === 0) {
+                showEditMessage('Adicione pelo menos um banner principal!', 'error');
+                return;
+            }
+
+            try {
+                const supabase = await obterSupabaseClient();
+                if (!supabase) {
+                    throw new Error('Não foi possível conectar ao banco de dados');
+                }
+
+                // Validar campos obrigatórios
+                const titulo = document.getElementById('editTitulo').value.trim();
+                const descricao = document.getElementById('editDescricao').value.trim();
+                
+                if (!titulo) {
+                    showEditMessage('O título é obrigatório!', 'error');
+                    return;
+                }
+                
+                if (!descricao) {
+                    showEditMessage('A descrição é obrigatória!', 'error');
+                    return;
+                }
+
+                // Garantir que banners_principais seja um array válido
+                const bannersPrincipais = Array.isArray(banners.mainBanners) && banners.mainBanners.length > 0
+                    ? banners.mainBanners.map(banner => ({
+                        imagem: banner.imagem ? String(banner.imagem).trim() : '',
+                        link: banner.link && String(banner.link).trim() ? String(banner.link).trim() : '',
+                        ativo: banner.ativo !== undefined ? Boolean(banner.ativo) : true
+                    }))
+                    : [];
+
+                // Validar estrutura de cada banner
+                bannersPrincipais.forEach((banner, index) => {
+                    if (!banner.imagem || banner.imagem === '') {
+                        throw new Error(`Banner ${index + 1}: imagem é obrigatória`);
+                    }
+                    if (typeof banner.imagem !== 'string') {
+                        throw new Error(`Banner ${index + 1}: imagem deve ser uma string`);
+                    }
+                    if (banner.link && typeof banner.link !== 'string') {
+                        throw new Error(`Banner ${index + 1}: link deve ser uma string`);
+                    }
+                    if (typeof banner.ativo !== 'boolean') {
+                        throw new Error(`Banner ${index + 1}: ativo deve ser boolean`);
+                    }
+                });
+
+                const updateData = {
+                    titulo: titulo,
+                    descricao: descricao,
+                    link_externo: document.getElementById('editLinkExterno').value.trim() || null,
+                    banners_principais: bannersPrincipais
+                };
+
+                const { data, error } = await supabase
+                    .from('publicidades')
+                    .update(updateData)
+                    .eq('id', publicidadeId)
+                    .select();
+
+                if (error) {
+                    throw new Error(error.message || 'Erro ao atualizar publicidade');
+                }
+
+                if (!data || data.length === 0) {
+                    throw new Error('Nenhum registro foi atualizado. Verifique se o ID está correto.');
+                }
+
+                showEditMessage('Publicidade atualizada com sucesso!', 'success');
+
+                setTimeout(() => {
+                    fecharModalEditarPublicidade();
+                    carregarEstatisticas();
+                    renderizarPublicidades();
+                }, 1000);
+
+            } catch (error) {
+                showEditMessage('Erro ao atualizar publicidade: ' + (error.message || 'Erro desconhecido'), 'error');
+            }
+        });
+
+        // Configurar calculadora de publicidade
+        function setupCalculadoraPublicidade() {
+            // Evitar adicionar listeners múltiplas vezes
+            if (calculadoraPublicidadeConfigurada) {
+                calcularPrecoPublicidade();
+                return;
+            }
+
+            const daysInput = document.getElementById('publicidadeDaysInput');
+            const daysButtons = document.querySelectorAll('.days-btn-publicidade');
+
+            if (!daysInput || daysButtons.length === 0) {
+                return;
+            }
+
+            // Botões de dias rápidos
+            daysButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const days = parseInt(btn.dataset.days);
+                    daysInput.value = days;
+                    
+                    // Atualizar botões ativos
+                    daysButtons.forEach(b => {
+                        b.classList.remove('active');
+                        b.style.background = 'white';
+                        b.style.color = '#333';
+                        b.style.borderColor = '#e0e0e0';
+                    });
+                    btn.classList.add('active');
+                    btn.style.background = '#0077B6';
+                    btn.style.color = 'white';
+                    btn.style.borderColor = '#0077B6';
+                    
+                    calcularPrecoPublicidade();
+                });
+            });
+
+            // Input manual
+            daysInput.addEventListener('input', function() {
+                let value = parseInt(daysInput.value) || PUBLICIDADE_DIAS_MAX;
+                
+                if (value < PUBLICIDADE_DIAS_MIN) {
+                    value = PUBLICIDADE_DIAS_MIN;
+                    daysInput.value = value;
+                }
+                if (value > PUBLICIDADE_DIAS_MAX) {
+                    value = PUBLICIDADE_DIAS_MAX;
+                    daysInput.value = value;
+                }
+                
+                // Atualizar botões ativos
+                daysButtons.forEach(btn => {
+                    if (parseInt(btn.dataset.days) === value) {
+                        btn.classList.add('active');
+                        btn.style.background = '#0077B6';
+                        btn.style.color = 'white';
+                        btn.style.borderColor = '#0077B6';
+                    } else {
+                        btn.classList.remove('active');
+                        btn.style.background = 'white';
+                        btn.style.color = '#333';
+                        btn.style.borderColor = '#e0e0e0';
+                    }
+                });
+                
+                calcularPrecoPublicidade();
+            });
+
+            calculadoraPublicidadeConfigurada = true;
+            calcularPrecoPublicidade();
+        }
+
+        // Calcular preço da publicidade
+        function calcularPrecoPublicidade() {
+            const daysInput = document.getElementById('publicidadeDaysInput');
+            const daysSelected = document.getElementById('publicidadeDaysSelected');
+            const totalPrice = document.getElementById('publicidadeTotalPrice');
+            
+            if (!daysInput || !daysSelected || !totalPrice) return;
+            
+            const days = parseInt(daysInput.value) || PUBLICIDADE_DIAS_MAX;
+            const precoTotal = (PUBLICIDADE_PRECO_MES / PUBLICIDADE_DIAS_MAX) * days;
+            
+            daysSelected.textContent = `${days} ${days === 1 ? 'dia' : 'dias'}`;
+            totalPrice.textContent = formatarMoeda(precoTotal);
+        }
+
+        // Formatar valor em moeda
+        function formatarMoeda(valor) {
+            return `R$ ${valor.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
+        }
+
+        // Processar pagamento da publicidade
+        async function processarPagamentoPublicidade() {
+            if (!publicidadePagamentoId) {
+                showPaymentMessage('Erro: ID da publicidade não encontrado', 'error');
+                return;
+            }
+
+            const btnPagar = document.getElementById('btnPagarPublicidade');
+            const daysInput = document.getElementById('publicidadeDaysInput');
+            const paymentMethod = document.querySelector('input[name="publicidadePaymentMethod"]:checked');
+            
+            if (!daysInput || !paymentMethod) {
+                showPaymentMessage('Erro: Campos não encontrados', 'error');
+                return;
+            }
+
+            const days = parseInt(daysInput.value) || PUBLICIDADE_DIAS_MAX;
+            
+            if (days < PUBLICIDADE_DIAS_MIN || days > PUBLICIDADE_DIAS_MAX) {
+                showPaymentMessage(`Por favor, selecione entre ${PUBLICIDADE_DIAS_MIN} e ${PUBLICIDADE_DIAS_MAX} dias`, 'error');
+                return;
+            }
+
+            btnPagar.disabled = true;
+            btnPagar.textContent = '⏳ Processando...';
+
+            try {
+                const supabase = await obterSupabaseClient();
+                if (!supabase) {
+                    throw new Error('Não foi possível conectar ao banco de dados');
+                }
+
+                const precoTotal = (PUBLICIDADE_PRECO_MES / PUBLICIDADE_DIAS_MAX) * days;
+                const dataInicio = new Date();
+                const dataFim = new Date();
+                dataFim.setDate(dataFim.getDate() + days);
+
+                // Atualizar publicidade com dados de pagamento
+                const updateData = {
+                    aprovada: true,
+                    visivel: true,
+                    dias_publicacao: days,
+                    valor_pagamento: precoTotal,
+                    data_inicio_publicacao: dataInicio.toISOString(),
+                    data_fim_publicacao: dataFim.toISOString(),
+                    forma_pagamento: paymentMethod.value,
+                    transacao_id: 'simulado_' + Date.now() // TODO: Substituir por ID real do gateway
+                };
+
+                const { error } = await supabase
+                    .from('publicidades')
+                    .update(updateData)
+                    .eq('id', publicidadePagamentoId);
+
+                if (error) {
+                    throw error;
+                }
+
+                showPaymentMessage('Pagamento processado com sucesso! Publicidade aprovada e ativada.', 'success');
+
+                // Fechar modal após 2 segundos
+                setTimeout(() => {
+                    fecharModalPagamento();
+                    // Recarregar estatísticas e listagem
+                    carregarEstatisticas();
+                    renderizarPublicidades();
+                }, 2000);
+
+            } catch (error) {
+                showPaymentMessage('Erro ao processar pagamento: ' + (error.message || 'Erro desconhecido'), 'error');
+                btnPagar.disabled = false;
+                btnPagar.textContent = '💳 Efetuar Pagamento';
+            }
+        }
+
+        // Mostrar mensagem no modal de pagamento
+        function showPaymentMessage(text, type) {
+            const messageDiv = document.getElementById('paymentMessage');
+            if (messageDiv) {
+                messageDiv.textContent = text;
+                messageDiv.className = 'message ' + type;
+                messageDiv.style.display = 'block';
+
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Fechar modais ao clicar no overlay (fora do conteúdo) e com ESC
+        document.addEventListener('DOMContentLoaded', function() {
+            // Modal de criação
+            const modalCriacao = document.getElementById('modalNovaPublicidade');
+            if (modalCriacao) {
+                modalCriacao.addEventListener('click', function(e) {
+                    if (e.target === modalCriacao) {
+                        fecharModalNovaPublicidade();
+                    }
+                });
+            }
+            
+            // Modal de pagamento
+            const modalPagamento = document.getElementById('modalPagamentoPublicidade');
+            if (modalPagamento) {
+                modalPagamento.addEventListener('click', function(e) {
+                    if (e.target === modalPagamento) {
+                        fecharModalPagamento();
+                    }
+                });
+            }
+            
+            // Fechar modais com ESC
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const modalCriacao = document.getElementById('modalNovaPublicidade');
+                    const modalPagamento = document.getElementById('modalPagamentoPublicidade');
+                    
+                    if (modalPagamento && modalPagamento.style.display === 'flex') {
+                        fecharModalPagamento();
+                    } else if (modalCriacao && modalCriacao.style.display === 'flex') {
+                        fecharModalNovaPublicidade();
+                    }
+                }
+            });
+        });
+
+        async function carregarEstatisticas() {
+            try {
+                // Garantir que os elementos existem
+                const totalEl = document.getElementById('totalPublicidades');
+                const ativasEl = document.getElementById('publicidadesAtivas');
+                const pendentesEl = document.getElementById('publicidadesPendentes');
+                
+                if (!totalEl || !ativasEl || !pendentesEl) {
+                    // Se os elementos não existem, retornar
+                    return;
+                }
+
+                const publicidades = await obterPublicidades();
 
             const ativas = publicidades.filter(p => p.aprovada && p.visivel).length;
             const pendentes = publicidades.filter(p => !p.aprovada).length;
 
-            document.getElementById('totalPublicidades').textContent = publicidades.length;
-            document.getElementById('publicidadesAtivas').textContent = ativas;
-            document.getElementById('publicidadesPendentes').textContent = pendentes;
+                totalEl.textContent = publicidades.length || 0;
+                ativasEl.textContent = ativas || 0;
+                pendentesEl.textContent = pendentes || 0;
 
-            const anuncios = localStorage.getItem('anuncios');
-            if (anuncios) {
-                const todosAnuncios = JSON.parse(anuncios);
-                const anunciantes = new Set(todosAnuncios.map(a => a.usuarioEmail));
-                document.getElementById('totalAnunciantes').textContent = anunciantes.size;
+                // Buscar total de anunciantes do Supabase
+                const supabase = await obterSupabaseClient();
+                if (supabase) {
+                    try {
+                        const { count, error: countError } = await supabase
+                            .from('users')
+                            .select('id', { count: 'exact', head: true })
+                            .eq('tipo_usuario', 'anunciante');
+                        
+                        const anunciantesEl = document.getElementById('totalAnunciantes');
+                        if (!countError && count !== null && count !== undefined && anunciantesEl) {
+                            anunciantesEl.textContent = count;
+                        } else {
+                            // Fallback: buscar e contar
+                            const { data: usersData, error: usersError } = await supabase
+                                .from('users')
+                                .select('id')
+                                .eq('tipo_usuario', 'anunciante');
+                            
+                            if (!usersError && usersData && anunciantesEl) {
+                                anunciantesEl.textContent = usersData.length;
+                            } else if (anunciantesEl) {
+                                anunciantesEl.textContent = '0';
+                            }
+                        }
+                    } catch (err) {
+                        const anunciantesEl = document.getElementById('totalAnunciantes');
+                        if (anunciantesEl) {
+                            anunciantesEl.textContent = '0';
+                        }
+                    }
+                } else {
+                    const anunciantesEl = document.getElementById('totalAnunciantes');
+                    if (anunciantesEl) {
+                        anunciantesEl.textContent = '0';
+                    }
+                }
+            } catch (error) {
+                // Se der erro, definir valores como 0
+                const totalEl = document.getElementById('totalPublicidades');
+                const ativasEl = document.getElementById('publicidadesAtivas');
+                const pendentesEl = document.getElementById('publicidadesPendentes');
+                const anunciantesEl = document.getElementById('totalAnunciantes');
+                
+                if (totalEl) totalEl.textContent = '0';
+                if (ativasEl) ativasEl.textContent = '0';
+                if (pendentesEl) pendentesEl.textContent = '0';
+                if (anunciantesEl) anunciantesEl.textContent = '0';
             }
         }
 
-        function obterPublicidades() {
-            const publicidades = localStorage.getItem('publicidades');
-            return publicidades ? JSON.parse(publicidades) : [];
+        // Obter cliente Supabase
+        // Usar a função padronizada do supabase-config.js
+        async function obterSupabaseClient() {
+            // Aguardar carregamento do Supabase se necessário
+            if (typeof window.supabase === 'undefined') {
+                await new Promise((resolve, reject) => {
+                    // Verificar se já está carregando
+                    if (document.querySelector('script[src*="supabase"]')) {
+                        // Aguardar até estar disponível
+                        const checkInterval = setInterval(() => {
+                            if (typeof window.supabase !== 'undefined') {
+                                clearInterval(checkInterval);
+                                resolve();
+                            }
+                        }, 100);
+                        setTimeout(() => {
+                            clearInterval(checkInterval);
+                            if (typeof window.supabase === 'undefined') {
+                                reject(new Error('Timeout ao carregar Supabase'));
+                            }
+                        }, 10000);
+                        return;
+                    }
+                    const script = document.createElement('script');
+                    script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+                    script.onload = () => {
+                        // Aguardar um pouco para garantir inicialização
+                        setTimeout(resolve, 100);
+                    };
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                });
+            }
+
+            // Aguardar um pouco para garantir que supabase-config.js está carregado
+            let tentativas = 0;
+            while (tentativas < 10 && typeof window.getSupabaseClient === 'undefined') {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                tentativas++;
+            }
+
+            // Usar função do supabase-config.js se disponível (padrão do sistema)
+            if (typeof window.getSupabaseClient === 'function') {
+                const client = window.getSupabaseClient();
+                if (client) return client;
+            }
+
+            // Fallback: criar cliente diretamente
+            if (typeof window.supabase !== 'undefined') {
+                return window.supabase.createClient(
+                    'https://svgmuxdxxrapepbodbgv.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2Z211eGR4eHJhcGVwYm9kYmd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0MTU2MTQsImV4cCI6MjA3Njk5MTYxNH0.U0rQ8-EXC6b0dkcCQBoE-VuNjNgNQREvcs3fWfZ1UGM'
+                );
+            }
+
+            return null;
         }
 
-        function salvarPublicidades(publicidades) {
+        async function obterPublicidades() {
+            try {
+                let supabase = await obterSupabaseClient();
+                
+                // Se não conseguir cliente autenticado, tentar cliente anônimo para leitura
+                if (!supabase) {
+                    if (typeof window.supabase !== 'undefined') {
+                        supabase = window.supabase.createClient(
+                            'https://svgmuxdxxrapepbodbgv.supabase.co',
+                            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2Z211eGR4eHJhcGVwYm9kYmd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0MTU2MTQsImV4cCI6MjA3Njk5MTYxNH0.U0rQ8-EXC6b0dkcCQBoE-VuNjNgNQREvcs3fWfZ1UGM'
+                        );
+                    }
+                }
+                
+                if (!supabase) {
+                    // Retornar array vazio se não conseguir conectar
+                    return [];
+                }
+
+                // Tentar buscar todas as publicidades (admin pode ver todas)
+                // Se der erro, tentar apenas as aprovadas e visíveis
+                let { data, error } = await supabase
+                    .from('publicidades')
+                    .select('*')
+                    .order('criada_em', { ascending: false });
+
+                // Se der erro de permissão, tentar apenas as aprovadas e visíveis
+                if (error && (error.code === 'PGRST301' || error.code === '42501' || error.message?.includes('permission'))) {
+                    const { data: publicData, error: publicError } = await supabase
+                        .from('publicidades')
+                        .select('*')
+                        .eq('aprovada', true)
+                        .eq('visivel', true)
+                        .order('criada_em', { ascending: false });
+                    
+                    if (!publicError) {
+                        data = publicData;
+                        error = null;
+                    } else {
+                        // Se ainda der erro, retornar array vazio
+                        return [];
+                    }
+                }
+
+                if (error) {
+                    // Retornar array vazio em caso de erro
+                    return [];
+                }
+
+                // Converter formato do banco para formato usado na interface
+                return (data || []).map(pub => ({
+                    id: pub.id,
+                    titulo: pub.titulo,
+                    descricao: pub.descricao || '',
+                    linkExterno: pub.link_externo || '',
+                    banners: {
+                        mainBanners: pub.banners_principais || [],
+                    },
+                    criadaEm: pub.criada_em,
+                    dataFimPublicacao: pub.data_fim_publicacao,
+                    diasPublicacao: pub.dias_publicacao,
+                    valorPagamento: pub.valor_pagamento,
+                    aprovada: pub.aprovada || false,
+                    visivel: pub.visivel !== false
+                }));
+            } catch (error) {
+                // Retornar array vazio em caso de erro
+                return [];
+            }
+        }
+
+        async function salvarPublicidades(publicidades) {
+            // Manter localStorage como backup
             localStorage.setItem('publicidades', JSON.stringify(publicidades));
         }
 
-        function renderizarPublicidades() {
-            const publicidades = obterPublicidades();
+        // Variável global para armazenar todas as publicidades
+        let todasPublicidades = [];
+
+        // Função para filtrar publicidades por título
+        function filtrarPublicidades() {
+            const termoBusca = document.getElementById('buscaPublicidade').value.trim().toLowerCase();
+            
+            let publicidadesFiltradas = todasPublicidades;
+            
+            if (termoBusca) {
+                publicidadesFiltradas = todasPublicidades.filter(pub => {
+                    const titulo = (pub.titulo || '').toLowerCase();
+                    return titulo.includes(termoBusca);
+                });
+            }
+            
+            renderizarPublicidadesLista(publicidadesFiltradas);
+        }
+
+        // Função para renderizar a lista de publicidades (recebe a lista como parâmetro)
+        function renderizarPublicidadesLista(publicidades) {
             const container = document.getElementById('publicidadesList');
             const emptyState = document.getElementById('emptyState');
+            const emptySearchState = document.getElementById('emptySearchState');
+            const termoBusca = document.getElementById('buscaPublicidade')?.value.trim() || '';
 
             if (publicidades.length === 0) {
                 container.style.display = 'none';
+                if (termoBusca) {
+                    // Se há termo de busca, mostrar mensagem de busca vazia
+                    emptyState.style.display = 'none';
+                    emptySearchState.style.display = 'block';
+                } else {
+                    // Se não há busca, mostrar mensagem de lista vazia
                 emptyState.style.display = 'block';
+                    emptySearchState.style.display = 'none';
+                }
                 return;
             }
 
             container.style.display = 'flex';
             emptyState.style.display = 'none';
+            emptySearchState.style.display = 'none';
 
-            container.innerHTML = publicidades.map(pub => {
+            container.innerHTML = '';
+            
+            publicidades.forEach(pub => {
+                // Determinar status de publicação (Ativa/Pausada/Pendente)
                 let statusClass = 'status-pausada';
                 let statusText = 'Pausada';
 
@@ -404,122 +1704,847 @@
                 } else if (!pub.aprovada) {
                     statusClass = 'status-pendente';
                     statusText = 'Pendente';
+                } else if (pub.aprovada && !pub.visivel) {
+                    statusClass = 'status-pausada';
+                    statusText = 'Pausada';
                 }
 
-                return `
-                    <div class="publicidade-card">
+                // Determinar status de aprovação (Aprovada/Aguardando)
+                let aprovacaoClass = pub.aprovada ? 'status-aprovada' : 'status-aguardando-aprovacao';
+                let aprovacaoText = pub.aprovada ? 'Aprovada' : 'Aguardando Aprovação';
+
+                const mainBannersCount = pub.banners?.mainBanners?.length || 0;
+                const totalBanners = mainBannersCount;
+                const pubId = pub.id || '';
+
+                // Criar elemento do card
+                const card = document.createElement('div');
+                card.className = 'publicidade-card';
+                card.innerHTML = `
                         <div class="publicidade-info">
-                            <h3>${pub.titulo}</h3>
-                            <p>${pub.descricao}</p>
-                            ${pub.linkExterno ? `<p><strong>Link:</strong> ${pub.linkExterno}</p>` : ''}
-                            <p><strong>Criada em:</strong> ${new Date(pub.criadaEm).toLocaleDateString('pt-BR')}</p>
+                        <h3>${(pub.titulo || 'Sem título').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}</h3>
+                        <p>${(pub.descricao || 'Sem descrição').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}</p>
+                        ${pub.linkExterno ? `<p><strong>Link:</strong> ${pub.linkExterno.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}</p>` : ''}
+                        <p style="margin-top: 10px;">
+                            <strong>Banners:</strong> 
+                            ${mainBannersCount > 0 ? `<span style="background: #e8f4fd; padding: 3px 8px; border-radius: 4px; margin-right: 5px;">🎯 ${mainBannersCount} Principal(is)</span>` : ''}
+                            ${totalBanners === 0 ? '<span style="color: #999;">Nenhum banner adicionado</span>' : ''}
+                        </p>
+                        <p><strong>Criada em:</strong> ${pub.criadaEm ? new Date(pub.criadaEm).toLocaleDateString('pt-BR') : 'N/A'}</p>
+                        ${pub.dataFimPublicacao ? `
+                            <p><strong>Expira em:</strong> 
+                                <span style="color: ${new Date(pub.dataFimPublicacao) > new Date() ? '#2e7d32' : '#c62828'};">
+                                    ${new Date(pub.dataFimPublicacao).toLocaleString('pt-BR', { 
+                                        day: '2-digit', 
+                                        month: '2-digit', 
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                    ${new Date(pub.dataFimPublicacao) <= new Date() ? ' (Expirada)' : ''}
+                                </span>
+                            </p>
+                        ` : pub.diasPublicacao ? `
+                            <p style="color: #666; font-size: 13px;">
+                                <strong>Duração:</strong> ${pub.diasPublicacao} ${pub.diasPublicacao === 1 ? 'dia' : 'dias'}
+                                ${pub.valorPagamento ? ` | <strong>Valor:</strong> R$ ${pub.valorPagamento.toFixed(2).replace('.', ',')}` : ''}
+                            </p>
+                        ` : ''}
+                        <div style="margin-top: 10px;">
                             <span class="publicidade-status ${statusClass}">${statusText}</span>
+                            <span class="publicidade-status ${aprovacaoClass}">${aprovacaoText}</span>
+                        </div>
                         </div>
                         <div class="publicidade-actions">
                             ${!pub.aprovada ? `
-                                <button class="btn btn-success btn-small" onclick="aprovarPublicidade(${pub.id})">
-                                    ✓ Aprovar
+                            <button class="btn btn-primary btn-small btn-gerar-pagamento" data-pub-id="${pubId}" data-pub-titulo="${(pub.titulo || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;')}">
+                                    💳 Gerar Pagamento
                                 </button>
                             ` : ''}
-                            ${pub.visivel ? `
-                                <button class="btn btn-small" onclick="pausarPublicidade(${pub.id})" style="background: #f57c00; color: white;">
-                                    ⏸ Pausar
+                            ${pub.dataFimPublicacao && new Date(pub.dataFimPublicacao) <= new Date() ? `
+                            <button class="btn btn-primary btn-small btn-duplicar" data-pub-id="${pubId}">
+                                    📋 Duplicar
                                 </button>
                             ` : `
-                                <button class="btn btn-success btn-small" onclick="ativarPublicidade(${pub.id})">
+                            ${pub.visivel && pub.aprovada ? `
+                            <button class="btn btn-small btn-pausar" data-pub-id="${pubId}" style="background: #f57c00; color: white;">
+                                    ⏸ Pausar
+                                </button>
+                            ` : pub.aprovada ? `
+                            <button class="btn btn-success btn-small btn-ativar" data-pub-id="${pubId}">
                                     ▶ Ativar
                                 </button>
-                            `}
-                            <button class="btn btn-danger btn-small" onclick="removerPublicidade(${pub.id})">
+                            ` : ''}
+                            ${pub.aprovada ? `
+                            <button class="btn btn-secondary btn-small btn-editar" data-pub-id="${pubId}">
+                                    ✏️ Editar
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-danger btn-small btn-remover" data-pub-id="${pubId}">
                                 🗑 Remover
                             </button>
+                            `}
                         </div>
-                    </div>
                 `;
-            }).join('');
+                
+                // Adicionar event listeners aos botões
+                const pausarBtn = card.querySelector('.btn-pausar');
+                if (pausarBtn) {
+                    pausarBtn.addEventListener('click', () => pausarPublicidade(pubId));
+                }
+                
+                const ativarBtn = card.querySelector('.btn-ativar');
+                if (ativarBtn) {
+                    ativarBtn.addEventListener('click', () => ativarPublicidade(pubId));
+                }
+                
+                const removerBtn = card.querySelector('.btn-remover');
+                if (removerBtn) {
+                    removerBtn.addEventListener('click', () => removerPublicidade(pubId));
+                }
+
+                const duplicarBtn = card.querySelector('.btn-duplicar');
+                if (duplicarBtn) {
+                    duplicarBtn.addEventListener('click', () => duplicarPublicidade(pubId));
+                }
+
+                const editarBtn = card.querySelector('.btn-editar');
+                if (editarBtn) {
+                    editarBtn.addEventListener('click', () => editarPublicidade(pubId));
+                }
+
+                const gerarPagamentoBtn = card.querySelector('.btn-gerar-pagamento');
+                if (gerarPagamentoBtn) {
+                    const titulo = gerarPagamentoBtn.dataset.pubTitulo || '';
+                    gerarPagamentoBtn.addEventListener('click', () => {
+                        abrirModalPagamento(pubId, titulo);
+                    });
+                }
+                
+                container.appendChild(card);
+            });
         }
 
-        document.getElementById('publicidadeForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+        async function renderizarPublicidades() {
+            try {
+                // Garantir que os elementos existem
+                const container = document.getElementById('publicidadesList');
+                const emptyState = document.getElementById('emptyState');
+                const emptySearchState = document.getElementById('emptySearchState');
+                
+                if (!container || !emptyState || !emptySearchState) {
+                    // Se os elementos não existem, retornar
+                    return;
+                }
 
-            const novaPublicidade = {
-                id: Date.now(),
-                titulo: document.getElementById('titulo').value,
-                descricao: document.getElementById('descricao').value,
-                linkExterno: document.getElementById('linkExterno').value,
-                imagemUrl: document.getElementById('imagemUrl').value,
-                criadaEm: new Date().toISOString(),
-                aprovada: true,
-                visivel: true
-            };
-
-            const publicidades = obterPublicidades();
-            publicidades.push(novaPublicidade);
-            salvarPublicidades(publicidades);
-
-            showMessage('Publicidade criada com sucesso!', 'success');
-
-            document.getElementById('publicidadeForm').reset();
-
-            carregarEstatisticas();
-            renderizarPublicidades();
-        });
-
-        function aprovarPublicidade(id) {
-            const publicidades = obterPublicidades();
-            const publicidade = publicidades.find(p => p.id === id);
-
-            if (publicidade) {
-                publicidade.aprovada = true;
-                publicidade.visivel = true;
-                salvarPublicidades(publicidades);
-
-                showMessage('Publicidade aprovada!', 'success');
-                carregarEstatisticas();
-                renderizarPublicidades();
+                todasPublicidades = await obterPublicidades();
+                
+                // Renderizar usando a lista completa ou filtrada
+                const termoBusca = document.getElementById('buscaPublicidade')?.value.trim() || '';
+                if (termoBusca) {
+                    filtrarPublicidades();
+                } else {
+                    renderizarPublicidadesLista(todasPublicidades);
+                }
+            } catch (error) {
+                // Em caso de erro, mostrar mensagem
+                const container = document.getElementById('publicidadesList');
+                const emptyState = document.getElementById('emptyState');
+                const emptySearchState = document.getElementById('emptySearchState');
+                if (container) container.style.display = 'none';
+                if (emptyState) emptyState.style.display = 'block';
+                if (emptySearchState) emptySearchState.style.display = 'none';
             }
         }
 
-        function pausarPublicidade(id) {
-            const publicidades = obterPublicidades();
-            const publicidade = publicidades.find(p => p.id === id);
+        // ===== CONFIGURAÇÃO DO CLOUDINARY =====
+        const CLOUDINARY_CONFIG = {
+            cloudName: 'demv63uh4', // Cloud name do Cloudinary
+            uploadPreset: 'produtos' // Upload preset (deve ser unsigned)
+        };
 
-            if (publicidade) {
-                publicidade.visivel = false;
-                salvarPublicidades(publicidades);
+        // Função para fazer upload de imagem para Cloudinary
+        async function uploadToCloudinary(file) {
+            try {
+                // Validar arquivo
+                if (!file) {
+                    throw new Error('Nenhum arquivo selecionado');
+                }
 
-                showMessage('Publicidade pausada!', 'success');
-                carregarEstatisticas();
-                renderizarPublicidades();
+                // Validar tipo de arquivo
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                if (!allowedTypes.includes(file.type)) {
+                    throw new Error('Tipo de arquivo não suportado. Use JPG, PNG, GIF ou WebP');
+                }
+
+                // Validar tamanho (máximo 10MB)
+                const maxSize = 10 * 1024 * 1024; // 10MB
+                if (file.size > maxSize) {
+                    throw new Error('Arquivo muito grande. Máximo 10MB');
+                }
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    if (response.status === 401) {
+                        throw new Error('Erro de autenticação: Verifique as configurações do Cloudinary');
+                    } else if (response.status === 400) {
+                        throw new Error('Erro na requisição: Verifique o upload preset');
+                    } else {
+                        throw new Error(`Erro no upload: ${response.status} - ${response.statusText}`);
+                    }
+                }
+
+                const data = await response.json();
+                return data.secure_url;
+            } catch (error) {
+                throw error;
             }
         }
 
-        function ativarPublicidade(id) {
-            const publicidades = obterPublicidades();
-            const publicidade = publicidades.find(p => p.id === id);
+        // Função para lidar com upload de arquivo
+        async function handleFileUpload(fileInput, tipo) {
+            const file = fileInput.files[0];
+            if (!file) return;
 
-            if (publicidade) {
-                publicidade.visivel = true;
-                salvarPublicidades(publicidades);
+            const bannerItem = fileInput.closest('.banner-item');
+            const urlInput = bannerItem.querySelector('.banner-image-input');
+            const preview = bannerItem.querySelector('.banner-preview');
+            const previewImg = bannerItem.querySelector('.banner-preview img');
+            const statusDiv = bannerItem.querySelector('.banner-upload-status');
+            const uploadBtn = fileInput.previousElementSibling.previousElementSibling;
 
-                showMessage('Publicidade ativada!', 'success');
-                carregarEstatisticas();
-                renderizarPublicidades();
+            // Mostrar status de upload
+            statusDiv.style.display = 'block';
+            statusDiv.textContent = '⏳ Fazendo upload...';
+            statusDiv.style.color = '#0077B6';
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = '⏳';
+
+            try {
+                // Fazer upload para Cloudinary
+                const imageUrl = await uploadToCloudinary(file);
+                
+                // Preencher campo de URL
+                urlInput.value = imageUrl;
+                
+                // Mostrar preview
+                previewImg.src = imageUrl;
+                preview.style.display = 'block';
+                
+                // Atualizar status
+                statusDiv.textContent = '✅ Upload concluído!';
+                statusDiv.style.color = '#10b981';
+                
+                showMessage('Imagem enviada com sucesso!', 'success');
+            } catch (error) {
+                statusDiv.textContent = '❌ Erro no upload: ' + error.message;
+                statusDiv.style.color = '#ef4444';
+                showMessage('Erro ao fazer upload: ' + error.message, 'error');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = '📤 Upload';
+                // Limpar input de arquivo para permitir selecionar o mesmo arquivo novamente
+                fileInput.value = '';
             }
         }
 
-        function removerPublicidade(id) {
-            if (!confirm('Tem certeza que deseja remover esta publicidade?')) {
+        // Função para mostrar preview quando URL for inserida
+        function setupBannerPreview() {
+            document.querySelectorAll('.banner-image-input').forEach(input => {
+                input.addEventListener('input', function() {
+                    const bannerItem = this.closest('.banner-item');
+                    const preview = bannerItem.querySelector('.banner-preview');
+                    const previewImg = bannerItem.querySelector('.banner-preview img');
+                    
+                    if (this.value && this.value.startsWith('http')) {
+                        previewImg.src = this.value;
+                        preview.style.display = 'block';
+                    } else {
+                        preview.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // Funções para gerenciar múltiplos banners
+        function adicionarBanner(tipo) {
+            const container = 'mainBannersContainer';
+            const maxCount = 3;
+            const placeholder = 'URL da imagem (1280 × 420px)';
+            
+            const containerEl = document.getElementById(container);
+            const currentCount = containerEl.querySelectorAll('.banner-item').length;
+
+            if (currentCount >= maxCount) {
+                showMessage(`Máximo de ${maxCount} banners atingido!`, 'error');
                 return;
             }
 
-            const publicidades = obterPublicidades();
-            const novasPublicidades = publicidades.filter(p => p.id !== id);
-            salvarPublicidades(novasPublicidades);
+            const bannerItem = document.createElement('div');
+            bannerItem.className = 'banner-item';
+            bannerItem.setAttribute('data-type', tipo);
+            bannerItem.setAttribute('data-index', currentCount);
+
+            bannerItem.innerHTML = `
+                <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                    <input type="url" class="banner-image-input" placeholder="${placeholder}" style="flex: 1;">
+                    <span style="color: #666; font-size: 14px;">OU</span>
+                    <input type="file" class="banner-file-input" accept="image/*" style="display: none;" onchange="handleFileUpload(this, '${tipo}')">
+                    <button type="button" class="btn btn-secondary btn-small" onclick="this.previousElementSibling.click()" style="padding: 8px 12px;">
+                        📤 Upload
+                    </button>
+                    <button type="button" class="btn btn-danger btn-small" onclick="removerBanner(this)" style="padding: 8px 12px;">🗑</button>
+                    </div>
+                <input type="url" class="banner-link-input" placeholder="Link do banner (opcional - usa link externo se vazio)" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #e0e0e0; border-radius: 4px;">
+                <div class="banner-preview" style="display: none; margin-top: 10px;">
+                    <img src="" alt="Preview" style="max-width: 100%; max-height: 150px; border-radius: 8px; border: 1px solid #e0e0e0;">
+                </div>
+                <div class="banner-upload-status" style="display: none; margin-top: 5px; color: #666; font-size: 12px;"></div>
+            `;
+
+            containerEl.appendChild(bannerItem);
+            
+            // Configurar preview para o novo input
+            const newInput = bannerItem.querySelector('.banner-image-input');
+            newInput.addEventListener('input', function() {
+                const preview = bannerItem.querySelector('.banner-preview');
+                const previewImg = bannerItem.querySelector('.banner-preview img');
+                
+                if (this.value && this.value.startsWith('http')) {
+                    previewImg.src = this.value;
+                    preview.style.display = 'block';
+                } else {
+                    preview.style.display = 'none';
+                }
+            });
+            
+            atualizarContadores();
+        }
+
+        function removerBanner(button) {
+            const container = button.closest('.banner-item').parentElement;
+            const bannerItem = button.closest('.banner-item');
+            const currentCount = container.querySelectorAll('.banner-item').length;
+            
+            // Não permitir remover se for o último item
+            if (currentCount <= 1) {
+                showMessage('É necessário ter pelo menos 1 banner!', 'error');
+                return;
+            }
+
+            showConfirm(
+                'Remover Banner',
+                'Deseja remover este banner?',
+                '🗑️',
+                'Remover',
+                'Cancelar'
+            ).then(confirmed => {
+                if (confirmed) {
+                    bannerItem.remove();
+                    atualizarContadores();
+                }
+            });
+        }
+
+        function atualizarContadores() {
+            const mainBanners = document.querySelectorAll('#mainBannersContainer .banner-item').length;
+            document.getElementById('mainBannersCount').textContent = `${mainBanners} / 3 banners`;
+
+            // Desabilitar botões quando atingir o máximo
+            document.getElementById('addMainBannerBtn').disabled = mainBanners >= 3;
+        }
+
+        function coletarBanners() {
+            const mainBanners = [];
+            const linkPadrao = document.getElementById('linkExterno').value || '';
+
+            // Coletar banners principais
+            document.querySelectorAll('#mainBannersContainer .banner-item').forEach((item, index) => {
+                const imageInput = item.querySelector('.banner-image-input');
+                const linkInput = item.querySelector('.banner-link-input');
+                
+                if (imageInput && imageInput.value.trim()) {
+                    // Usar link individual do banner, se fornecido, senão usar link padrão
+                    const linkBanner = linkInput && linkInput.value.trim() 
+                        ? linkInput.value.trim() 
+                        : linkPadrao;
+                    
+                    mainBanners.push({
+                        imagem: imageInput.value.trim(),
+                        link: linkBanner || '',
+                        ativo: true
+                    });
+                }
+            });
+
+            return {
+                mainBanners
+            };
+        }
+
+        document.getElementById('publicidadeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const banners = coletarBanners();
+
+            // Validar se há pelo menos um banner
+            if (banners.mainBanners.length === 0) {
+                showMessage('Adicione pelo menos um banner principal!', 'error');
+                return;
+            }
+
+            // Os banners já têm o link padrão aplicado na função coletarBanners
+            const mainBannersComLink = banners.mainBanners;
+
+            try {
+                // Aguardar carregamento do Supabase se necessário
+                if (typeof window.supabase === 'undefined') {
+                    await new Promise((resolve) => {
+                        const script = document.createElement('script');
+                        script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+                        script.onload = resolve;
+                        document.head.appendChild(script);
+                    });
+                }
+
+                let supabase = await obterSupabaseClient();
+                
+                // Fallback: criar cliente diretamente se obterSupabaseClient falhar
+                if (!supabase && typeof window.supabase !== 'undefined') {
+                    supabase = window.supabase.createClient(
+                        'https://svgmuxdxxrapepbodbgv.supabase.co',
+                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2Z211eGR4eHJhcGVwYm9kYmd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0MTU2MTQsImV4cCI6MjA3Njk5MTYxNH0.U0rQ8-EXC6b0dkcCQBoE-VuNjNgNQREvcs3fWfZ1UGM'
+                    );
+                }
+
+                if (!supabase) {
+                    throw new Error('Não foi possível conectar ao banco de dados. Verifique se o Supabase está configurado.');
+                }
+
+                // Obter admin logado do localStorage
+                const adminLogado = localStorage.getItem('adminLogado');
+                if (!adminLogado) {
+                    throw new Error('Admin não autenticado');
+                }
+
+                const adminData = JSON.parse(adminLogado);
+                
+                // Obter ou criar um usuário do sistema para o admin
+                let userId;
+                try {
+                    userId = await obterUserIdAdmin();
+                } catch (userError) {
+                    // Se obterUserIdAdmin falhar, tentar buscar/criar user diretamente aqui
+                    const { data: userData } = await supabase
+                        .from('users')
+                        .select('id')
+                        .eq('email', adminData.email)
+                        .maybeSingle();
+
+                    if (userData) {
+                        userId = userData.id;
+                    } else {
+                        const { data: newUser, error: userError2 } = await supabase
+                            .from('users')
+                            .insert([{
+                                email: adminData.email,
+                                nome: adminData.nome,
+                                tipo_usuario: 'anunciante'
+                            }])
+                            .select('id')
+                            .single();
+
+                        if (userError2 || !newUser) {
+                            throw new Error('Erro ao criar usuário para o admin: ' + (userError2?.message || 'Erro desconhecido'));
+                        }
+                        userId = newUser.id;
+                    }
+                }
+
+                // Preparar dados para inserção
+                const publicidadeData = {
+                titulo: document.getElementById('titulo').value,
+                descricao: document.getElementById('descricao').value,
+                    link_externo: document.getElementById('linkExterno').value || null,
+                    banners_principais: mainBannersComLink,
+                    criado_por: userId,
+                    aprovada: false, // Aguardar pagamento
+                    visivel: false
+                };
+
+                const { data, error } = await supabase
+                    .from('publicidades')
+                    .insert([publicidadeData])
+                    .select()
+                    .single();
+
+                if (error) {
+                    throw error;
+                }
+
+                // Fechar modal de criação
+                fecharModalNovaPublicidade();
+                
+                showMessage('Publicidade criada com sucesso! Use o botão "Gerar Pagamento" no card para realizar o pagamento.', 'success');
+                
+                // Resetar banners
+                document.getElementById('mainBannersContainer').innerHTML = `
+                    <div class="banner-item" data-type="main" data-index="0">
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                            <input type="url" class="banner-image-input" placeholder="URL da imagem (1280 × 420px)" style="flex: 1;">
+                            <span style="color: #666; font-size: 14px;">OU</span>
+                            <input type="file" class="banner-file-input" accept="image/*" style="display: none;" onchange="handleFileUpload(this, 'main')">
+                            <button type="button" class="btn btn-secondary btn-small" onclick="this.previousElementSibling.click()" style="padding: 8px 12px;">
+                                📤 Upload
+                            </button>
+                            <button type="button" class="btn btn-danger btn-small" onclick="removerBanner(this)" style="padding: 8px 12px;">🗑</button>
+                        </div>
+                        <input type="url" class="banner-link-input" placeholder="Link do banner (opcional - usa link externo se vazio)" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #e0e0e0; border-radius: 4px;">
+                        <div class="banner-preview" style="display: none; margin-top: 10px;">
+                            <img src="" alt="Preview" style="max-width: 100%; max-height: 150px; border-radius: 8px; border: 1px solid #e0e0e0;">
+                        </div>
+                        <div class="banner-upload-status" style="display: none; margin-top: 5px; color: #666; font-size: 12px;"></div>
+                    </div>
+                `;
+                atualizarContadores();
+
+                // Recarregar dados
+                await carregarEstatisticas();
+                await renderizarPublicidades();
+            } catch (error) {
+                throw error;
+            }
+        });
+
+        async function obterUserIdAdmin() {
+            const adminLogado = localStorage.getItem('adminLogado');
+            if (!adminLogado) {
+                throw new Error('Admin não autenticado');
+            }
+
+            const adminData = JSON.parse(adminLogado);
+            let supabase = await obterSupabaseClient();
+            
+            // Se não conseguir pelo método padrão, criar cliente diretamente
+            if (!supabase) {
+                if (typeof window.supabase !== 'undefined') {
+                    supabase = window.supabase.createClient(
+                        'https://svgmuxdxxrapepbodbgv.supabase.co',
+                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2Z211eGR4eHJhcGVwYm9kYmd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0MTU2MTQsImV4cCI6MjA3Njk5MTYxNH0.U0rQ8-EXC6b0dkcCQBoE-VuNjNgNQREvcs3fWfZ1UGM'
+                    );
+                }
+            }
+            
+            if (!supabase) {
+                throw new Error('Não foi possível conectar ao banco de dados');
+            }
+
+            // Buscar user com email do admin
+            const { data: userData } = await supabase
+                .from('users')
+                .select('id')
+                .eq('email', adminData.email)
+                .maybeSingle();
+
+            if (userData) {
+                return userData.id;
+            }
+
+            // Se não existir, criar
+            const { data: newUser, error: userError } = await supabase
+                .from('users')
+                .insert([{
+                    email: adminData.email,
+                    nome: adminData.nome,
+                    tipo_usuario: 'anunciante'
+                }])
+                .select('id')
+                .single();
+
+            if (userError || !newUser) {
+                throw new Error('Erro ao obter usuário do admin: ' + (userError?.message || 'Erro desconhecido'));
+            }
+
+            return newUser.id;
+        }
+
+        async function aprovarPublicidade(id) {
+            try {
+                const supabase = await obterSupabaseClient();
+                if (!supabase) {
+                    throw new Error('Não foi possível conectar ao banco de dados');
+                }
+
+                const userId = await obterUserIdAdmin();
+
+                const { error } = await supabase
+                    .from('publicidades')
+                    .update({
+                        aprovada: true,
+                        visivel: true,
+                        aprovada_em: new Date().toISOString(),
+                        aprovada_por: userId
+                    })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                showMessage('Publicidade aprovada!', 'success');
+                await carregarEstatisticas();
+                await renderizarPublicidades();
+            } catch (error) {
+                showMessage('Erro ao aprovar publicidade: ' + (error.message || 'Erro desconhecido'), 'error');
+            }
+        }
+
+        async function pausarPublicidade(id) {
+            try {
+                const supabase = await obterSupabaseClient();
+                if (!supabase) {
+                    throw new Error('Não foi possível conectar ao banco de dados');
+                }
+
+                const { error } = await supabase
+                    .from('publicidades')
+                    .update({ visivel: false })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                showMessage('Publicidade pausada!', 'success');
+                await carregarEstatisticas();
+                await renderizarPublicidades();
+            } catch (error) {
+                showMessage('Erro ao pausar publicidade: ' + (error.message || 'Erro desconhecido'), 'error');
+            }
+        }
+
+        async function ativarPublicidade(id) {
+            try {
+                const supabase = await obterSupabaseClient();
+                if (!supabase) {
+                    throw new Error('Não foi possível conectar ao banco de dados');
+                }
+
+                const { error } = await supabase
+                    .from('publicidades')
+                    .update({ visivel: true })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                showMessage('Publicidade ativada!', 'success');
+                await carregarEstatisticas();
+                await renderizarPublicidades();
+            } catch (error) {
+                showMessage('Erro ao ativar publicidade: ' + (error.message || 'Erro desconhecido'), 'error');
+            }
+        }
+
+        async function duplicarPublicidade(id) {
+            try {
+                const supabase = await obterSupabaseClient();
+                if (!supabase) {
+                    throw new Error('Não foi possível conectar ao banco de dados');
+                }
+
+                // Buscar publicidade original
+                const { data: publicidadeOriginal, error: fetchError } = await supabase
+                    .from('publicidades')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+
+                if (fetchError || !publicidadeOriginal) {
+                    throw new Error('Publicidade não encontrada');
+                }
+
+                // Preencher formulário com dados da publicidade original
+                document.getElementById('titulo').value = publicidadeOriginal.titulo || '';
+                document.getElementById('descricao').value = publicidadeOriginal.descricao || '';
+                document.getElementById('linkExterno').value = publicidadeOriginal.link_externo || '';
+
+                // Limpar e preencher banners principais
+                const mainBannersContainer = document.getElementById('mainBannersContainer');
+                mainBannersContainer.innerHTML = '';
+
+                if (publicidadeOriginal.banners_principais && Array.isArray(publicidadeOriginal.banners_principais) && publicidadeOriginal.banners_principais.length > 0) {
+                    publicidadeOriginal.banners_principais.forEach((banner, index) => {
+                        adicionarBannerComDados('main', banner.imagem || '', banner.link || '');
+                    });
+                } else {
+                    adicionarBannerComDados('main');
+                }
+
+                atualizarContadores();
+
+                // Abrir modal de criação
+                abrirModalNovaPublicidade();
+            } catch (error) {
+                showMessage('Erro ao carregar publicidade para duplicar: ' + (error.message || 'Erro desconhecido'), 'error');
+            }
+        }
+
+        // Função auxiliar para adicionar banner com dados pré-preenchidos
+        function adicionarBannerComDados(tipo, imagemUrl = '', linkUrl = '') {
+            const container = 'mainBannersContainer';
+            const containerEl = document.getElementById(container);
+            const currentCount = containerEl.querySelectorAll('.banner-item').length;
+
+            if (currentCount >= 3) {
+                return;
+            }
+
+            const bannerItem = document.createElement('div');
+            bannerItem.className = 'banner-item';
+            bannerItem.setAttribute('data-type', 'main');
+            bannerItem.setAttribute('data-index', currentCount);
+            
+            // Escapar valores para evitar problemas com aspas
+            const safeImagemUrl = (imagemUrl || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            const safeLinkUrl = (linkUrl || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            
+            bannerItem.innerHTML = `
+                <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                    <input type="url" class="banner-image-input" placeholder="URL da imagem (1280 × 420px)" value="${safeImagemUrl}" style="flex: 1;">
+                    <span style="color: #666; font-size: 14px;">OU</span>
+                    <input type="file" class="banner-file-input" accept="image/*" style="display: none;">
+                    <button type="button" class="btn btn-secondary btn-small btn-upload-banner" style="padding: 8px 12px;">
+                        📤 Upload
+                    </button>
+                    <button type="button" class="btn btn-danger btn-small btn-remover-banner" style="padding: 8px 12px;">🗑</button>
+                </div>
+                <input type="url" class="banner-link-input" placeholder="Link do banner (opcional - usa link externo se vazio)" value="${safeLinkUrl}" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #e0e0e0; border-radius: 4px;">
+                <div class="banner-preview" style="display: ${imagemUrl ? 'block' : 'none'}; margin-top: 10px;">
+                    <img src="${safeImagemUrl}" alt="Preview" style="max-width: 100%; max-height: 150px; border-radius: 8px; border: 1px solid #e0e0e0;">
+                </div>
+                <div class="banner-upload-status" style="display: none; margin-top: 5px; color: #666; font-size: 12px;"></div>
+            `;
+
+            containerEl.appendChild(bannerItem);
+
+            // Configurar event listeners
+            const imageInput = bannerItem.querySelector('.banner-image-input');
+            const fileInput = bannerItem.querySelector('.banner-file-input');
+            const uploadBtn = bannerItem.querySelector('.btn-upload-banner');
+            const removeBtn = bannerItem.querySelector('.btn-remover-banner');
+            const preview = bannerItem.querySelector('.banner-preview');
+            const previewImg = bannerItem.querySelector('.banner-preview img');
+
+            // Preview quando URL é inserida
+            imageInput.addEventListener('input', function() {
+                if (this.value && this.value.startsWith('http')) {
+                    previewImg.src = this.value;
+                    preview.style.display = 'block';
+                } else {
+                    preview.style.display = 'none';
+                }
+            });
+
+            // Upload button
+            uploadBtn.addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            // File upload
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    handleFileUpload(this, 'main');
+                }
+            });
+
+            // Remove button
+            removeBtn.addEventListener('click', function() {
+                removerBanner(this);
+            });
+        }
+
+        async function editarPublicidade(id) {
+            try {
+                const supabase = await obterSupabaseClient();
+                if (!supabase) {
+                    throw new Error('Não foi possível conectar ao banco de dados');
+                }
+
+                // Buscar publicidade
+                const { data: publicidade, error: fetchError } = await supabase
+                    .from('publicidades')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+
+                if (fetchError || !publicidade) {
+                    throw new Error('Publicidade não encontrada');
+                }
+
+                // Preencher modal de edição com dados existentes
+                document.getElementById('editTitulo').value = publicidade.titulo || '';
+                document.getElementById('editDescricao').value = publicidade.descricao || '';
+                document.getElementById('editLinkExterno').value = publicidade.link_externo || '';
+
+                // Limpar e preencher banners
+                const mainBannersContainer = document.getElementById('editMainBannersContainer');
+                mainBannersContainer.innerHTML = '';
+
+                if (publicidade.banners_principais && Array.isArray(publicidade.banners_principais) && publicidade.banners_principais.length > 0) {
+                    publicidade.banners_principais.forEach((banner, index) => {
+                        adicionarBannerEdit('main', banner.imagem || '', banner.link || '');
+                    });
+                } else {
+                    adicionarBannerEdit('main');
+                }
+
+                // Armazenar ID da publicidade sendo editada
+                document.getElementById('modalEditarPublicidade').dataset.publicidadeId = id;
+
+                // Abrir modal de edição
+                abrirModalEditarPublicidade();
+            } catch (error) {
+                showMessage('Erro ao carregar publicidade: ' + (error.message || 'Erro desconhecido'), 'error');
+            }
+        }
+
+        async function removerPublicidade(id) {
+            const confirmed = await showConfirm(
+                'Remover Publicidade',
+                'Tem certeza que deseja remover esta publicidade? Esta ação não pode ser desfeita.',
+                '🗑️',
+                'Remover',
+                'Cancelar'
+            );
+            
+            if (!confirmed) {
+                return;
+            }
+
+            try {
+                const supabase = await obterSupabaseClient();
+                if (!supabase) {
+                    throw new Error('Não foi possível conectar ao banco de dados');
+                }
+
+                const { error } = await supabase
+                    .from('publicidades')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
 
             showMessage('Publicidade removida!', 'success');
-            carregarEstatisticas();
-            renderizarPublicidades();
+                await carregarEstatisticas();
+                await renderizarPublicidades();
+            } catch (error) {
+                showMessage('Erro ao remover publicidade: ' + (error.message || 'Erro desconhecido'), 'error');
+            }
         }
 
         function showMessage(text, type) {
@@ -534,43 +2559,75 @@
         }
 
         function sairAdmin() {
-            if (confirm('Deseja sair do painel admin?')) {
-                window.location.href = '../../index.html';
-            }
+            fazerLogoutAdmin();
         }
 
         // Funções de autenticação serão carregadas do assets/js/header-auth.js
 
-        window.addEventListener('load', function() {
-            carregarEstatisticas();
-            renderizarPublicidades();
+        window.addEventListener('load', async function() {
+            try {
+                // Verificar se admin está logado antes de carregar conteúdo
+                if (!verificarAdminLogado()) {
+                    return; // Redirecionamento já foi feito
+                }
+
+                // Verificar se admin ainda está ativo no banco
+                try {
+                    const adminAtivo = await verificarAdminAtivo();
+                    if (!adminAtivo) {
+                        return; // Redirecionamento já foi feito
+                    }
+                } catch (adminError) {
+                    // Se der erro ao verificar admin, continuar mesmo assim
+                }
+
+                // Aguardar um pouco para garantir que todos os scripts estão carregados
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Carregar conteúdo apenas se admin estiver logado e ativo
+                await carregarEstatisticas();
+                await renderizarPublicidades();
+                
+                // Chamar funções opcionais se existirem
+                if (typeof atualizarContadores === 'function') {
+                    atualizarContadores();
+                }
+                if (typeof setupBannerPreview === 'function') {
+                    setupBannerPreview();
+                }
+            } catch (error) {
+                // Se der erro, tentar novamente após um delay
+                setTimeout(async () => {
+                    try {
+                        await carregarEstatisticas();
+                        await renderizarPublicidades();
+                        
+                        // Chamar funções opcionais se existirem
+                        if (typeof atualizarContadores === 'function') {
+                            atualizarContadores();
+                        }
+                        if (typeof setupBannerPreview === 'function') {
+                            setupBannerPreview();
+                        }
+                    } catch (retryError) {
+                        // Se ainda der erro, definir valores padrão
+                        const totalEl = document.getElementById('totalPublicidades');
+                        const ativasEl = document.getElementById('publicidadesAtivas');
+                        const pendentesEl = document.getElementById('publicidadesPendentes');
+                        const anunciantesEl = document.getElementById('totalAnunciantes');
+                        
+                        if (totalEl) totalEl.textContent = '0';
+                        if (ativasEl) ativasEl.textContent = '0';
+                        if (pendentesEl) pendentesEl.textContent = '0';
+                        if (anunciantesEl) anunciantesEl.textContent = '0';
+                    }
+                }, 1500);
+            }
         });
 
-        // Carregar header dinamicamente
-        function loadHeader() {
-            fetch('../../components/header-component.html')
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById('header-container').innerHTML = html;
-                    
-                    // Aguardar o header ser renderizado antes de carregar o script
-                    setTimeout(() => {
-                        // Carregar o script de autenticação após o header estar renderizado
-                        const script = document.createElement('script');
-                        script.src = '../../assets/js/header-auth.js';
-                        script.onload = function() {
-                        };
-                        document.head.appendChild(script);
-                    }, 100);
-                })
-                .catch(error => {
-                });
-        }
-
-        // Carregar header quando a página carregar
-        document.addEventListener('DOMContentLoaded', function() {
-            loadHeader();
-        });
+        // Header não é necessário na página admin
     </script>
 </body>
 </html>
+
+

@@ -7,6 +7,8 @@
     <link rel="icon" type="image/svg+xml" href="../../assets/images/logo-achei-na-ilha.png">
     <link rel="alternate icon" href="../../assets/images/logo-achei-na-ilha.png">
     <link rel="stylesheet" href="../../assets/css/header.css">
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -321,6 +323,45 @@
             color: #856404;
         }
 
+        /* Estilos para seção PIX */
+        #pixSection {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #pixCode {
+            word-break: break-all;
+        }
+
+        .pix-success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .pix-success h3 {
+            color: #155724;
+            margin-bottom: 10px;
+        }
+
+        .pix-success p {
+            color: #155724;
+            font-size: 14px;
+        }
+
         @media (max-width: 768px) {
             .payment-wrapper {
                 grid-template-columns: 1fr;
@@ -414,29 +455,83 @@
 
                 <div class="payment-methods">
                     <h3 style="margin-bottom: 15px; font-size: 16px;">Forma de Pagamento</h3>
-                    <div class="payment-method">
-                        <input type="radio" id="paymentPix" name="paymentMethod" value="pix" checked>
+                    <div class="payment-method" style="background: #e8f5e9; border-color: #4caf50;">
+                        <input type="radio" id="paymentPix" name="paymentMethod" value="pix" checked disabled>
                         <label for="paymentPix">
                             <span class="payment-icon">💳</span>
                             PIX - Aprovação Imediata
                         </label>
                     </div>
-                    <div class="payment-method">
-                        <input type="radio" id="paymentCard" name="paymentMethod" value="card">
-                        <label for="paymentCard">
-                            <span class="payment-icon">💳</span>
-                            Cartão de Crédito
-                        </label>
-                    </div>
                 </div>
 
                 <button class="btn-pay" id="btnPay" onclick="processPayment()">
-                    💳 Finalizar Pagamento
+                    💳 Gerar PIX
                 </button>
 
                 <div class="warning-box" id="warningBox">
-                    ⚠️ Após o pagamento, seu anúncio será publicado imediatamente.
+                    ⚠️ Após o pagamento ser confirmado, seu anúncio será publicado imediatamente.
                 </div>
+            </div>
+
+            <!-- Seção de QR Code PIX (aparece após gerar PIX) -->
+            <div class="calculator-section" id="pixSection" style="display: none;">
+                <h2 class="section-title">📱 Pague com PIX</h2>
+                
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <p style="color: #666; margin-bottom: 15px;">Escaneie o QR Code com o app do seu banco ou copie o código PIX</p>
+                    
+                    <!-- QR Code -->
+                    <div id="qrcodeContainer" style="margin: 20px auto; max-width: 300px;">
+                        <canvas id="qrcodeCanvas" style="display: none;"></canvas>
+                        <img id="qrcodeImage" src="" alt="QR Code PIX" style="max-width: 100%; border: 4px solid #f0f0f0; border-radius: 12px; padding: 10px; background: white;">
+                    </div>
+                    
+                    <!-- Código PIX Copia e Cola -->
+                    <div style="margin-top: 20px;">
+                        <label style="display: block; font-weight: 600; color: #333; margin-bottom: 10px; font-size: 14px;">
+                            Código PIX (Copia e Cola)
+                        </label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input 
+                                type="text" 
+                                id="pixCode" 
+                                readonly 
+                                style="flex: 1; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 12px; font-family: monospace; background: #f9f9f9;"
+                            >
+                            <button 
+                                onclick="copyPixCode()" 
+                                id="btnCopyPix"
+                                style="padding: 12px 20px; background: #0077B6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; white-space: nowrap;"
+                            >
+                                📋 Copiar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Informações do Pagamento -->
+                    <div style="background: #f0f7ff; padding: 20px; border-radius: 8px; margin-top: 20px; text-align: left;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: #666; font-weight: 500;">Valor:</span>
+                            <span style="color: #0077B6; font-weight: 700; font-size: 18px;" id="pixValue">R$ 0,00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: #666; font-weight: 500;">Status:</span>
+                            <span style="color: #ff9800; font-weight: 600;" id="pixStatus">⏳ Aguardando pagamento...</span>
+                        </div>
+                        <div style="font-size: 12px; color: #999; margin-top: 15px; text-align: center;">
+                            O pagamento será verificado automaticamente
+                        </div>
+                    </div>
+                    
+                    <!-- Botão de Cancelar -->
+                    <button 
+                        onclick="cancelPixPayment()" 
+                        style="margin-top: 20px; padding: 12px 24px; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;"
+                    >
+                        ❌ Cancelar Pagamento
+                    </button>
+                </div>
+            </div>
             </div>
         </div>
     </div>
@@ -462,6 +557,15 @@
         const HIGHLIGHT_PRICE = 8.90;
         const MIN_DAYS = 3;
         const RECOMMENDED_DAYS = 7;
+        
+        // Configurações do PushinPay PIX
+        const PUSHINPAY_API_KEY = 'a04770e3-1bbf-4913-bf47-3fc05a440873|1tPtzIVtY6njf5LIgJ2GDK8zME2pQ8DNwZAe6reA91526390';
+        const PUSHINPAY_API_URL = 'https://api.pushinpay.com.br'; // Verificar URL exata na documentação
+        const N8N_WEBHOOK_URL = 'https://hooks.upcaodigital.com.br/webhook/acheinailha';
+        
+        // Variáveis globais para controle do PIX
+        let pixCheckInterval = null;
+        let currentPixId = null;
 
         // Inicializar
         document.addEventListener('DOMContentLoaded', async () => {
@@ -654,12 +758,7 @@
                     throw new Error('Dados do anúncio não encontrados');
                 }
 
-                // Aqui você integraria com o gateway de pagamento (PIX, Cartão, etc.)
-                // Por enquanto, vamos simular o pagamento e salvar os dados
-                // Simular processamento
-                await new Promise(resolve => setTimeout(resolve, 2000));
-
-                // Salvar anúncio no banco de dados
+                // Obter dados do usuário e anúncio
                 const supabase = authService.getSupabase();
                 if (!supabase) {
                     throw new Error('Supabase não disponível');
@@ -673,45 +772,10 @@
                 const dadosCompletos = anuncioData.dados || {};
                 
                 // Verificar se é um anúncio existente (rascunho) ou novo
-                const anuncioId = anuncioData.id || anuncioData.dados?.id;
+                let anuncioId = anuncioData.id || anuncioData.dados?.id;
                 
-                // Preparar dados de atualização/publicação
-                const updateData = {
-                    ativo: true, // Publicado está ativo
-                    status: 'publicado'
-                };
-
-                // Adicionar campos de pagamento (se existirem na tabela)
-                try {
-                    updateData.dias_publicacao = days;
-                    updateData.valor_pagamento = total;
-                    updateData.em_destaque = hasHighlight;
-                    updateData.data_inicio_publicacao = new Date().toISOString();
-                    updateData.data_fim_publicacao = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
-                    if (hasHighlight) {
-                        updateData.data_fim_destaque = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
-                    }
-                    updateData.forma_pagamento = paymentMethod;
-                    updateData.transacao_id = 'simulado_' + Date.now(); // TODO: Substituir por ID real do gateway
-                } catch (e) {
-                }
-
-                let data;
-                let error;
-
-                // Se tem ID válido (UUID, não temp_), atualizar anúncio existente (rascunho)
-                if (anuncioId && typeof anuncioId === 'string' && !anuncioId.startsWith('temp_') && anuncioId.length > 10) {
-                    const { data: updatedData, error: updateError } = await supabase
-                        .from('anuncios')
-                        .update(updateData)
-                        .eq('id', anuncioId)
-                        .select()
-                        .single();
-
-                    data = updatedData;
-                    error = updateError;
-                } else {
-                    // Se não tem ID válido, criar novo anúncio
+                // Se não tem ID válido, criar anúncio primeiro (como rascunho)
+                if (!anuncioId || typeof anuncioId !== 'string' || anuncioId.startsWith('temp_') || anuncioId.length <= 10) {
                     const anuncioDataDB = {
                         usuario_id: user.id,
                         titulo: dadosCompletos.titulo,
@@ -731,7 +795,8 @@
                         vagas_garagem: dadosCompletos.vagasGaragem || null,
                         emoji: dadosCompletos.emoji || null,
                         caracteristicas: dadosCompletos.caracteristicas || [],
-                        ...updateData
+                        ativo: false, // Ainda não publicado
+                        status: 'pendente_pagamento' // Aguardando pagamento
                     };
 
                     const { data: insertedData, error: insertError } = await supabase
@@ -740,28 +805,290 @@
                         .select()
                         .single();
 
-                    data = insertedData;
-                    error = insertError;
+                    if (insertError || !insertedData) {
+                        throw new Error('Erro ao criar anúncio: ' + (insertError?.message || 'Erro desconhecido'));
+                    }
+
+                    anuncioId = insertedData.id;
                 }
 
-                if (error) {
-                    throw new Error('Erro ao salvar anúncio: ' + error.message);
+                // Converter valor para centavos (PushinPay usa centavos)
+                const valorCentavos = Math.round(total * 100);
+
+                // Criar PIX no PushinPay
+                const pixData = {
+                    value: valorCentavos, // Valor em centavos
+                    description: `Anúncio - ${days} ${days === 1 ? 'dia' : 'dias'}${hasHighlight ? ' + Destaque' : ''}`,
+                    metadata: {
+                        anuncio_id: anuncioId,
+                        dias_publicacao: days,
+                        valor_total: total,
+                        valor_base: basePrice,
+                        valor_destaque: highlightPrice,
+                        em_destaque: hasHighlight,
+                        forma_pagamento: 'pix',
+                        user_id: user.id,
+                        tipo: 'anuncio'
+                    }
+                };
+
+                // Fazer requisição para criar PIX
+                const pixResponse = await fetch(`${PUSHINPAY_API_URL}/pix/qrcode`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${PUSHINPAY_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(pixData)
+                });
+
+                if (!pixResponse.ok) {
+                    const errorData = await pixResponse.json().catch(() => ({ message: 'Erro desconhecido' }));
+                    throw new Error('Erro ao criar PIX: ' + (errorData.message || `Status ${pixResponse.status}`));
                 }
-                alert('✅ Pagamento processado com sucesso! Seu anúncio foi publicado.');
+
+                const pixResult = await pixResponse.json();
+
+                // Verificar se a resposta contém o QR Code
+                if (!pixResult.qr_code && !pixResult.qrcode && !pixResult.pix_code) {
+                    throw new Error('Resposta do PIX inválida. QR Code não encontrado.');
+                }
+
+                // Obter dados do PIX
+                const pixCode = pixResult.qr_code || pixResult.qrcode || pixResult.pix_code;
+                const pixId = pixResult.id || pixResult.transaction_id || pixResult.pix_id;
                 
-                // Limpar dados pendentes
-                localStorage.removeItem('pendingAnnouncement');
+                // Salvar ID da transação no anúncio (status pendente)
+                try {
+                    await supabase
+                        .from('anuncios')
+                        .update({
+                            transacao_id: pixId,
+                            status: 'pendente_pagamento'
+                        })
+                        .eq('id', anuncioId);
+                } catch (e) {
+                    // Não foi possível salvar ID da transação
+                }
+
+                // Armazenar dados globalmente
+                currentPixId = pixId;
                 
-                // Redirecionar
-                window.location.href = '../../pages/user/meus-anuncios.html';
+                // Exibir QR Code na tela
+                displayPixQrCode(pixCode, total);
+                
+                // Iniciar verificação de pagamento
+                startPixCheck(pixId, anuncioId, {
+                    days,
+                    total,
+                    basePrice,
+                    highlightPrice,
+                    hasHighlight,
+                    user: user.id
+                });
 
             } catch (error) {
                 alert('Erro ao processar pagamento: ' + error.message);
                 
                 const btnPay = document.getElementById('btnPay');
                 btnPay.disabled = false;
-                btnPay.textContent = '💳 Finalizar Pagamento';
+                btnPay.textContent = '💳 Gerar PIX';
             }
+        }
+
+        // Exibir QR Code do PIX
+        function displayPixQrCode(pixCode, valor) {
+            // Mostrar seção PIX
+            document.getElementById('pixSection').style.display = 'block';
+            
+            // Esconder botão de pagamento
+            document.getElementById('btnPay').style.display = 'none';
+            
+            // Preencher código PIX
+            document.getElementById('pixCode').value = pixCode;
+            
+            // Preencher valor
+            document.getElementById('pixValue').textContent = formatCurrency(valor);
+            
+            // Gerar QR Code visual
+            const qrcodeCanvas = document.getElementById('qrcodeCanvas');
+            const qrcodeImage = document.getElementById('qrcodeImage');
+            
+            QRCode.toCanvas(qrcodeCanvas, pixCode, {
+                width: 300,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#FFFFFF'
+                }
+            }, function (error) {
+                if (error) {
+                    qrcodeImage.style.display = 'none';
+                } else {
+                    // Converter canvas para imagem
+                    qrcodeImage.src = qrcodeCanvas.toDataURL();
+                    qrcodeCanvas.style.display = 'none';
+                    qrcodeImage.style.display = 'block';
+                }
+            });
+            
+            // Scroll para seção PIX
+            document.getElementById('pixSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Copiar código PIX
+        function copyPixCode() {
+            const pixCodeInput = document.getElementById('pixCode');
+            pixCodeInput.select();
+            pixCodeInput.setSelectionRange(0, 99999); // Para mobile
+            
+            try {
+                document.execCommand('copy');
+                const btnCopy = document.getElementById('btnCopyPix');
+                const originalText = btnCopy.textContent;
+                btnCopy.textContent = '✅ Copiado!';
+                btnCopy.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    btnCopy.textContent = originalText;
+                    btnCopy.style.background = '#0077B6';
+                }, 2000);
+            } catch (err) {
+                alert('Erro ao copiar. Por favor, copie manualmente.');
+            }
+        }
+
+        // Verificar status do pagamento PIX
+        async function checkPixStatus(pixId) {
+            try {
+                const response = await fetch(`${PUSHINPAY_API_URL}/pix/${pixId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${PUSHINPAY_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erro ao verificar status do PIX');
+                }
+
+                const pixData = await response.json();
+                
+                // Verificar status (pode variar: 'paid', 'pago', 'approved', etc.)
+                const status = pixData.status || pixData.payment_status;
+                const isPaid = status === 'paid' || status === 'pago' || status === 'approved' || status === 'aprovado';
+                
+                return {
+                    paid: isPaid,
+                    status: status,
+                    data: pixData
+                };
+            } catch (error) {
+                return { paid: false, status: 'error', data: null };
+            }
+        }
+
+        // Iniciar verificação periódica do pagamento
+        function startPixCheck(pixId, anuncioId, paymentData) {
+            // Atualizar status inicial
+            document.getElementById('pixStatus').textContent = '⏳ Aguardando pagamento...';
+            document.getElementById('pixStatus').style.color = '#ff9800';
+            
+            // Verificar a cada 3 segundos
+            pixCheckInterval = setInterval(async () => {
+                const result = await checkPixStatus(pixId);
+                
+                if (result.paid) {
+                    // Pagamento confirmado!
+                    clearInterval(pixCheckInterval);
+                    pixCheckInterval = null;
+                    
+                    // Atualizar status visual
+                    document.getElementById('pixStatus').textContent = '✅ Pagamento confirmado!';
+                    document.getElementById('pixStatus').style.color = '#28a745';
+                    
+                    // Disparar webhook para n8n
+                    await sendWebhookToN8n(anuncioId, pixId, paymentData, result.data);
+                    
+                    // Mostrar mensagem de sucesso
+                    setTimeout(() => {
+                        alert('✅ Pagamento confirmado! Seu anúncio será publicado em instantes.');
+                        window.location.href = '../../pages/user/meus-anuncios.html';
+                    }, 2000);
+                } else if (result.status === 'error') {
+                    // Erro na verificação, continuar tentando
+                }
+            }, 3000); // Verificar a cada 3 segundos
+            
+            // Parar após 15 minutos (segurança)
+            setTimeout(() => {
+                if (pixCheckInterval) {
+                    clearInterval(pixCheckInterval);
+                    pixCheckInterval = null;
+                    document.getElementById('pixStatus').textContent = '⏰ Tempo esgotado. Gere um novo PIX.';
+                    document.getElementById('pixStatus').style.color = '#dc3545';
+                }
+            }, 15 * 60 * 1000); // 15 minutos
+        }
+
+        // Enviar webhook para n8n quando pagamento confirmado
+        async function sendWebhookToN8n(anuncioId, pixId, paymentData, pixResult) {
+            try {
+                const webhookData = {
+                    event: 'payment.paid',
+                    tipo: 'pix',
+                    data: {
+                        id: pixId,
+                        anuncio_id: anuncioId,
+                        amount: paymentData.total,
+                        status: 'paid',
+                        payment_method: 'pix',
+                        metadata: {
+                            anuncio_id: anuncioId,
+                            dias_publicacao: paymentData.days,
+                            valor_total: paymentData.total,
+                            valor_base: paymentData.basePrice,
+                            valor_destaque: paymentData.highlightPrice,
+                            em_destaque: paymentData.hasHighlight,
+                            forma_pagamento: 'pix',
+                            user_id: paymentData.user,
+                            tipo: 'anuncio'
+                        },
+                        created_at: new Date().toISOString()
+                    }
+                };
+
+                const response = await fetch(N8N_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(webhookData)
+                });
+
+                // Webhook enviado (sucesso ou erro não bloqueia o fluxo)
+            } catch (error) {
+                // Erro ao enviar webhook (não bloqueia o fluxo)
+            }
+        }
+
+        // Cancelar pagamento PIX
+        function cancelPixPayment() {
+            if (pixCheckInterval) {
+                clearInterval(pixCheckInterval);
+                pixCheckInterval = null;
+            }
+            
+            currentPixId = null;
+            
+            // Esconder seção PIX
+            document.getElementById('pixSection').style.display = 'none';
+            
+            // Mostrar botão de pagamento novamente
+            document.getElementById('btnPay').style.display = 'block';
+            document.getElementById('btnPay').disabled = false;
+            document.getElementById('btnPay').textContent = '💳 Gerar PIX';
         }
     </script>
 </body>

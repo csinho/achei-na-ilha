@@ -7,6 +7,10 @@
     <link rel="icon" type="image/svg+xml" href="../../assets/images/logo-achei-na-ilha.png">
     <link rel="alternate icon" href="../../assets/images/logo-achei-na-ilha.png">
     <link rel="stylesheet" href="../../assets/css/header.css">
+    
+    <!-- Carregar configuração do Supabase -->
+    <script src="../../assets/js/supabase-config.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -82,6 +86,199 @@
 
         .btn-clear:hover {
             background: #c82333;
+        }
+
+        /* Banner Principal Slider */
+        .main-banner-section {
+            max-width: 1280px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .main-banner-slider {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1280 / 420; /* Proporção 16:9 para banner 1280x720 */
+            max-height: 720px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background: #f5f5f5;
+        }
+
+        .main-banner-slides {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .main-banner-slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            pointer-events: none; /* Desabilitar cliques em slides inativos */
+            z-index: 1;
+        }
+
+        .main-banner-slide.active {
+            opacity: 1;
+            pointer-events: auto; /* Habilitar cliques apenas no slide ativo */
+            z-index: 2;
+        }
+
+        .main-banner-slide a {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .main-banner-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Tooltip para banners */
+        .banner-tooltip-container {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .banner-tooltip {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            bottom: calc(100% + 15px);
+            left: 50%;
+            transform: translateX(-50%) translateY(-10px);
+            background-color: rgba(0, 0, 0, 0.9);
+            color: white;
+            text-align: center;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: normal;
+            max-width: 300px;
+            width: max-content;
+            min-width: 200px;
+            z-index: 10000;
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            word-wrap: break-word;
+        }
+
+        .banner-tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: rgba(0, 0, 0, 0.9);
+        }
+
+        .main-banner-slide.active .banner-tooltip-container:hover .banner-tooltip {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .banner-tooltip {
+                max-width: 250px;
+                min-width: 150px;
+                font-size: 12px;
+                padding: 10px 12px;
+            }
+        }
+
+        .main-banner-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .main-banner-nav:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .main-banner-nav.prev {
+            left: 15px;
+        }
+
+        .main-banner-nav.next {
+            right: 15px;
+        }
+
+        .main-banner-dots {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .main-banner-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .main-banner-dot.active {
+            background: #0077B6;
+            border-color: #0077B6;
+        }
+
+
+        @media (max-width: 768px) {
+            .main-banner-section {
+                padding: 0 10px;
+            }
+
+            .main-banner-slider {
+                border-radius: 4px;
+            }
+
+            .main-banner-nav {
+                width: 30px;
+                height: 30px;
+                font-size: 16px;
+            }
+
+            .main-banner-nav.prev {
+                left: 10px;
+            }
+
+            .main-banner-nav.next {
+                right: 10px;
+            }
         }
 
         .main-layout {
@@ -498,6 +695,19 @@
         </div>
     </div>
 
+    <!-- Banner Principal Slider -->
+    <div class="main-banner-section" id="mainBannerSection" style="display: none;">
+        <div class="main-banner-slider" id="mainBannerSlider">
+            <div class="main-banner-slides" id="mainBannerSlides">
+                <!-- Banners serão inseridos via JavaScript -->
+            </div>
+            <button class="main-banner-nav prev" onclick="navigateMainBanner(-1)">‹</button>
+            <button class="main-banner-nav next" onclick="navigateMainBanner(1)">›</button>
+            <div class="main-banner-dots" id="mainBannerDots"></div>
+        </div>
+    </div>
+
+
     <div class="main-layout">
         <div class="sidebar">
             <h3 class="sidebar-title">Filtros</h3>
@@ -600,7 +810,7 @@
                         <label for="filterTemGaragem">Com Garagem</label>
                     </div>
                 </div>
-                <div class="filter-group">
+                <div class="filter-group" id="filterVagasContainer" style="display: none; margin-top: 20px;">
                     <label class="filter-label">Mínimo de Vagas</label>
                     <select id="filterVagasGaragem">
                         <option value="">Qualquer</option>
@@ -969,8 +1179,8 @@
             const anunciosSalvos = localStorage.getItem('anuncios');
             if (anunciosSalvos) {
                 try {
-                    const anuncios = JSON.parse(anunciosSalvos);
-                    todosAnuncios = [...anunciosExemplo, ...anuncios];
+                const anuncios = JSON.parse(anunciosSalvos);
+                todosAnuncios = [...anunciosExemplo, ...anuncios];
                 } catch (e) {
                 }
             }
@@ -1179,7 +1389,20 @@
             document.getElementById('filterBanheiros').addEventListener('change', aplicarFiltros);
             
             // Filtros de garagem
-            document.getElementById('filterTemGaragem').addEventListener('change', aplicarFiltros);
+            document.getElementById('filterTemGaragem').addEventListener('change', function() {
+                const temGaragem = this.checked;
+                const vagasContainer = document.getElementById('filterVagasContainer');
+                
+                if (temGaragem) {
+                    vagasContainer.style.display = 'block';
+                } else {
+                    vagasContainer.style.display = 'none';
+                    // Limpar o valor do select quando desmarcar
+                    document.getElementById('filterVagasGaragem').value = '';
+                }
+                
+                aplicarFiltros();
+            });
             document.getElementById('filterVagasGaragem').addEventListener('change', aplicarFiltros);
             
             // Filtros de características
@@ -1262,6 +1485,9 @@
             document.getElementById('filterQuartos').value = '';
             document.getElementById('filterBanheiros').value = '';
             document.getElementById('filterVagasGaragem').value = '';
+            
+            // Esconder campo de vagas de garagem
+            document.getElementById('filterVagasContainer').style.display = 'none';
             
             // Limpar campo de busca
             document.getElementById('searchInput').value = '';
@@ -1389,9 +1615,346 @@
             }
         }
 
-        // Carregar header quando a página carregar
+        // ============================================
+        // SISTEMA DE PUBLICIDADES
+        // ============================================
+
+        // Arrays para armazenar banners (serão preenchidos do banco de dados)
+        let mainBanners = [];
+        let leftSideBanners = [];
+        let rightSideBanners = [];
+
+        // Variáveis globais para controle dos sliders
+        let mainBannerCurrentIndex = 0;
+        let mainBannerInterval = null;
+
+        // Função para renderizar banner principal
+        function renderMainBanner() {
+            const slidesContainer = document.getElementById('mainBannerSlides');
+            const dotsContainer = document.getElementById('mainBannerDots');
+            const bannerSection = document.getElementById('mainBannerSection');
+
+            if (!slidesContainer || !bannerSection) return;
+
+            const activeBanners = mainBanners.filter(b => b.ativo);
+
+            if (activeBanners.length === 0) {
+                bannerSection.style.display = 'none';
+                return;
+            }
+
+            bannerSection.style.display = 'block';
+            slidesContainer.innerHTML = '';
+            dotsContainer.innerHTML = '';
+
+            activeBanners.forEach((banner, index) => {
+                // Criar slide
+                const slide = document.createElement('div');
+                slide.className = `main-banner-slide ${index === 0 ? 'active' : ''}`;
+                // Garantir que o link seja único para cada banner
+                const bannerLink = banner.link || '';
+                const descricao = banner.descricao || '';
+                // Escapar HTML para evitar XSS
+                const descricaoEscapada = descricao
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+                
+                slide.innerHTML = `
+                    <a href="${bannerLink}" target="_blank" rel="noopener noreferrer" data-banner-link="${bannerLink}" class="banner-tooltip-container">
+                        ${descricao ? `<div class="banner-tooltip">${descricaoEscapada}</div>` : ''}
+                        <img src="${banner.imagem}" alt="Publicidade ${banner.id}" onerror="this.src='https://via.placeholder.com/1280x720/f5f5f5/999999?text=Imagem+nao+carregada'">
+                    </a>
+                `;
+                slidesContainer.appendChild(slide);
+
+                // Criar dot
+                const dot = document.createElement('div');
+                dot.className = `main-banner-dot ${index === 0 ? 'active' : ''}`;
+                dot.onclick = () => goToMainBanner(index);
+                dotsContainer.appendChild(dot);
+            });
+
+            // Iniciar slider automático
+            startMainBannerSlider();
+        }
+
+        // Função para navegar banner principal
+        function navigateMainBanner(direction) {
+            const activeBanners = mainBanners.filter(b => b.ativo);
+            if (activeBanners.length === 0) return;
+
+            mainBannerCurrentIndex += direction;
+
+            if (mainBannerCurrentIndex >= activeBanners.length) {
+                mainBannerCurrentIndex = 0;
+            } else if (mainBannerCurrentIndex < 0) {
+                mainBannerCurrentIndex = activeBanners.length - 1;
+            }
+
+            goToMainBanner(mainBannerCurrentIndex);
+        }
+
+        // Função para ir para banner específico
+        function goToMainBanner(index) {
+            const slides = document.querySelectorAll('.main-banner-slide');
+            const dots = document.querySelectorAll('.main-banner-dot');
+            const activeBanners = mainBanners.filter(b => b.ativo);
+
+            if (index >= activeBanners.length || index < 0) return;
+
+            mainBannerCurrentIndex = index;
+
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+
+            // Reiniciar slider automático
+            restartMainBannerSlider();
+        }
+
+        // Função para iniciar slider automático do banner principal
+        function startMainBannerSlider() {
+            stopMainBannerSlider();
+            const activeBanners = mainBanners.filter(b => b.ativo);
+            if (activeBanners.length <= 1) return;
+
+            mainBannerInterval = setInterval(() => {
+                navigateMainBanner(1);
+            }, 5000); // 5 segundos
+        }
+
+        // Função para reiniciar slider automático
+        function restartMainBannerSlider() {
+            startMainBannerSlider();
+        }
+
+        // Função para parar slider automático
+        function stopMainBannerSlider() {
+            if (mainBannerInterval) {
+                clearInterval(mainBannerInterval);
+                mainBannerInterval = null;
+            }
+        }
+
+
+        // Variável global para armazenar o cliente Supabase e a subscription
+        let publicidadesSupabaseClient = null;
+        let publicidadesSubscription = null;
+
+        // Função para configurar realtime subscription
+        function configurarRealtimePublicidades(supabaseClient) {
+            // Se já existe uma subscription, remover antes de criar nova
+            if (publicidadesSubscription) {
+                supabaseClient.removeChannel(publicidadesSubscription);
+            }
+
+            // Criar subscription para escutar mudanças na tabela publicidades
+            // Escutamos todas as mudanças e filtramos no callback
+            publicidadesSubscription = supabaseClient
+                .channel('publicidades-realtime')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*', // Escutar INSERT, UPDATE, DELETE
+                        schema: 'public',
+                        table: 'publicidades'
+                    },
+                    (payload) => {
+                        // Quando houver mudança, verificar se afeta publicidades aprovadas, visíveis e não expiradas
+                        const agora = new Date();
+                        
+                        if (payload.eventType === 'INSERT') {
+                            // Nova publicidade inserida - verificar se está aprovada, visível e não expirada
+                            const newRecord = payload.new;
+                            if (newRecord && newRecord.aprovada === true && newRecord.visivel === true) {
+                                // Verificar se não está expirada (considerando data e hora)
+                                const isNotExpired = !newRecord.data_fim_publicacao || new Date(newRecord.data_fim_publicacao) >= agora;
+                                if (isNotExpired) {
+                                    setTimeout(() => {
+                                        carregarPublicidades();
+                                    }, 500);
+                                }
+                            }
+                        } else if (payload.eventType === 'UPDATE') {
+                            // Publicidade atualizada - recarregar se estava ou agora está aprovada e visível
+                            const oldRecord = payload.old;
+                            const newRecord = payload.new;
+                            const wasVisible = oldRecord && oldRecord.aprovada === true && oldRecord.visivel === true;
+                            const isVisible = newRecord && newRecord.aprovada === true && newRecord.visivel === true;
+                            
+                            // Verificar expiração considerando data e hora
+                            const wasNotExpired = !oldRecord?.data_fim_publicacao || new Date(oldRecord.data_fim_publicacao) >= agora;
+                            const isNotExpired = !newRecord?.data_fim_publicacao || new Date(newRecord.data_fim_publicacao) >= agora;
+                            
+                            if ((wasVisible && wasNotExpired) || (isVisible && isNotExpired)) {
+                                setTimeout(() => {
+                                    carregarPublicidades();
+                                }, 500);
+                            }
+                        } else if (payload.eventType === 'DELETE') {
+                            // Publicidade deletada - sempre recarregar (pode ter sido removida)
+                            setTimeout(() => {
+                                carregarPublicidades();
+                            }, 500);
+                        }
+                    }
+                )
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        // Subscription ativa com sucesso
+                    } else if (status === 'CHANNEL_ERROR') {
+                        // Erro na subscription - tentar reconectar após delay
+                        setTimeout(() => {
+                            if (publicidadesSupabaseClient) {
+                                configurarRealtimePublicidades(publicidadesSupabaseClient);
+                            }
+                        }, 5000);
+                    }
+                });
+        }
+
+        // Função para carregar publicidades do banco de dados
+        async function carregarPublicidades() {
+            try {
+                // Aguardar carregamento do Supabase se necessário
+                if (typeof window.supabase === 'undefined') {
+                    await new Promise((resolve) => {
+                        const script = document.createElement('script');
+                        script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+                        script.onload = resolve;
+                        document.head.appendChild(script);
+                    });
+                }
+
+                // Obter cliente Supabase usando a função padronizada
+                let supabaseClient = null;
+                
+                // Tentar usar getSupabaseClient do supabase-config.js primeiro
+                if (typeof window.getSupabaseClient === 'function') {
+                    supabaseClient = window.getSupabaseClient();
+                }
+                
+                // Fallback: tentar authService
+                if (!supabaseClient && typeof window.authService !== 'undefined' && window.authService && window.authService.isInitialized) {
+                    supabaseClient = window.authService.getSupabase();
+                }
+                
+                // Fallback final: criar cliente diretamente
+                if (!supabaseClient && typeof window.supabase !== 'undefined') {
+                    supabaseClient = window.supabase.createClient(
+                        'https://svgmuxdxxrapepbodbgv.supabase.co',
+                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2Z211eGR4eHJhcGVwYm9kYmd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0MTU2MTQsImV4cCI6MjA3Njk5MTYxNH0.U0rQ8-EXC6b0dkcCQBoE-VuNjNgNQREvcs3fWfZ1UGM'
+                    );
+                }
+
+                if (!supabaseClient) {
+                    // Se não conseguir conectar, não mostrar banners
+                    return;
+                }
+
+                // Armazenar cliente globalmente para usar na subscription
+                publicidadesSupabaseClient = supabaseClient;
+
+                // Buscar publicidades aprovadas, visíveis e não expiradas
+                // Usar timestamp completo (data + hora + minuto)
+                const agora = new Date();
+                const agoraISO = agora.toISOString();
+                
+                // Filtrar publicidades não expiradas (considerando data e hora completa)
+                // Primeiro buscar todas aprovadas e visíveis
+                let query = supabaseClient
+                    .from('publicidades')
+                    .select('*')
+                    .eq('aprovada', true)
+                    .eq('visivel', true);
+                
+                // Filtrar por expiração: data_fim_publicacao é NULL ou >= agora
+                const { data: publicidades, error } = await query
+                    .or(`data_fim_publicacao.is.null,data_fim_publicacao.gte.${agoraISO}`)
+                    .order('criada_em', { ascending: false });
+                
+                // Filtro adicional no JavaScript para garantir comparação correta (com hora/minuto)
+                const publicidadesFiltradas = (publicidades || []).filter(pub => {
+                    if (!pub.data_fim_publicacao) {
+                        return true; // Sem data de expiração = sempre válida
+                    }
+                    const dataFim = new Date(pub.data_fim_publicacao);
+                    return dataFim >= agora; // Comparação com data e hora completa
+                });
+
+                if (error) {
+                    throw error;
+                }
+
+                // Processar banners principais
+                const todosMainBanners = [];
+                (publicidadesFiltradas || []).forEach(pub => {
+                    if (pub.banners_principais && Array.isArray(pub.banners_principais)) {
+                        pub.banners_principais.forEach(banner => {
+                            // Verificar se banner tem imagem e está ativo (ou se ativo não está definido, considerar ativo)
+                            const bannerAtivo = banner.ativo !== false; // Se não especificar, considera ativo
+                            if (bannerAtivo && banner.imagem) {
+                                // Usar link do banner individual, senão usar link_externo da publicidade
+                                const bannerLink = banner.link || pub.link_externo || '';
+                                todosMainBanners.push({
+                                    id: `${pub.id}-${banner.imagem}`,
+                                    imagem: banner.imagem,
+                                    link: bannerLink,
+                                    descricao: pub.descricao || pub.titulo || '',
+                                    ativo: true
+                                });
+                            }
+                        });
+                    }
+                });
+
+                // Atualizar array global apenas se houver banners principais
+                if (todosMainBanners.length > 0) {
+                    mainBanners = todosMainBanners;
+                }
+
+                // Renderizar banner principal
+                renderMainBanner();
+
+                // Configurar realtime subscription após carregar pela primeira vez
+                if (publicidadesSupabaseClient && !publicidadesSubscription) {
+                    configurarRealtimePublicidades(publicidadesSupabaseClient);
+                }
+            } catch (error) {
+                // Em caso de erro, não mostrar banners
+            }
+        }
+
+        // Limpar subscription quando a página for fechada
+        window.addEventListener('beforeunload', function() {
+            if (publicidadesSubscription && publicidadesSupabaseClient) {
+                publicidadesSupabaseClient.removeChannel(publicidadesSubscription);
+            }
+        });
+
+        // Pausar sliders quando o usuário passar o mouse sobre eles e carregar publicidades
         document.addEventListener('DOMContentLoaded', function() {
             loadHeader();
+            
+            // Aguardar um pouco para garantir que os elementos foram renderizados
+            setTimeout(() => {
+                const mainBanner = document.getElementById('mainBannerSlider');
+
+                if (mainBanner) {
+                    mainBanner.addEventListener('mouseenter', stopMainBannerSlider);
+                    mainBanner.addEventListener('mouseleave', startMainBannerSlider);
+                }
+
+                // Carregar publicidades
+                carregarPublicidades();
+            }, 500);
         });
     </script>
 </body>
