@@ -354,8 +354,12 @@
         </div> -->
     </div>
 
-    <!-- Supabase -->
+    <!-- Sistema de Toast -->
+    <script src="../../assets/js/toast.js"></script>
+    <!-- Supabase CDN (DEVE SER PRIMEIRO) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Configuração e Serviços -->
+    <script src="../../assets/js/supabase-config.js"></script>
     <script src="../../assets/js/supabase-auth-service.js"></script>
 
     <script>
@@ -506,10 +510,32 @@
         }
 
         function showStatus(message, type) {
+            // Usar toast system
+            if (window.toast && window.toast.container) {
+                try {
+                    if (type === 'success') {
+                        const result = window.toast.success(message);
+                        if (result) return; // Toast funcionou
+                    } else if (type === 'error') {
+                        const result = window.toast.error(message);
+                        if (result) return; // Toast funcionou
+                    } else {
+                        const result = window.toast.info(message);
+                        if (result) return; // Toast funcionou
+                    }
+                } catch (e) {
+                    // Erro ao mostrar toast, usar fallback
+                }
+            }
+            // Fallback: mostrar mensagem inline
             const statusMessage = document.getElementById('statusMessage');
-            statusMessage.textContent = message;
-            statusMessage.className = `status-message status-${type}`;
-            statusMessage.style.display = 'block';
+            if (statusMessage) {
+                statusMessage.textContent = message;
+                statusMessage.className = `status-message status-${type}`;
+                statusMessage.style.display = 'block';
+            } else {
+                alert(message);
+            }
         }
 
         // Verificar automaticamente a cada 30 segundos

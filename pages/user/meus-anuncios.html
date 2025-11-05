@@ -7,6 +7,8 @@
     <link rel="icon" type="image/svg+xml" href="../../assets/images/logo-achei-na-ilha.png">
     <link rel="alternate icon" href="../../assets/images/logo-achei-na-ilha.png">
     <link rel="stylesheet" href="../../assets/css/header.css">
+    <!-- Sistema de Toast -->
+    <script src="../../assets/js/toast.js"></script>
     <style>
         * {
             margin: 0;
@@ -487,10 +489,71 @@
 
                 // Renderizar anúncios
                 renderizarAnuncios(meusAnuncios);
+
+                // Configurar realtime subscription após carregar pela primeira vez
+                if (supabase && user && !window.anunciosSubscription) {
+                    configurarRealtimeMeusAnuncios(supabase, user.id);
+                }
             } catch (error) {
                 showMessage('Erro ao carregar anúncios: ' + (error.message || 'Erro desconhecido'), 'error');
             }
         }
+
+        // Função para configurar realtime subscription de anúncios do usuário
+        function configurarRealtimeMeusAnuncios(supabaseClient, userId) {
+            // Se já existe uma subscription, remover antes de criar nova
+            if (window.anunciosSubscription) {
+                supabaseClient.removeChannel(window.anunciosSubscription);
+            }
+
+            // Criar subscription para escutar mudanças na tabela anuncios do usuário
+            window.anunciosSubscription = supabaseClient
+                .channel('meus-anuncios-realtime')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*', // Escutar INSERT, UPDATE, DELETE
+                        schema: 'public',
+                        table: 'anuncios',
+                        filter: `usuario_id=eq.${userId}`
+                    },
+                    (payload) => {
+                        // Quando houver mudança, recarregar anúncios
+                        setTimeout(() => {
+                            carregarAnuncios();
+                        }, 500);
+                    }
+                )
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        // Subscription ativa com sucesso
+                    } else if (status === 'CHANNEL_ERROR') {
+                        // Erro na subscription - tentar reconectar após delay
+                        setTimeout(() => {
+                            if (window.authService && window.authService.getSupabase) {
+                                const supabase = window.authService.getSupabase();
+                                if (supabase) {
+                                    window.authService.getCurrentUser().then(user => {
+                                        if (user) {
+                                            configurarRealtimeMeusAnuncios(supabase, user.id);
+                                        }
+                                    });
+                                }
+                            }
+                        }, 5000);
+                    }
+                });
+        }
+
+        // Limpar subscription quando a página for fechada
+        window.addEventListener('beforeunload', function() {
+            if (window.anunciosSubscription && window.authService && window.authService.getSupabase) {
+                const supabase = window.authService.getSupabase();
+                if (supabase) {
+                    supabase.removeChannel(window.anunciosSubscription);
+                }
+            }
+        });
 
         // URL da imagem padrão para anúncios sem imagens
         const IMAGEM_PADRAO = 'https://images.tcdn.com.br/img/img_prod/734896/patch_cord_cat6_amarelo_sohoplus_50_centimetros_2525_1_546d22ba08fae4a55e7ad243dfdc8b90.jpeg';
@@ -849,14 +912,25 @@
         }
 
         function showMessage(text, type) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = text;
-            messageDiv.className = 'message ' + type;
-            messageDiv.style.display = 'block';
-
-            setTimeout(() => {
-                messageDiv.style.display = 'none';
-            }, 3000);
+            // Usar toast system
+            if (window.toast && window.toast.container) {
+                try {
+                    if (type === 'success') {
+                        const result = window.toast.success(text);
+                        if (result) return; // Toast funcionou
+                    } else if (type === 'error') {
+                        const result = window.toast.error(text);
+                        if (result) return; // Toast funcionou
+                    } else {
+                        const result = window.toast.info(text);
+                        if (result) return; // Toast funcionou
+                    }
+                } catch (e) {
+                    // Erro ao mostrar toast, usar fallback
+                }
+            }
+            // Fallback caso toast não esteja disponível ou tenha erro
+            alert(text);
         }
 
         async function verificarPermissao() {

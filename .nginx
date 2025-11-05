@@ -1,0 +1,156 @@
+# ============================================
+# Configuração Nginx para Easypanel
+# URLs Curtas/Abreviadas - Achei na Ilha
+# ============================================
+# 
+# Este arquivo é automaticamente detectado pelo Easypanel
+# Coloque-o na raiz do projeto
+# ============================================
+
+# ============================================
+# URLs CURTAS - PROPERTY (Propriedades)
+# ============================================
+
+# Busca de imóveis
+location = /busca {
+    rewrite ^ /pages/property/busca.html permanent;
+}
+
+# Detalhes do imóvel
+location = /detalhes {
+    rewrite ^ /pages/property/detalhes.html permanent;
+}
+
+# Novo anúncio
+location = /novo-anuncio {
+    rewrite ^ /pages/property/novo-anuncio.html permanent;
+}
+
+# ============================================
+# URLs CURTAS - AUTH (Autenticação)
+# ============================================
+
+# Login
+location = /login {
+    rewrite ^ /pages/auth/login.html permanent;
+}
+
+# Cadastro
+location = /cadastro {
+    rewrite ^ /pages/auth/cadastro.html permanent;
+}
+
+# Confirmar email
+location = /confirmar-email {
+    rewrite ^ /pages/auth/confirmar-email.html permanent;
+}
+
+# ============================================
+# URLs CURTAS - USER (Usuário)
+# ============================================
+
+# Meus anúncios
+location = /meus-anuncios {
+    rewrite ^ /pages/user/meus-anuncios.html permanent;
+}
+
+# Configurações do usuário
+location = /configuracoes {
+    rewrite ^ /pages/user/configuracoes.html permanent;
+}
+
+# Escolha de plano
+location = /escolha-plano {
+    rewrite ^ /pages/user/escolha-plano.html permanent;
+}
+
+# ============================================
+# URLs CURTAS - PAYMENT (Pagamento)
+# ============================================
+
+# Pagamento
+location = /pagamento {
+    rewrite ^ /pages/payment/pagamento.html permanent;
+}
+
+# ============================================
+# URLs CURTAS - ADMIN (Administração)
+# ============================================
+
+# Painel administrativo
+location = /admin {
+    rewrite ^ /pages/admin/admin.html permanent;
+}
+
+# Login administrativo
+location = /admin-login {
+    rewrite ^ /pages/admin/login.html permanent;
+}
+
+# ============================================
+# REDIRECIONAMENTOS 301 (SEO - Antigo para Novo)
+# ============================================
+# Redireciona URLs antigas para as novas curtas
+
+# Property
+location = /pages/property/busca.html {
+    return 301 /busca;
+}
+location = /pages/property/detalhes.html {
+    return 301 /detalhes;
+}
+location = /pages/property/novo-anuncio.html {
+    return 301 /novo-anuncio;
+}
+
+# Auth
+location = /pages/auth/login.html {
+    return 301 /login;
+}
+location = /pages/auth/cadastro.html {
+    return 301 /cadastro;
+}
+location = /pages/auth/confirmar-email.html {
+    return 301 /confirmar-email;
+}
+
+# User
+location = /pages/user/meus-anuncios.html {
+    return 301 /meus-anuncios;
+}
+location = /pages/user/configuracoes.html {
+    return 301 /configuracoes;
+}
+location = /pages/user/escolha-plano.html {
+    return 301 /escolha-plano;
+}
+
+# Payment
+location = /pages/payment/pagamento.html {
+    return 301 /pagamento;
+}
+
+# Admin
+location = /pages/admin/admin.html {
+    return 301 /admin;
+}
+location = /pages/admin/login.html {
+    return 301 /admin-login;
+}
+
+# ============================================
+# CONFIGURAÇÕES ADICIONAIS (Opcional)
+# ============================================
+
+# Cache para arquivos estáticos
+location ~* \.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot)$ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+    access_log off;
+}
+
+# HTML sem cache
+location ~ \.html$ {
+    add_header Cache-Control "no-cache, no-store, must-revalidate";
+}
+

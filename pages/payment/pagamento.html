@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="../../assets/css/header.css">
     <!-- QR Code Library -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <!-- Sistema de Toast -->
+    <script src="../../assets/js/toast.js"></script>
     <style>
         * {
             margin: 0;
@@ -326,21 +328,65 @@
         /* Estilos para seção PIX */
         #pixSection {
             animation: fadeIn 0.3s ease-in;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 30px;
+        }
+        
+        /* Overlay escuro quando PIX estiver visível */
+        #pixOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+        }
+        
+        #pixSection[style*="display: block"],
+        #pixSection:not([style*="display: none"]) {
+            display: block !important;
+        }
+        
+        #pixSection[style*="display: none"] {
+            display: none !important;
         }
 
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translate(-50%, -50%) scale(0.9);
             }
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translate(-50%, -50%) scale(1);
             }
         }
-
+        
         #pixCode {
             word-break: break-all;
+        }
+        
+        /* Responsivo para mobile */
+        @media (max-width: 768px) {
+            #pixSection {
+                width: 95%;
+                max-width: 95%;
+                padding: 20px;
+                max-height: 95vh;
+            }
         }
 
         .pix-success {
@@ -386,7 +432,7 @@
 
         <div class="payment-wrapper">
             <!-- Calculadora -->
-            <div class="calculator-section">
+            <div class="calculator-section" id="calculatorSection">
                 <h2 class="section-title">📊 Calculadora de Preço</h2>
 
                 <div class="form-group">
@@ -397,6 +443,7 @@
                             id="daysInput" 
                             class="days-input" 
                             min="3" 
+                            max="30"
                             value="7"
                             required
                         >
@@ -422,54 +469,6 @@
                     <div class="highlight-info">
                         Seu anúncio ficará em destaque por 3 dias. Aparecerá no topo das buscas!
                     </div>
-                </div>
-            </div>
-
-            <!-- Resumo -->
-            <div class="summary-section">
-                <h2 class="section-title">📋 Resumo do Pedido</h2>
-
-                <div class="announcement-info" id="announcementInfo">
-                    <h4>📝 Anúncio:</h4>
-                    <p id="announcementTitle">Carregando...</p>
-                </div>
-
-                <div class="price-breakdown">
-                    <div class="price-row">
-                        <span class="price-label">Publicação (por dia)</span>
-                        <span class="price-value" id="dailyPrice">R$ 9,90</span>
-                    </div>
-                    <div class="price-row">
-                        <span class="price-label">Dias selecionados</span>
-                        <span class="price-value" id="daysSelected">7 dias</span>
-                    </div>
-                    <div class="price-row" id="highlightRow" style="display: none;">
-                        <span class="price-label">⭐ Destaque (3 dias)</span>
-                        <span class="price-value" id="highlightPrice">R$ 8,90</span>
-                    </div>
-                    <div class="price-row price-total">
-                        <span class="price-label">Total</span>
-                        <span class="price-value" id="totalPrice">R$ 69,30</span>
-                    </div>
-                </div>
-
-                <div class="payment-methods">
-                    <h3 style="margin-bottom: 15px; font-size: 16px;">Forma de Pagamento</h3>
-                    <div class="payment-method" style="background: #e8f5e9; border-color: #4caf50;">
-                        <input type="radio" id="paymentPix" name="paymentMethod" value="pix" checked disabled>
-                        <label for="paymentPix">
-                            <span class="payment-icon">💳</span>
-                            PIX - Aprovação Imediata
-                        </label>
-                    </div>
-                </div>
-
-                <button class="btn-pay" id="btnPay" onclick="processPayment()">
-                    💳 Gerar PIX
-                </button>
-
-                <div class="warning-box" id="warningBox">
-                    ⚠️ Após o pagamento ser confirmado, seu anúncio será publicado imediatamente.
                 </div>
             </div>
 
@@ -532,13 +531,65 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Resumo -->
+            <div class="summary-section" id="summarySection">
+                <h2 class="section-title">📋 Resumo do Pedido</h2>
+
+                <div class="announcement-info" id="announcementInfo">
+                    <h4>📝 Anúncio:</h4>
+                    <p id="announcementTitle">Carregando...</p>
+                </div>
+
+                <div class="price-breakdown">
+                    <div class="price-row">
+                        <span class="price-label">Publicação (por dia)</span>
+                        <span class="price-value" id="dailyPrice">R$ 9,90</span>
+                    </div>
+                    <div class="price-row">
+                        <span class="price-label">Dias selecionados</span>
+                        <span class="price-value" id="daysSelected">7 dias</span>
+                    </div>
+                    <div class="price-row" id="highlightRow" style="display: none;">
+                        <span class="price-label">⭐ Destaque (3 dias)</span>
+                        <span class="price-value" id="highlightPrice">R$ 8,90</span>
+                    </div>
+                    <div class="price-row price-total">
+                        <span class="price-label">Total</span>
+                        <span class="price-value" id="totalPrice">R$ 69,30</span>
+                    </div>
+                </div>
+
+                <div class="payment-methods">
+                    <h3 style="margin-bottom: 15px; font-size: 16px;">Forma de Pagamento</h3>
+                    <div class="payment-method" style="background: #e8f5e9; border-color: #4caf50;">
+                        <input type="radio" id="paymentPix" name="paymentMethod" value="pix" checked disabled>
+                        <label for="paymentPix">
+                            <span class="payment-icon">💳</span>
+                            PIX - Aprovação Imediata
+                        </label>
+                    </div>
+                </div>
+
+                <button class="btn-pay" id="btnPay" onclick="processPayment()">
+                    💳 Gerar PIX
+                </button>
+
+                <div class="warning-box" id="warningBox">
+                    ⚠️ Após o pagamento ser confirmado, seu anúncio será publicado imediatamente.
+                </div>
+            </div>
+
             </div>
         </div>
     </div>
 
+    <!-- Sistema de Toast (carregado apenas uma vez) -->
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../../assets/js/supabase-config.js"></script>
     <script src="../../assets/js/supabase-auth-service.js"></script>
+    <script src="../../assets/js/config-service.js"></script>
     <script src="../../assets/js/header-auth.js"></script>
 
     <script>
@@ -553,25 +604,99 @@
         });
 
         let authService;
-        const DAILY_PRICE = 9.90;
-        const HIGHLIGHT_PRICE = 8.90;
-        const MIN_DAYS = 3;
-        const RECOMMENDED_DAYS = 7;        
         
-        // Configurações do PushinPay PIX
-        // Como a API do PushinPay bloqueia CORS, vamos usar o n8n como proxy
-        const PUSHINPAY_API_KEY = 'a04770e3-1bbf-4913-bf47-3fc05a440873|1tPtzIVtY6njf5LIgJ2GDK8zME2pQ8DNwZAe6reA91526390';
-        const N8N_PIX_CREATE_URL = 'https://hooks.upcaodigital.com.br/webhook/criar-pix'; // Endpoint no n8n para criar PIX
-        const N8N_PIX_CHECK_URL = 'https://hooks.upcaodigital.com.br/webhook/verificar-pix'; // Endpoint no n8n para verificar PIX
-        const N8N_WEBHOOK_URL = 'https://hooks.upcaodigital.com.br/webhook/acheinailha'; // Webhook de confirmação
+        // Variáveis de configuração (serão carregadas do banco - SEM valores hardcoded)
+        let DAILY_PRICE = null;
+        let HIGHLIGHT_PRICE = null;
+        let MIN_DAYS = null;
+        let MAX_DAYS = null;
+        let MAX_PRICE = null;
+        let RECOMMENDED_DAYS = null;
+        
+        // Configurações do PushinPay PIX (serão carregadas do banco - SEM valores hardcoded)
+        let PUSHINPAY_API_KEY = null;
+        let N8N_PIX_CREATE_URL = null;
+        let N8N_PIX_CHECK_URL = null;
+        let N8N_WEBHOOK_URL = null;
         
         // Variáveis globais para controle do PIX
         let pixCheckInterval = null;
         let currentPixId = null;
 
+        // Função para carregar configurações do banco
+        async function loadConfigurations(forceRefresh = false) {
+            try {
+                if (!window.configService) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+
+                if (window.configService) {
+                    await window.configService.initialize();
+                    
+                    // Se forçar refresh, limpar cache primeiro
+                    if (forceRefresh) {
+                        window.configService.clearCache();
+                    }
+                    
+                    // Carregar configurações de preços (OBRIGATÓRIO - do banco)
+                    const pricingConfig = await window.configService.getPricingConfig();
+                    if (!pricingConfig.dailyPrice || !pricingConfig.highlightPrice || !pricingConfig.minDays || !pricingConfig.maxDays || !pricingConfig.maxPrice || !pricingConfig.recommendedDays) {
+                        throw new Error('Configurações de preços não encontradas no banco de dados. Verifique a tabela configuracoes.');
+                    }
+                    DAILY_PRICE = pricingConfig.dailyPrice;
+                    HIGHLIGHT_PRICE = pricingConfig.highlightPrice;
+                    MIN_DAYS = pricingConfig.minDays;
+                    MAX_DAYS = pricingConfig.maxDays;
+                    MAX_PRICE = pricingConfig.maxPrice;
+                    RECOMMENDED_DAYS = pricingConfig.recommendedDays;
+
+                    // Carregar configurações PushinPay (OBRIGATÓRIO - do banco)
+                    const pushinpayConfig = await window.configService.getPushinPayConfig(forceRefresh);
+                    
+                    // Verificar isProduction corretamente
+                    const isProduction = pushinpayConfig.isProduction === true;
+                    
+                    // Validar que as API keys existem
+                    if (isProduction && !pushinpayConfig.apiKeyProd) {
+                        throw new Error('API Key de produção do PushinPay não encontrada no banco de dados.');
+                    }
+                    if (!isProduction && !pushinpayConfig.apiKeySandbox) {
+                        throw new Error('API Key de sandbox do PushinPay não encontrada no banco de dados.');
+                    }
+                    
+                    PUSHINPAY_API_KEY = isProduction ? pushinpayConfig.apiKeyProd : pushinpayConfig.apiKeySandbox;
+                    
+
+                    // Carregar configurações N8N (OBRIGATÓRIO - do banco)
+                    const n8nConfig = await window.configService.getN8NConfig();
+                    if (!n8nConfig.pixCreateUrl || !n8nConfig.pixCheckUrl || !n8nConfig.webhookUrl) {
+                        throw new Error('Configurações N8N não encontradas no banco de dados. Verifique a tabela configuracoes.');
+                    }
+                    N8N_PIX_CREATE_URL = n8nConfig.pixCreateUrl;
+                    N8N_PIX_CHECK_URL = n8nConfig.pixCheckUrl;
+                    N8N_WEBHOOK_URL = n8nConfig.webhookUrl;
+                } else {
+                    throw new Error('ConfigService não disponível. Verifique se os scripts foram carregados corretamente.');
+                }
+            } catch (error) {
+                // Em caso de erro, mostrar mensagem clara e não continuar
+                const errorMsg = `Erro ao carregar configurações do banco de dados: ${error.message}`;
+                console.error(errorMsg, error);
+                if (window.toast && window.toast.container) {
+                    window.toast.error(errorMsg);
+                } else {
+                    alert(errorMsg + '\n\nO sistema não pode continuar sem as configurações do banco de dados.');
+                }
+                throw error; // Propagar erro para que a página não continue sem configurações
+            }
+        }
+
         // Inicializar
         document.addEventListener('DOMContentLoaded', async () => {
             try {
+                // Carregar configurações primeiro (para garantir que estão disponíveis)
+                await loadConfigurations(true); // forceRefresh = true na inicialização
+                
                 // Carregar header
                 const headerResponse = await fetch('../../components/header-component.html');
                 const headerHTML = await headerResponse.text();
@@ -583,10 +708,18 @@
                 if (window.authService) {
                     authService = window.authService;
                     await checkAuth();
-                    loadAnnouncementInfo();
-                    setupCalculators();
+                    
+                    // Verificar se há PIX pendente ANTES de carregar outras coisas
+                    const hasPendingPix = await checkPendingPixPayment();
+                    
+                    if (!hasPendingPix) {
+                        // Só carregar informações se não houver PIX pendente
+                        loadAnnouncementInfo();
+                        setupCalculators();
+                    }
                 } else {
-                    alert('Erro ao carregar serviço de autenticação');
+                    if (window.toast) window.toast.error('Erro ao carregar serviço de autenticação');
+                    else alert('Erro ao carregar serviço de autenticação');
                 }
             } catch (error) {
             }
@@ -609,7 +742,8 @@
                         // Ignorar
                     }
                 }
-                alert('Você precisa estar logado para publicar um anúncio');
+                if (window.toast) window.toast.warning('Você precisa estar logado para publicar um anúncio');
+                else alert('Você precisa estar logado para publicar um anúncio');
                 window.location.href = '../../pages/auth/login.html';
                 return false;
             }
@@ -637,7 +771,8 @@
                         // Ignorar
                     }
                 }
-                alert('Você precisa estar logado para publicar um anúncio');
+                if (window.toast) window.toast.warning('Você precisa estar logado para publicar um anúncio');
+                else alert('Você precisa estar logado para publicar um anúncio');
                 window.location.href = '../../pages/auth/login.html';
                 return false;
             }
@@ -664,9 +799,26 @@
         }
 
         function setupCalculators() {
+            // Verificar se as configurações foram carregadas
+            if (MIN_DAYS === null || MAX_DAYS === null || DAILY_PRICE === null || HIGHLIGHT_PRICE === null || MAX_PRICE === null) {
+                console.warn('Configurações não carregadas ainda. Tentando novamente...');
+                setTimeout(() => {
+                    if (MIN_DAYS !== null && MAX_DAYS !== null) {
+                        setupCalculators();
+                    }
+                }, 1000);
+                return;
+            }
+            
             const daysInput = document.getElementById('daysInput');
             const highlightCheckbox = document.getElementById('highlightCheckbox');
             const daysButtons = document.querySelectorAll('.days-btn');
+
+            // Atualizar atributos min/max do input com valores do banco
+            if (daysInput) {
+                daysInput.min = MIN_DAYS;
+                daysInput.max = MAX_DAYS;
+            }
 
             // Botões de dias rápidos
             daysButtons.forEach(btn => {
@@ -684,10 +836,15 @@
 
             // Input manual
             daysInput.addEventListener('input', () => {
-                const value = parseInt(daysInput.value) || MIN_DAYS;
+                let value = parseInt(daysInput.value) || MIN_DAYS;
                 
                 if (value < MIN_DAYS) {
+                    value = MIN_DAYS;
                     daysInput.value = MIN_DAYS;
+                }
+                if (value > MAX_DAYS) {
+                    value = MAX_DAYS;
+                    daysInput.value = MAX_DAYS;
                 }
                 
                 // Atualizar botões ativos
@@ -712,19 +869,53 @@
         }
 
         function calculatePrice() {
-            const days = parseInt(document.getElementById('daysInput').value) || MIN_DAYS;
+            // Verificar se as configurações foram carregadas
+            if (DAILY_PRICE === null || HIGHLIGHT_PRICE === null || MAX_PRICE === null || MIN_DAYS === null || MAX_DAYS === null) {
+                console.warn('Configurações não carregadas. Não é possível calcular preço.');
+                return;
+            }
+            
+            let days = parseInt(document.getElementById('daysInput').value) || MIN_DAYS;
+            
+            // Garantir que está dentro dos limites
+            if (days < MIN_DAYS) {
+                days = MIN_DAYS;
+                document.getElementById('daysInput').value = MIN_DAYS;
+            }
+            if (days > MAX_DAYS) {
+                days = MAX_DAYS;
+                document.getElementById('daysInput').value = MAX_DAYS;
+            }
+            
             const hasHighlight = document.getElementById('highlightCheckbox').checked;
 
-            const basePrice = days * DAILY_PRICE;
-            const highlightPrice = hasHighlight ? HIGHLIGHT_PRICE : 0;
-            const total = basePrice + highlightPrice;
+            // Lógica especial: Se for 30 dias + destaque, total = R$ 150,00
+            let basePrice;
+            let highlightPrice = hasHighlight ? HIGHLIGHT_PRICE : 0;
+            let total;
+            let dailyPriceDisplay = DAILY_PRICE; // Valor por dia para exibição
+
+            if (hasHighlight && days === MAX_DAYS) {
+                // 30 dias + destaque = R$ 150,00 total
+                // basePrice = 150 - 8.90 = 141.10
+                basePrice = MAX_PRICE - HIGHLIGHT_PRICE; // 150.00 - 8.90 = 141.10
+                total = MAX_PRICE; // R$ 150,00
+                // Valor por dia ajustado: 141.10 / 30 = 4.703333... ≈ R$ 4,70
+                dailyPriceDisplay = basePrice / days; // R$ 4,70 por dia
+            } else {
+                // Cálculo normal
+                basePrice = Math.min(days * DAILY_PRICE, MAX_PRICE); // Não ultrapassar máximo
+                total = basePrice + highlightPrice;
+                dailyPriceDisplay = DAILY_PRICE; // R$ 5,00 por dia
+            }
 
             // Atualizar exibição
+            document.getElementById('dailyPrice').textContent = formatCurrency(dailyPriceDisplay);
             document.getElementById('daysSelected').textContent = `${days} ${days === 1 ? 'dia' : 'dias'}`;
             
             if (hasHighlight) {
                 document.getElementById('highlightRow').style.display = 'flex';
-                document.getElementById('highlightPrice').textContent = `R$ ${HIGHLIGHT_PRICE.toFixed(2).replace('.', ',')}`;
+                document.getElementById('highlightPrice').textContent = formatCurrency(highlightPrice);
             } else {
                 document.getElementById('highlightRow').style.display = 'none';
             }
@@ -744,19 +935,41 @@
                 btnPay.disabled = true;
                 btnPay.textContent = '⏳ Processando...';
 
-                const days = parseInt(document.getElementById('daysInput').value) || MIN_DAYS;
+                let days = parseInt(document.getElementById('daysInput').value) || MIN_DAYS;
+                
+                // Garantir que está dentro dos limites
+                if (days < MIN_DAYS) {
+                    days = MIN_DAYS;
+                    document.getElementById('daysInput').value = MIN_DAYS;
+                }
+                if (days > MAX_DAYS) {
+                    days = MAX_DAYS;
+                    document.getElementById('daysInput').value = MAX_DAYS;
+                }
+                
                 const hasHighlight = document.getElementById('highlightCheckbox').checked;
                 const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
 
                 // Calcular valores
-                const basePrice = days * DAILY_PRICE;
-                const highlightPrice = hasHighlight ? HIGHLIGHT_PRICE : 0;
-                const total = basePrice + highlightPrice;
+                // Lógica especial: Se for 30 dias + destaque, total = R$ 150,00
+                let basePrice;
+                let highlightPrice = hasHighlight ? HIGHLIGHT_PRICE : 0;
+                let total;
 
-                // Obter dados do anúncio
+                if (hasHighlight && days === MAX_DAYS) {
+                    // 30 dias + destaque = R$ 150,00 total
+                    basePrice = MAX_PRICE - HIGHLIGHT_PRICE; // 150.00 - 8.90 = 141.10
+                    total = MAX_PRICE; // R$ 150,00
+                } else {
+                    // Cálculo normal
+                    basePrice = Math.min(days * DAILY_PRICE, MAX_PRICE); // Não ultrapassar máximo
+                    total = basePrice + highlightPrice;
+                }
+
+                // Obter dados do anúncio do localStorage
                 const anuncioData = JSON.parse(localStorage.getItem('pendingAnnouncement') || '{}');
                 
-                if (!anuncioData.id) {
+                if (!anuncioData || !anuncioData.dados) {
                     throw new Error('Dados do anúncio não encontrados');
                 }
 
@@ -774,33 +987,87 @@
                 const dadosCompletos = anuncioData.dados || {};
                 
                 // Verificar se é um anúncio existente (rascunho) ou novo
-                let anuncioId = anuncioData.id || anuncioData.dados?.id;
+                // Se anuncioData.id existe e é um UUID válido (não temp_), é um rascunho existente
+                let anuncioId = anuncioData.id;
+                const isRascunhoExistente = anuncioId && 
+                                           typeof anuncioId === 'string' && 
+                                           !anuncioId.startsWith('temp_') && 
+                                           anuncioId.length > 10;
                 
-                // Se não tem ID válido, criar anúncio primeiro (como rascunho)
-                if (!anuncioId || typeof anuncioId !== 'string' || anuncioId.startsWith('temp_') || anuncioId.length <= 10) {
-                    const anuncioDataDB = {
-                        usuario_id: user.id,
-                        titulo: dadosCompletos.titulo,
-                        descricao: dadosCompletos.descricao,
-                        tipo_imovel: dadosCompletos.tipo,
-                        categoria: dadosCompletos.categoria,
-                        valor: dadosCompletos.preco,
-                        endereco: dadosCompletos.localizacao || '',
-                        bairro: null,
-                        cidade: 'Ilha',
-                        estado: 'BA',
-                        cep: null,
-                        area_terreno: null,
-                        area_construida: null,
-                        quartos: dadosCompletos.quartos || null,
-                        banheiros: dadosCompletos.banheiros || null,
-                        vagas_garagem: dadosCompletos.vagasGaragem || null,
-                        emoji: dadosCompletos.emoji || null,
-                        caracteristicas: dadosCompletos.caracteristicas || [],
-                        ativo: false, // Ainda não publicado
-                        status: 'pendente_pagamento' // Aguardando pagamento
-                    };
+                // Preparar dados do anúncio
+                const anuncioDataDB = {
+                    usuario_id: user.id,
+                    titulo: dadosCompletos.titulo,
+                    descricao: dadosCompletos.descricao,
+                    tipo_imovel: dadosCompletos.tipo,
+                    categoria: dadosCompletos.categoria,
+                    valor: dadosCompletos.preco,
+                    endereco: dadosCompletos.localizacao || '',
+                    bairro: null,
+                    cidade: 'Ilha',
+                    estado: 'BA',
+                    cep: null,
+                    area_terreno: null,
+                    area_construida: null,
+                    quartos: dadosCompletos.quartos || null,
+                    banheiros: dadosCompletos.banheiros || null,
+                    vagas_garagem: dadosCompletos.vagasGaragem || null,
+                    emoji: dadosCompletos.emoji || null,
+                    caracteristicas: dadosCompletos.caracteristicas || [],
+                    // Nota: imagens não é uma coluna direta na tabela anuncios
+                    // As imagens são armazenadas em outra estrutura ou tabela relacionada
+                    ativo: false, // Ainda não publicado
+                    status: 'pendente_pagamento' // Aguardando pagamento
+                };
 
+                // Criar ou atualizar anúncio no banco de dados
+                if (isRascunhoExistente) {
+                    // É um rascunho existente, fazer UPDATE
+                    const { data: updatedData, error: updateError } = await supabase
+                        .from('anuncios')
+                        .update(anuncioDataDB)
+                        .eq('id', anuncioId)
+                        .select()
+                        .single();
+
+                    if (updateError || !updatedData) {
+                        throw new Error('Erro ao atualizar anúncio: ' + (updateError?.message || 'Erro desconhecido'));
+                    }
+
+                    anuncioId = updatedData.id;
+
+                    // Atualizar imagens: remover as antigas e inserir as novas
+                    if (dadosCompletos.imagens && Array.isArray(dadosCompletos.imagens)) {
+                        try {
+                            // Remover imagens antigas deste anúncio
+                            await supabase
+                                .from('imagens_anuncio')
+                                .delete()
+                                .eq('anuncio_id', anuncioId);
+
+                            // Inserir novas imagens (se houver)
+                            if (dadosCompletos.imagens.length > 0) {
+                                const imagensData = dadosCompletos.imagens.map((url, index) => ({
+                                    anuncio_id: anuncioId,
+                                    url: url,
+                                    ordem: index,
+                                    principal: index === 0 // Primeira imagem é principal
+                                }));
+
+                                const { error: imagensError } = await supabase
+                                    .from('imagens_anuncio')
+                                    .insert(imagensData);
+
+                                if (imagensError) {
+                                    console.warn('Aviso: Erro ao atualizar imagens:', imagensError.message);
+                                }
+                            }
+                        } catch (imagensError) {
+                            console.warn('Aviso: Erro ao processar imagens:', imagensError);
+                        }
+                    }
+                } else {
+                    // É um novo anúncio, fazer INSERT
                     const { data: insertedData, error: insertError } = await supabase
                         .from('anuncios')
                         .insert([anuncioDataDB])
@@ -812,29 +1079,46 @@
                     }
 
                     anuncioId = insertedData.id;
+
+                    // Salvar imagens na tabela imagens_anuncio (se houver imagens)
+                    if (dadosCompletos.imagens && Array.isArray(dadosCompletos.imagens) && dadosCompletos.imagens.length > 0) {
+                        try {
+                            // Preparar dados das imagens para inserção
+                            const imagensData = dadosCompletos.imagens.map((url, index) => ({
+                                anuncio_id: anuncioId,
+                                url: url,
+                                ordem: index,
+                                principal: index === 0 // Primeira imagem é principal
+                            }));
+
+                            // Inserir todas as imagens de uma vez
+                            const { error: imagensError } = await supabase
+                                .from('imagens_anuncio')
+                                .insert(imagensData);
+
+                            if (imagensError) {
+                                // Não é crítico se falhar, mas logar o erro
+                                console.warn('Aviso: Erro ao salvar imagens:', imagensError.message);
+                            }
+                        } catch (imagensError) {
+                            // Não é crítico se falhar, apenas logar
+                            console.warn('Aviso: Erro ao processar imagens:', imagensError);
+                        }
+                    }
                 }
 
                 // Converter valor para centavos (PushinPay usa centavos)
                 const valorCentavos = Math.round(total * 100);
 
-                // Criar PIX no PushinPay
-                const pixData = {
-                    value: valorCentavos, // Valor em centavos
-                    description: `Anúncio - ${days} ${days === 1 ? 'dia' : 'dias'}${hasHighlight ? ' + Destaque' : ''}`,
-                    metadata: {
-                        anuncio_id: anuncioId,
-                        dias_publicacao: days,
-                        valor_total: total,
-                        valor_base: basePrice,
-                        valor_destaque: highlightPrice,
-                        em_destaque: hasHighlight,
-                        forma_pagamento: 'pix',
-                        user_id: user.id,
-                        tipo: 'anuncio'
-                    }
-                };
+                // Recarregar configurações antes de criar PIX para garantir valor atualizado
+                await loadConfigurations(true); // forceRefresh = true
+                
+                // Validar que as configurações foram carregadas
+                if (!PUSHINPAY_API_KEY || !N8N_PIX_CREATE_URL) {
+                    throw new Error('Configurações de pagamento não foram carregadas do banco de dados.');
+                }
 
-                // Fazer requisição para criar PIX via n8n (proxy para evitar CORS)
+                // Criar PIX no PushinPay via n8n (proxy para evitar CORS)
                 const pixResponse = await fetch(N8N_PIX_CREATE_URL, {
                     method: 'POST',
                     headers: {
@@ -842,7 +1126,8 @@
                     },
                     body: JSON.stringify({
                         api_key: PUSHINPAY_API_KEY,
-                        pix_data: pixData
+                        value: valorCentavos, // Valor em centavos
+                        anuncio_id: anuncioId // ID do anúncio para salvar transaction_id no banco
                     })
                 });
 
@@ -853,54 +1138,117 @@
 
                 const pixResult = await pixResponse.json();
 
+                // Estrutura da resposta pode ser:
+                // 1. Array: [{ data: {...}, success: true }]
+                // 2. Objeto direto: { id, qr_code, qr_code_base64, ... }
+                // 3. Objeto com data: { data: { id, qr_code, ... }, success: true }
+                
+                let resultData;
+                
+                if (Array.isArray(pixResult)) {
+                    // Se for array, pegar o primeiro elemento
+                    const firstItem = pixResult[0];
+                    if (firstItem && firstItem.data) {
+                        resultData = firstItem.data;
+                    } else if (firstItem) {
+                        resultData = firstItem;
+                    }
+                } else if (pixResult.data) {
+                    // Se tem data, usar data
+                    resultData = pixResult.data;
+                } else {
+                    // Se não tem data, usar o objeto direto
+                    resultData = pixResult;
+                }
+
                 // Verificar se houve erro na resposta
-                if (pixResult.error || !pixResult.success) {
-                    throw new Error(pixResult.error || 'Erro ao criar PIX');
+                if (resultData.error || (pixResult.error && !resultData)) {
+                    throw new Error(resultData.error || pixResult.error || 'Erro ao criar PIX');
                 }
 
-                // Obter dados (pode estar em pixResult.data se vier do n8n)
-                const resultData = pixResult.data || pixResult;
-
-                // Verificar se a resposta contém o QR Code
-                if (!resultData.qr_code && !resultData.qrcode && !resultData.pix_code) {
-                    throw new Error('Resposta do PIX inválida. QR Code não encontrado.');
+                if (!resultData) {
+                    throw new Error('Dados do PIX não encontrados na resposta');
                 }
 
-                // Obter dados do PIX
-                const pixCode = resultData.qr_code || resultData.qrcode || resultData.pix_code;
-                const pixId = resultData.id || resultData.transaction_id || resultData.pix_id || pixResult.id;
+                // Estrutura esperada: { id, qr_code, status: "created", value, qr_code_base64, anuncio_id }
+                // IMPORTANTE: transaction_id vem em MINUSCULA do n8n e deve ser salvo assim
+                let transactionId = resultData.id;
+                const pixCode = resultData.qr_code;
+                const qrCodeBase64 = resultData.qr_code_base64;
+                
+                if (!transactionId) {
+                    throw new Error('ID da transação não encontrado na resposta');
+                }
+                
+                // GARANTIR que transaction_id está em MINUSCULA antes de salvar
+                transactionId = String(transactionId).toLowerCase();
+                
+                if (!pixCode) {
+                    throw new Error('QR Code não encontrado na resposta');
+                }
                 
                 // Salvar ID da transação no anúncio (status pendente)
+                // IMPORTANTE: Salvar em MINUSCULA para manter consistência
                 try {
-                    await supabase
+                    const { error: updateError } = await supabase
                         .from('anuncios')
                         .update({
-                            transacao_id: pixId,
+                            transacao_id: transactionId, // Garantido em MINUSCULA
                             status: 'pendente_pagamento'
                         })
                         .eq('id', anuncioId);
+                    
+                    if (updateError) {
+                        throw new Error('Erro ao salvar ID da transação no banco: ' + updateError.message);
+                    }
                 } catch (e) {
-                    // Não foi possível salvar ID da transação
+                    throw new Error('Erro ao salvar ID da transação no banco: ' + (e.message || 'Erro desconhecido'));
                 }
 
-                // Armazenar dados globalmente
-                currentPixId = pixId;
+                // Armazenar dados globalmente para verificação de status
+                currentPixId = transactionId;
+                
+                // Salvar no localStorage para persistir entre recarregamentos
+                const pixPendingData = {
+                    transactionId: transactionId,
+                    anuncioId: anuncioId, // IMPORTANTE: Salvar anuncioId para usar como fallback
+                    paymentData: {
+                        days,
+                        total,
+                        basePrice,
+                        highlightPrice,
+                        hasHighlight,
+                        user: user.id,
+                        anuncioId: anuncioId // Adicionar anuncioId para usar como fallback
+                    },
+                    pixCode: pixCode,
+                    qrCodeBase64: qrCodeBase64,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('pixPendingPayment', JSON.stringify(pixPendingData));
+                
+                // Esconder calculadora e resumo, mostrar apenas PIX
+                document.getElementById('calculatorSection').style.display = 'none';
+                document.getElementById('summarySection').style.display = 'none';
                 
                 // Exibir QR Code na tela
-                displayPixQrCode(pixCode, total);
+                // Usar qr_code_base64 para imagem e qr_code para copiar
+                displayPixQrCode(pixCode, qrCodeBase64, total);
                 
                 // Iniciar verificação de pagamento
-                startPixCheck(pixId, anuncioId, {
+                startPixCheck(transactionId, anuncioId, {
                     days,
                     total,
                     basePrice,
                     highlightPrice,
                     hasHighlight,
-                    user: user.id
+                    user: user.id,
+                    anuncioId: anuncioId // Adicionar anuncioId para usar como fallback
                 });
 
             } catch (error) {
-                alert('Erro ao processar pagamento: ' + error.message);
+                if (window.toast) window.toast.error('Erro ao processar pagamento: ' + error.message);
+                else alert('Erro ao processar pagamento: ' + error.message);
                 
                 const btnPay = document.getElementById('btnPay');
                 btnPay.disabled = false;
@@ -909,40 +1257,81 @@
         }
 
         // Exibir QR Code do PIX
-        function displayPixQrCode(pixCode, valor) {
-            // Mostrar seção PIX
+        function displayPixQrCode(pixCode, qrCodeBase64, valor) {
+            // Criar overlay se não existir
+            let overlay = document.getElementById('pixOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'pixOverlay';
+                overlay.onclick = cancelPixPayment; // Fechar ao clicar no overlay
+                document.body.appendChild(overlay);
+            }
+            
+            // Mostrar overlay e seção PIX
+            overlay.style.display = 'block';
             document.getElementById('pixSection').style.display = 'block';
             
             // Esconder botão de pagamento
             document.getElementById('btnPay').style.display = 'none';
             
-            // Preencher código PIX
+            // Preencher código PIX (Copia e Cola)
             document.getElementById('pixCode').value = pixCode;
             
             // Preencher valor
             document.getElementById('pixValue').textContent = formatCurrency(valor);
             
-            // Gerar QR Code visual
+            // Exibir QR Code visual
             const qrcodeCanvas = document.getElementById('qrcodeCanvas');
             const qrcodeImage = document.getElementById('qrcodeImage');
             
-            QRCode.toCanvas(qrcodeCanvas, pixCode, {
-                width: 300,
-                margin: 2,
-                color: {
-                    dark: '#000000',
-                    light: '#FFFFFF'
-                }
-            }, function (error) {
-                if (error) {
-                    qrcodeImage.style.display = 'none';
+            // Sempre tentar usar qr_code_base64 primeiro (melhor qualidade)
+            if (qrCodeBase64) {
+                // Se já tem prefixo data:image, usar direto
+                if (qrCodeBase64.startsWith('data:image')) {
+                    qrcodeImage.src = qrCodeBase64;
+                    qrcodeCanvas.style.display = 'none';
+                    qrcodeImage.style.display = 'block';
                 } else {
-                    // Converter canvas para imagem
-                    qrcodeImage.src = qrcodeCanvas.toDataURL();
+                    // Se não tem prefixo, adicionar (assumindo PNG)
+                    qrcodeImage.src = `data:image/png;base64,${qrCodeBase64}`;
                     qrcodeCanvas.style.display = 'none';
                     qrcodeImage.style.display = 'block';
                 }
-            });
+            } else {
+                // Fallback: Se não temos base64, gerar QR code do pixCode usando a biblioteca
+                qrcodeCanvas.style.display = 'block';
+                qrcodeImage.style.display = 'none';
+                
+                // Limpar canvas anterior
+                const ctx = qrcodeCanvas.getContext('2d');
+                ctx.clearRect(0, 0, qrcodeCanvas.width, qrcodeCanvas.height);
+                
+                // Gerar QR code
+                if (typeof QRCode !== 'undefined') {
+                    QRCode.toCanvas(qrcodeCanvas, pixCode, {
+                        width: 300,
+                        margin: 2,
+                        color: {
+                            dark: '#000000',
+                            light: '#FFFFFF'
+                        }
+                    }, (error) => {
+                        if (error) {
+                            console.error('Erro ao gerar QR code:', error);
+                            // Se falhar, mostrar mensagem
+                            if (window.toast && window.toast.container) {
+                                try {
+                                    window.toast.warning('QR Code gerado, mas imagem não pôde ser exibida. Use o código PIX para copiar.');
+                                } catch (e) {
+                                    // Ignorar erro do toast
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    console.warn('Biblioteca QRCode não disponível. Exibindo apenas código PIX.');
+                }
+            }
             
             // Scroll para seção PIX
             document.getElementById('pixSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -966,13 +1355,22 @@
                     btnCopy.style.background = '#0077B6';
                 }, 2000);
             } catch (err) {
-                alert('Erro ao copiar. Por favor, copie manualmente.');
+                if (window.toast) window.toast.error('Erro ao copiar. Por favor, copie manualmente.');
+                else alert('Erro ao copiar. Por favor, copie manualmente.');
             }
         }
 
         // Verificar status do pagamento PIX via n8n (proxy para evitar CORS)
-        async function checkPixStatus(pixId) {
+        async function checkPixStatus(transactionId) {
             try {
+                // Recarregar configurações antes de verificar status para garantir API key correta
+                await loadConfigurations(true); // forceRefresh = true
+                
+                // Validar que as configurações foram carregadas
+                if (!PUSHINPAY_API_KEY || !N8N_PIX_CHECK_URL) {
+                    throw new Error('Configurações de pagamento não foram carregadas do banco de dados.');
+                }
+                
                 const response = await fetch(N8N_PIX_CHECK_URL, {
                     method: 'POST',
                     headers: {
@@ -980,7 +1378,7 @@
                     },
                     body: JSON.stringify({
                         api_key: PUSHINPAY_API_KEY,
-                        pix_id: pixId
+                        transaction_id: String(transactionId).toLowerCase() // Garantir MINUSCULA
                     })
                 });
 
@@ -990,17 +1388,42 @@
 
                 const pixData = await response.json();
                 
+                // Estrutura da resposta do n8n pode ser:
+                // 1. Array: [{ data: {...}, success: true }]
+                // 2. Objeto direto: { data: {...}, success: true }
+                // 3. Objeto com data: { data: { status: "paid", ... }, success: true }
+                
+                let resultData;
+                
+                if (Array.isArray(pixData)) {
+                    // Se for array, pegar o primeiro elemento
+                    const firstItem = pixData[0];
+                    if (firstItem && firstItem.data) {
+                        resultData = firstItem.data;
+                    } else if (firstItem) {
+                        resultData = firstItem;
+                    }
+                } else if (pixData.data) {
+                    // Se tem data, usar data
+                    resultData = pixData.data;
+                } else {
+                    // Se não tem data, usar o objeto direto
+                    resultData = pixData;
+                }
+                
                 // Verificar se houve erro
-                if (pixData.error || !pixData.success) {
+                if (resultData && resultData.error) {
                     return { paid: false, status: 'error', data: null };
                 }
                 
-                // Obter dados (pode estar em pixData.data se vier do n8n)
-                const resultData = pixData.data || pixData;
+                if (!resultData) {
+                    return { paid: false, status: 'error', data: null };
+                }
                 
-                // Verificar status (pode variar: 'paid', 'pago', 'approved', etc.)
-                const status = resultData.status || resultData.payment_status;
-                const isPaid = status === 'paid' || status === 'pago' || status === 'approved' || status === 'aprovado';
+                // Verificar status conforme estrutura real da API
+                // Status possíveis: "created", "paid"
+                const status = resultData.status;
+                const isPaid = status === 'paid';
                 
                 return {
                     paid: isPaid,
@@ -1008,41 +1431,246 @@
                     data: resultData
                 };
             } catch (error) {
-                return { paid: false, status: 'error', data: null };
+                console.error('Erro ao verificar status do PIX:', error);
+                return { paid: false, status: 'error', data: null, error: error.message };
+            }
+        }
+
+        // Verificar se há PIX pendente no localStorage
+        async function checkPendingPixPayment() {
+            try {
+                const pixPendingStr = localStorage.getItem('pixPendingPayment');
+                if (!pixPendingStr) {
+                    return false; // Não há PIX pendente
+                }
+
+                const pixPendingData = JSON.parse(pixPendingStr);
+                
+                // Verificar se o PIX ainda é válido (não expirou há mais de 15 minutos)
+                const now = Date.now();
+                const pixAge = now - pixPendingData.timestamp;
+                const maxAge = 15 * 60 * 1000; // 15 minutos
+                
+                if (pixAge > maxAge) {
+                    // PIX expirado, limpar localStorage
+                    localStorage.removeItem('pixPendingPayment');
+                    return false;
+                }
+
+                // Verificar status do pagamento
+                // IMPORTANTE: transaction_id está em MINUSCULA no banco
+                const transactionIdUpper = String(pixPendingData.transactionId).toLowerCase();
+                const result = await checkPixStatus(transactionIdUpper);
+                
+                if (result.paid) {
+                    // Pagamento confirmado! Processar e limpar localStorage
+                    try {
+                        await atualizarAnuncioAposPagamento(transactionIdUpper, pixPendingData.paymentData);
+                    } catch (updateError) {
+                        console.error('Erro ao atualizar anúncio após pagamento:', updateError);
+                        // Tentar usar anuncioId do localStorage como fallback
+                        if (pixPendingData.anuncioId) {
+                            try {
+                                const supabase = authService.getSupabase();
+                                if (supabase) {
+                                    const diasPublicacao = pixPendingData.paymentData.days || 7;
+                                    const agora = new Date();
+                                    const dataInicio = agora.toISOString();
+                                    const dataFim = new Date(agora);
+                                    dataFim.setDate(dataFim.getDate() + diasPublicacao);
+                                    
+                                    await supabase
+                                        .from('anuncios')
+                                        .update({
+                                            status: 'publicado',
+                                            ativo: true,
+                                            data_inicio_publicacao: dataInicio,
+                                            data_fim_publicacao: dataFim.toISOString(),
+                                            dias_publicacao: diasPublicacao,
+                                            valor_pagamento: pixPendingData.paymentData.total,
+                                            forma_pagamento: 'pix',
+                                            em_destaque: pixPendingData.paymentData.hasHighlight || false
+                                        })
+                                        .eq('id', pixPendingData.anuncioId);
+                                }
+                            } catch (fallbackError) {
+                                console.error('Erro no fallback:', fallbackError);
+                            }
+                        }
+                    }
+                    
+                    // Limpar localStorage
+                    localStorage.removeItem('pixPendingPayment');
+                    
+                    // Mostrar mensagem e redirecionar
+                    if (window.toast && window.toast.container) {
+                        try {
+                            window.toast.success('✅ Pagamento confirmado! Seu anúncio foi publicado com sucesso.');
+                        } catch (e) {
+                            // Ignorar erro do toast
+                        }
+                    }
+                    
+                    setTimeout(() => {
+                        window.location.href = '../../pages/user/meus-anuncios.html';
+                    }, 2000);
+                    
+                    return true;
+                } else {
+                    // Pagamento ainda não confirmado, mostrar tela PIX
+                    document.getElementById('calculatorSection').style.display = 'none';
+                    document.getElementById('summarySection').style.display = 'none';
+                    
+                    // Criar overlay se não existir
+                    let overlay = document.getElementById('pixOverlay');
+                    if (!overlay) {
+                        overlay = document.createElement('div');
+                        overlay.id = 'pixOverlay';
+                        overlay.onclick = cancelPixPayment; // Fechar ao clicar no overlay
+                        document.body.appendChild(overlay);
+                    }
+                    overlay.style.display = 'block';
+                    document.getElementById('pixSection').style.display = 'block';
+                    
+                    // Restaurar dados do PIX (sem chamar displayPixQrCode para evitar duplicar overlay)
+                    document.getElementById('pixCode').value = pixPendingData.pixCode;
+                    document.getElementById('pixValue').textContent = formatCurrency(pixPendingData.paymentData.total);
+                    
+                    // Exibir QR Code visual
+                    const qrcodeCanvas = document.getElementById('qrcodeCanvas');
+                    const qrcodeImage = document.getElementById('qrcodeImage');
+                    
+                    if (pixPendingData.qrCodeBase64) {
+                        if (pixPendingData.qrCodeBase64.startsWith('data:image')) {
+                            qrcodeImage.src = pixPendingData.qrCodeBase64;
+                        } else {
+                            qrcodeImage.src = `data:image/png;base64,${pixPendingData.qrCodeBase64}`;
+                        }
+                        qrcodeCanvas.style.display = 'none';
+                        qrcodeImage.style.display = 'block';
+                    }
+                    
+                    // Iniciar verificação de pagamento
+                    currentPixId = pixPendingData.transactionId;
+                    startPixCheck(pixPendingData.transactionId, pixPendingData.anuncioId, pixPendingData.paymentData);
+                    
+                    return true;
+                }
+            } catch (error) {
+                console.error('Erro ao verificar PIX pendente:', error);
+                // Em caso de erro, limpar localStorage e mostrar tela normal
+                localStorage.removeItem('pixPendingPayment');
+                return false;
             }
         }
 
         // Iniciar verificação periódica do pagamento
-        function startPixCheck(pixId, anuncioId, paymentData) {
+        function startPixCheck(transactionId, anuncioId, paymentData) {
             // Atualizar status inicial
             document.getElementById('pixStatus').textContent = '⏳ Aguardando pagamento...';
             document.getElementById('pixStatus').style.color = '#ff9800';
             
-            // Verificar a cada 3 segundos
-            pixCheckInterval = setInterval(async () => {
-                const result = await checkPixStatus(pixId);
-                
-                if (result.paid) {
-                    // Pagamento confirmado!
-                    clearInterval(pixCheckInterval);
-                    pixCheckInterval = null;
+            // Função para verificar pagamento
+            const checkPayment = async () => {
+                try {
+                    const result = await checkPixStatus(transactionId);
                     
-                    // Atualizar status visual
-                    document.getElementById('pixStatus').textContent = '✅ Pagamento confirmado!';
-                    document.getElementById('pixStatus').style.color = '#28a745';
-                    
-                    // Disparar webhook para n8n
-                    await sendWebhookToN8n(anuncioId, pixId, paymentData, result.data);
-                    
-                    // Mostrar mensagem de sucesso
-                    setTimeout(() => {
-                        alert('✅ Pagamento confirmado! Seu anúncio será publicado em instantes.');
-                        window.location.href = '../../pages/user/meus-anuncios.html';
-                    }, 2000);
-                } else if (result.status === 'error') {
-                    // Erro na verificação, continuar tentando
+                    if (result.paid) {
+                        // Pagamento confirmado! PARAR IMEDIATAMENTE de verificar
+                        if (pixCheckInterval) {
+                            clearInterval(pixCheckInterval);
+                            pixCheckInterval = null;
+                        }
+                        
+                        // Atualizar status visual
+                        document.getElementById('pixStatus').textContent = '✅ Pagamento confirmado!';
+                        document.getElementById('pixStatus').style.color = '#28a745';
+                        
+                        // IMPORTANTE: Garantir que transactionId está em MINUSCULA
+                        const transactionIdUpper = String(transactionId).toLowerCase();
+                        
+                        // Atualizar anúncio diretamente no banco de dados (após parar verificação)
+                        let atualizacaoSucesso = false;
+                        try {
+                            await atualizarAnuncioAposPagamento(transactionIdUpper, paymentData);
+                            atualizacaoSucesso = true;
+                        } catch (updateError) {
+                            console.error('Erro ao atualizar anúncio após pagamento:', updateError);
+                            // Tentar usar anuncioId do paymentData como fallback
+                            if (paymentData.anuncioId) {
+                                try {
+                                    const supabase = authService.getSupabase();
+                                    if (supabase) {
+                                        const diasPublicacao = paymentData.days || 7;
+                                        const agora = new Date();
+                                        const dataInicio = agora.toISOString();
+                                        const dataFim = new Date(agora);
+                                        dataFim.setDate(dataFim.getDate() + diasPublicacao);
+                                        
+                                        await supabase
+                                            .from('anuncios')
+                                            .update({
+                                                status: 'publicado',
+                                                ativo: true,
+                                                data_inicio_publicacao: dataInicio,
+                                                data_fim_publicacao: dataFim.toISOString(),
+                                                dias_publicacao: diasPublicacao,
+                                                valor_pagamento: paymentData.total,
+                                                forma_pagamento: 'pix',
+                                                em_destaque: paymentData.hasHighlight || false
+                                            })
+                                            .eq('id', paymentData.anuncioId);
+                                        atualizacaoSucesso = true;
+                                    }
+                                } catch (fallbackError) {
+                                    console.error('Erro no fallback:', fallbackError);
+                                }
+                            }
+                        }
+                        
+                        // Limpar localStorage após pagamento confirmado
+                        localStorage.removeItem('pixPendingPayment');
+                        
+                        // Esconder overlay e seção PIX
+                        const overlay = document.getElementById('pixOverlay');
+                        if (overlay) {
+                            overlay.style.display = 'none';
+                        }
+                        document.getElementById('pixSection').style.display = 'none';
+                        
+                        // Mostrar mensagem de sucesso e redirecionar (mesmo se atualização falhou)
+                        if (window.toast && window.toast.container) {
+                            try {
+                                if (atualizacaoSucesso) {
+                                    window.toast.success('✅ Pagamento confirmado! Seu anúncio foi publicado com sucesso.');
+                                } else {
+                                    window.toast.warning('✅ Pagamento confirmado! Mas houve um problema ao atualizar o anúncio. Entre em contato com o suporte.');
+                                }
+                            } catch (e) {
+                                // Fallback
+                            }
+                        }
+                        
+                        // Redirecionar após 2 segundos (sempre redirecionar, mesmo se atualização falhou)
+                        setTimeout(() => {
+                            window.location.href = '../../pages/user/meus-anuncios.html';
+                        }, 2000);
+                    } else if (result.status === 'error') {
+                        // Erro na verificação, continuar tentando
+                    } else {
+                        // Ainda não pago, continuar verificando
+                    }
+                } catch (error) {
+                    console.error('Erro ao verificar status do PIX:', error);
+                    // Continuar tentando mesmo em caso de erro
                 }
-            }, 3000); // Verificar a cada 3 segundos
+            };
+            
+            // Verificar imediatamente (não esperar 10 segundos)
+            checkPayment();
+            
+            // Verificar a cada 10 segundos (ajustado de 3 para 10)
+            pixCheckInterval = setInterval(checkPayment, 10000);
             
             // Parar após 15 minutos (segurança)
             setTimeout(() => {
@@ -1055,44 +1683,134 @@
             }, 15 * 60 * 1000); // 15 minutos
         }
 
-        // Enviar webhook para n8n quando pagamento confirmado
-        async function sendWebhookToN8n(anuncioId, pixId, paymentData, pixResult) {
+        // Atualizar anúncio diretamente no banco de dados após pagamento confirmado
+        async function atualizarAnuncioAposPagamento(transactionId, paymentData) {
             try {
-                const webhookData = {
-                    event: 'payment.paid',
-                    tipo: 'pix',
-                    data: {
-                        id: pixId,
-                        anuncio_id: anuncioId,
-                        amount: paymentData.total,
-                        status: 'paid',
-                        payment_method: 'pix',
-                        metadata: {
-                            anuncio_id: anuncioId,
-                            dias_publicacao: paymentData.days,
-                            valor_total: paymentData.total,
-                            valor_base: paymentData.basePrice,
-                            valor_destaque: paymentData.highlightPrice,
-                            em_destaque: paymentData.hasHighlight,
-                            forma_pagamento: 'pix',
-                            user_id: paymentData.user,
-                            tipo: 'anuncio'
-                        },
-                        created_at: new Date().toISOString()
+                // Obter cliente Supabase
+                const supabase = authService.getSupabase();
+                if (!supabase) {
+                    throw new Error('Supabase não disponível');
+                }
+
+                // IMPORTANTE: transaction_id está em MINUSCULA no banco
+                const transactionIdUpper = String(transactionId).toLowerCase();
+                
+                // Buscar anúncio pelo transaction_id
+                const { data: anuncioEncontrado, error: buscaError } = await supabase
+                    .from('anuncios')
+                    .select('id, dias_publicacao, transacao_id')
+                    .eq('transacao_id', transactionIdUpper)
+                    .single();
+
+                if (buscaError || !anuncioEncontrado) {
+                    // Estratégia 2: Tentar buscar sem converter para MINUSCULA
+                    const { data: anuncioEncontrado2, error: buscaError2 } = await supabase
+                        .from('anuncios')
+                        .select('id, dias_publicacao, transacao_id')
+                        .eq('transacao_id', transactionId)
+                        .maybeSingle();
+                    
+                    if (anuncioEncontrado2 && !buscaError2) {
+                        anuncioEncontrado = anuncioEncontrado2;
+                    } else {
+                        // Estratégia 3: Tentar buscar usando ILIKE (case insensitive)
+                        const { data: anuncioEncontrado3, error: buscaError3 } = await supabase
+                            .from('anuncios')
+                            .select('id, dias_publicacao, transacao_id')
+                            .ilike('transacao_id', `%${transactionIdUpper}%`)
+                            .maybeSingle();
+                        
+                        if (anuncioEncontrado3 && !buscaError3) {
+                            anuncioEncontrado = anuncioEncontrado3;
+                        } else {
+                            // Estratégia 4: Se não encontrar, usar anuncioId do paymentData (se disponível)
+                            // Isso pode acontecer se o transaction_id não foi salvo corretamente
+                            throw new Error(`Anúncio não encontrado com transaction_id: ${transactionIdUpper}. Tente novamente ou entre em contato com o suporte.`);
+                        }
                     }
+                }
+
+                if (!anuncioEncontrado) {
+                    throw new Error('Anúncio não encontrado com o transaction_id fornecido');
+                }
+
+                const anuncioId = anuncioEncontrado.id;
+                const diasPublicacao = paymentData.days || anuncioEncontrado.dias_publicacao || 7;
+
+                // Calcular datas
+                const agora = new Date();
+                const dataInicio = agora.toISOString();
+                
+                // Data de fim = agora + dias de publicação
+                const dataFim = new Date(agora);
+                dataFim.setDate(dataFim.getDate() + diasPublicacao);
+                const dataFimISO = dataFim.toISOString();
+
+                // Se tiver destaque, calcular data de fim do destaque (3 dias)
+                let dataFimDestaque = null;
+                if (paymentData.hasHighlight) {
+                    const dataFimDestaqueCalc = new Date(agora);
+                    dataFimDestaqueCalc.setDate(dataFimDestaqueCalc.getDate() + 3);
+                    dataFimDestaque = dataFimDestaqueCalc.toISOString();
+                }
+
+                // Preparar dados para atualização
+                const dadosAtualizacao = {
+                    status: 'publicado',
+                    ativo: true,
+                    data_inicio_publicacao: dataInicio,
+                    data_fim_publicacao: dataFimISO,
+                    dias_publicacao: diasPublicacao,
+                    valor_pagamento: paymentData.total,
+                    forma_pagamento: 'pix',
+                    em_destaque: paymentData.hasHighlight || false
                 };
 
-                const response = await fetch(N8N_WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(webhookData)
-                });
+                // Adicionar data de fim do destaque se aplicável
+                if (dataFimDestaque) {
+                    dadosAtualizacao.data_fim_destaque = dataFimDestaque;
+                }
 
-                // Webhook enviado (sucesso ou erro não bloqueia o fluxo)
+                // Atualizar anúncio no banco
+                const { error: updateError } = await supabase
+                    .from('anuncios')
+                    .update(dadosAtualizacao)
+                    .eq('id', anuncioId);
+
+                if (updateError) {
+                    throw new Error('Erro ao atualizar anúncio: ' + updateError.message);
+                }
+
+                // Criar registro na tabela de pagamentos (se existir)
+                try {
+                    const { error: pagamentoError } = await supabase
+                        .from('pagamentos_anuncio')
+                        .insert({
+                            anuncio_id: anuncioId,
+                            usuario_id: paymentData.user,
+                            valor_total: paymentData.total,
+                            valor_publicacao: paymentData.basePrice,
+                            valor_destaque: paymentData.highlightPrice || 0,
+                            dias_publicacao: diasPublicacao,
+                            dias_destaque: paymentData.hasHighlight ? 3 : 0,
+                            forma_pagamento: 'pix',
+                            status_pagamento: 'aprovado',
+                            transacao_id: String(transactionId).toLowerCase(), // Garantir MINUSCULA
+                            gateway_pagamento: 'pushinpay',
+                            aprovado_em: agora.toISOString()
+                        });
+
+                    // Se a tabela não existir, não é crítico (apenas logar)
+                    if (pagamentoError && !pagamentoError.message.includes('does not exist')) {
+                        // Não lançar erro, apenas logar (opcional)
+                    }
+                } catch (pagamentoError) {
+                    // Tabela de pagamentos pode não existir, não é crítico
+                }
+
             } catch (error) {
-                // Erro ao enviar webhook (não bloqueia o fluxo)
+                // Em caso de erro, tentar novamente ou logar
+                throw new Error('Erro ao atualizar anúncio após pagamento: ' + error.message);
             }
         }
 
@@ -1103,15 +1821,21 @@
                 pixCheckInterval = null;
             }
             
+            // Limpar localStorage do PIX pendente (mas preservar dados do anúncio)
+            localStorage.removeItem('pixPendingPayment');
+            
             currentPixId = null;
             
-            // Esconder seção PIX
+            // Esconder overlay e seção PIX
+            const overlay = document.getElementById('pixOverlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
             document.getElementById('pixSection').style.display = 'none';
             
-            // Mostrar botão de pagamento novamente
-            document.getElementById('btnPay').style.display = 'block';
-            document.getElementById('btnPay').disabled = false;
-            document.getElementById('btnPay').textContent = '💳 Gerar PIX';
+            // Recarregar a página para resetar tudo, mas preservando dados do anúncio
+            // O localStorage 'pendingAnnouncement' será mantido para o processo continuar
+            window.location.reload();
         }
     </script>
 </body>

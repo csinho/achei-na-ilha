@@ -7,6 +7,8 @@
     <link rel="icon" type="image/svg+xml" href="../../assets/images/logo-achei-na-ilha.png">
     <link rel="alternate icon" href="../../assets/images/logo-achei-na-ilha.png">
     <link rel="stylesheet" href="../../assets/css/header.css">
+    <!-- Sistema de Toast -->
+    <script src="../../assets/js/toast.js"></script>
     <style>
         * {
             margin: 0;
@@ -413,7 +415,8 @@
             // Validar formato básico do telefone
             const telefoneLimpo = telefone.replace(/\D/g, '');
             if (telefoneLimpo.length < 10) {
-                alert('Por favor, informe um telefone válido com DDD (ex: (11) 9 9999-9999).');
+                if (window.toast) window.toast.warning('Por favor, informe um telefone válido com DDD (ex: (11) 9 9999-9999).');
+                else alert('Por favor, informe um telefone válido com DDD (ex: (11) 9 9999-9999).');
                 return;
             }
             
@@ -751,7 +754,8 @@
             
             if (novoTelefone !== null) {
                 if (novoTelefone.trim() === '') {
-                    alert('Por favor, informe um telefone válido.');
+                    if (window.toast) window.toast.warning('Por favor, informe um telefone válido.');
+                    else alert('Por favor, informe um telefone válido.');
                     return;
                 }
                 
@@ -771,7 +775,8 @@
                     
                     // Atualizar exibição
                     document.getElementById('phoneValue').textContent = novoTelefone.trim();
-                    alert('Telefone atualizado com sucesso!');
+                    if (window.toast) window.toast.success('Telefone atualizado com sucesso!');
+                    else alert('Telefone atualizado com sucesso!');
             }
         }
 
@@ -820,7 +825,8 @@
             // Validar formato básico do telefone
             const telefoneLimpo = novoTelefone.replace(/\D/g, '');
             if (telefoneLimpo.length < 10) {
-                alert('Por favor, informe um telefone válido com DDD (ex: (11) 9 9999-9999).');
+                if (window.toast) window.toast.warning('Por favor, informe um telefone válido com DDD (ex: (11) 9 9999-9999).');
+                else alert('Por favor, informe um telefone válido com DDD (ex: (11) 9 9999-9999).');
                 return;
             }
             

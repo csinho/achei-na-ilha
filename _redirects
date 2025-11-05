@@ -1,0 +1,31 @@
+# Netlify Redirects - URLs Curtas
+# Formato: /caminho-origem /caminho-destino código
+
+# URLs Curtas (rewrite)
+/busca /pages/property/busca.html 200
+/detalhes /pages/property/detalhes.html 200
+/novo-anuncio /pages/property/novo-anuncio.html 200
+/login /pages/auth/login.html 200
+/cadastro /pages/auth/cadastro.html 200
+/confirmar-email /pages/auth/confirmar-email.html 200
+/meus-anuncios /pages/user/meus-anuncios.html 200
+/configuracoes /pages/user/configuracoes.html 200
+/escolha-plano /pages/user/escolha-plano.html 200
+/pagamento /pages/payment/pagamento.html 200
+/admin /pages/admin/admin.html 200
+/admin-login /pages/admin/login.html 200
+
+# Redirecionamentos 301 (URLs antigas para novas)
+/pages/property/busca.html /busca 301
+/pages/property/detalhes.html /detalhes 301
+/pages/property/novo-anuncio.html /novo-anuncio 301
+/pages/auth/login.html /login 301
+/pages/auth/cadastro.html /cadastro 301
+/pages/auth/confirmar-email.html /confirmar-email 301
+/pages/user/meus-anuncios.html /meus-anuncios 301
+/pages/user/configuracoes.html /configuracoes 301
+/pages/user/escolha-plano.html /escolha-plano 301
+/pages/payment/pagamento.html /pagamento 301
+/pages/admin/admin.html /admin 301
+/pages/admin/login.html /admin-login 301
+

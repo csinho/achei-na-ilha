@@ -8,10 +8,14 @@
     <link rel="alternate icon" href="../../assets/images/logo-achei-na-ilha.png">
     <link rel="stylesheet" href="../../assets/css/header.css">
     
-    <!-- Carregar Supabase primeiro -->
+    <!-- Sistema de Toast -->
+    <script src="../../assets/js/toast.js"></script>
+    <!-- Supabase CDN (DEVE SER PRIMEIRO) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Carregar configuração do Supabase -->
+    <!-- Configuração do Supabase -->
     <script src="../../assets/js/supabase-config.js"></script>
+    <!-- Serviço de Configurações -->
+    <script src="../../assets/js/config-service.js"></script>
     <style>
         * {
             margin: 0;
@@ -319,6 +323,56 @@
             border-color: #005a8d !important;
         }
 
+        /* Toggle Switch para PushinPay */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 30px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: #0077B6;
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+
+        .toggle-switch input:focus + .toggle-slider {
+            box-shadow: 0 0 1px #0077B6;
+        }
+
         label[for*="paymentMethod"]:has(input:checked) {
             border-color: #0077B6 !important;
             background: #e8f4fd !important;
@@ -393,6 +447,32 @@
     <div id="header-container" style="display: none;"></div>
 
     <div class="main-content">
+        <!-- Aba de Configurações -->
+        <div class="section-card" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 class="section-title" style="margin: 0;">⚙️ Configurações do Sistema</h2>
+                <button class="btn btn-primary" onclick="abrirModalConfiguracoes()">
+                    📝 Gerenciar Configurações
+                </button>
+            </div>
+            
+            <!-- Resumo rápido das configurações principais -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div style="padding: 15px; background: #f5f5f5; border-radius: 10px;">
+                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Ambiente PushinPay</div>
+                    <div id="pushinpayEnvStatus" style="font-weight: 600; color: #333;">Carregando...</div>
+                </div>
+                <div style="padding: 15px; background: #f5f5f5; border-radius: 10px;">
+                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Preço Diário (Anúncios)</div>
+                    <div id="pricingDailyStatus" style="font-weight: 600; color: #333;">Carregando...</div>
+                </div>
+                <div style="padding: 15px; background: #f5f5f5; border-radius: 10px;">
+                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Preço Máximo</div>
+                    <div id="pricingMaxStatus" style="font-weight: 600; color: #333;">Carregando...</div>
+                </div>
+            </div>
+        </div>
+        
         <div class="dashboard">
             <div class="stat-card">
                 <div class="stat-icon">📢</div>
@@ -564,6 +644,27 @@
         </div>
         </div>
 
+    <!-- Modal de Configurações -->
+    <div id="modalConfiguracoes" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2 style="margin: 0; color: #333;">⚙️ Gerenciar Configurações do Sistema</h2>
+                <button onclick="fecharModalConfiguracoes()" class="modal-close-btn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: background 0.2s;">
+                    ✕
+                </button>
+            </div>
+            
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <div id="configuracoesList" style="display: flex; flex-direction: column; gap: 20px;">
+                    <!-- Configurações serão carregadas dinamicamente -->
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        Carregando configurações...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de Pagamento de Publicidade -->
     <div id="modalPagamentoPublicidade" class="modal-overlay" style="display: none;">
         <div class="modal-content" style="max-width: 700px;">
@@ -590,56 +691,91 @@
                     <h3 style="color: #333; margin-bottom: 20px; font-size: 18px;">📊 Calculadora de Preço</h3>
                     
                     <div class="form-group">
-                        <label style="display: block; margin-bottom: 10px; color: #333; font-weight: 600;">Quantidade de Dias</label>
-                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
-                            <input 
-                                type="number" 
-                                id="publicidadeDaysInput" 
-                                min="7" 
-                                max="30"
-                                value="30"
-                                required
-                                style="width: 100px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; text-align: center;"
-                            >
-                            <span style="color: #666;">dias</span>
+                        <label style="display: block; margin-bottom: 10px; color: #333; font-weight: 600;">Escolha o Plano</label>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                            <button type="button" class="days-btn-publicidade" data-days="7" data-price="35.00" style="padding: 12px 20px; border: 2px solid #e0e0e0; background: white; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; flex: 1; min-width: 120px;">
+                                <div style="font-weight: 600; margin-bottom: 4px;">7 dias</div>
+                                <div style="font-size: 12px; color: #666;">R$ 35,00</div>
+                            </button>
+                            <button type="button" class="days-btn-publicidade" data-days="15" data-price="75.00" style="padding: 12px 20px; border: 2px solid #e0e0e0; background: white; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; flex: 1; min-width: 120px;">
+                                <div style="font-weight: 600; margin-bottom: 4px;">15 dias</div>
+                                <div style="font-size: 12px; color: #666;">R$ 75,00</div>
+                            </button>
+                            <button type="button" class="days-btn-publicidade active" data-days="30" data-price="150.00" style="padding: 12px 20px; border: 2px solid #0077B6; background: #0077B6; color: white; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; flex: 1; min-width: 120px;">
+                                <div style="font-weight: 600; margin-bottom: 4px;">30 dias</div>
+                                <div style="font-size: 12px; opacity: 0.9;">R$ 150,00</div>
+                            </button>
                         </div>
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
-                            <button type="button" class="days-btn-publicidade" data-days="7" style="padding: 8px 16px; border: 2px solid #e0e0e0; background: white; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s;">7 dias</button>
-                            <button type="button" class="days-btn-publicidade" data-days="14" style="padding: 8px 16px; border: 2px solid #e0e0e0; background: white; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s;">14 dias</button>
-                            <button type="button" class="days-btn-publicidade active" data-days="30" style="padding: 8px 16px; border: 2px solid #0077B6; background: #0077B6; color: white; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s;">30 dias</button>
-                        </div>
-                        <p style="color: #666; font-size: 12px; margin-top: 10px;">Mínimo: 7 dias | Máximo: 30 dias</p>
+                        <input 
+                            type="hidden" 
+                            id="publicidadeDaysInput" 
+                            value="30"
+                            required
+                        >
+                        <p style="color: #666; font-size: 12px; margin-top: 10px;">Escolha entre 7, 15 ou 30 dias de publicação</p>
                     </div>
 
                     <!-- Resumo do Preço -->
                     <div style="background: white; border-radius: 8px; padding: 20px; margin-top: 20px; border: 2px solid #e0e0e0;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                            <span style="color: #666;">Valor por mês (30 dias):</span>
-                            <span style="color: #333; font-weight: 600;">R$ 59,90</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                            <span style="color: #666;">Dias selecionados:</span>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                            <span style="color: #666;">Plano selecionado:</span>
                             <span style="color: #333; font-weight: 600;" id="publicidadeDaysSelected">30 dias</span>
                         </div>
                         <div style="border-top: 2px solid #e0e0e0; padding-top: 15px; margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
                             <span style="color: #333; font-weight: 700; font-size: 18px;">Total:</span>
-                            <span style="color: #0077B6; font-weight: 700; font-size: 24px;" id="publicidadeTotalPrice">R$ 59,90</span>
+                            <span style="color: #0077B6; font-weight: 700; font-size: 24px;" id="publicidadeTotalPrice">R$ 150,00</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Métodos de Pagamento -->
-                <div style="margin-bottom: 25px;">
-                    <h3 style="color: #333; margin-bottom: 15px; font-size: 18px;">💳 Método de Pagamento</h3>
-                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                        <label style="flex: 1; min-width: 150px; padding: 15px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.2s;">
-                            <input type="radio" name="publicidadePaymentMethod" value="pix" checked style="margin-right: 8px;">
-                            <span>PIX</span>
-                        </label>
-                        <label style="flex: 1; min-width: 150px; padding: 15px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.2s;">
-                            <input type="radio" name="publicidadePaymentMethod" value="cartao" style="margin-right: 8px;">
-                            <span>Cartão de Crédito</span>
-                        </label>
+                <!-- Seção PIX (aparece após gerar PIX) -->
+                <div id="pixSectionPublicidade" style="display: none; margin-bottom: 25px;">
+                    <div style="background: #f0f9ff; border: 2px solid #0077B6; border-radius: 12px; padding: 25px;">
+                        <h3 style="color: #333; margin-bottom: 15px; font-size: 18px;">📱 Pagamento via PIX</h3>
+                        
+                        <p style="color: #666; margin-bottom: 20px; font-size: 14px;">
+                            Copie o código PIX abaixo e envie para o usuário realizar o pagamento:
+                        </p>
+                        
+                        <!-- Código PIX Copia e Cola -->
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 600; color: #333; margin-bottom: 10px; font-size: 14px;">
+                                Código PIX (Copia e Cola)
+                            </label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input 
+                                    type="text" 
+                                    id="pixCodePublicidade" 
+                                    readonly 
+                                    style="flex: 1; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 12px; font-family: monospace; background: #f9f9f9; word-break: break-all;"
+                                >
+                                <button 
+                                    type="button" 
+                                    id="btnCopyPixPublicidade" 
+                                    onclick="copiarPixCodePublicidade()"
+                                    style="padding: 12px 20px; background: #0077B6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; white-space: nowrap; transition: background 0.2s;"
+                                >
+                                    📋 Copiar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Status do Pagamento -->
+                        <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px; border: 2px solid #e0e0e0;">
+                            <p id="pixStatusPublicidade" style="color: #ff9800; font-weight: 600; margin: 0; text-align: center;">
+                                ⏳ Aguardando pagamento...
+                            </p>
+                        </div>
+                        
+                        <div style="margin-top: 15px; text-align: center;">
+                            <button 
+                                type="button" 
+                                onclick="cancelarPixPublicidade()"
+                                style="padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;"
+                            >
+                                ❌ Cancelar Pagamento
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -648,7 +784,7 @@
                         Cancelar
                     </button>
                     <button type="button" id="btnPagarPublicidade" onclick="processarPagamentoPublicidade()" class="btn btn-primary">
-                        💳 Efetuar Pagamento
+                        💳 Gerar PIX
                     </button>
                 </div>
             </div>
@@ -892,11 +1028,105 @@
         // Flag para evitar múltiplos event listeners
         let calculadoraPublicidadeConfigurada = false;
 
-        // Constantes de preço
-        const PUBLICIDADE_PRECO_MES = 59.90;
-        const PUBLICIDADE_DIAS_MIN = 7;
-        const PUBLICIDADE_DIAS_MAX = 30;
-        const PUBLICIDADE_PRECO_DIA = PUBLICIDADE_PRECO_MES / PUBLICIDADE_DIAS_MAX; // R$ 1,997 por dia
+        // Variáveis de configuração (serão carregadas do banco - SEM valores hardcoded)
+        let PUBLICIDADE_PLANOS = null;
+        let PUBLICIDADE_DIAS_DISPONIVEIS = null;
+        let PUBLICIDADE_DIAS_MIN = null;
+        let PUBLICIDADE_DIAS_MAX = null;
+        
+        // Configurações PushinPay - API Keys (serão carregadas do banco - SEM valores hardcoded)
+        let PUSHINPAY_API_KEY_PROD = null;
+        let PUSHINPAY_API_KEY_SANDBOX = null;
+        
+        // Variável global para ambiente PushinPay (será atualizada do banco)
+        let pushinpayIsProduction = null;
+
+        // Função para obter a API key baseado no ambiente (do banco)
+        function getPushinPayApiKey() {
+            if (pushinpayIsProduction === null || PUSHINPAY_API_KEY_PROD === null || PUSHINPAY_API_KEY_SANDBOX === null) {
+                throw new Error('Configurações PushinPay não foram carregadas do banco de dados.');
+            }
+            return pushinpayIsProduction ? PUSHINPAY_API_KEY_PROD : PUSHINPAY_API_KEY_SANDBOX;
+        }
+        
+        let N8N_PIX_CREATE_URL = null;
+        let N8N_PIX_CHECK_URL = null;
+
+        // Função para carregar configurações do banco
+        async function loadConfigurations() {
+            try {
+                if (!window.configService) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+
+                if (window.configService) {
+                    await window.configService.initialize();
+                    
+                    // Carregar configurações de preços de publicidades
+                    const publicidadePricingConfig = await window.configService.getPublicidadePricingConfig();
+                    PUBLICIDADE_PLANOS = {
+                        7: publicidadePricingConfig.plano7Dias || 35.00,
+                        15: publicidadePricingConfig.plano15Dias || 75.00,
+                        30: publicidadePricingConfig.plano30Dias || 150.00
+                    };
+                    PUBLICIDADE_DIAS_DISPONIVEIS = [7, 15, 30];
+                    PUBLICIDADE_DIAS_MIN = publicidadePricingConfig.diasMin || 7;
+                    PUBLICIDADE_DIAS_MAX = publicidadePricingConfig.diasMax || 30;
+
+                    // Carregar configurações PushinPay (OBRIGATÓRIO - do banco)
+                    const pushinpayConfig = await window.configService.getPushinPayConfig(true); // forceRefresh = true
+                    
+                    if (!pushinpayConfig.apiKeyProd || !pushinpayConfig.apiKeySandbox) {
+                        throw new Error('API Keys do PushinPay não encontradas no banco de dados.');
+                    }
+                    
+                    PUSHINPAY_API_KEY_PROD = pushinpayConfig.apiKeyProd;
+                    PUSHINPAY_API_KEY_SANDBOX = pushinpayConfig.apiKeySandbox;
+                    
+                    // Usar isProduction do banco (comparar explicitamente com true)
+                    const isProduction = pushinpayConfig.isProduction === true; // Comparar explicitamente com true
+                    pushinpayIsProduction = isProduction;
+                    
+
+                    // Carregar configurações N8N (OBRIGATÓRIO - do banco)
+                    const n8nConfig = await window.configService.getN8NConfig();
+                    if (!n8nConfig.pixCreateUrl || !n8nConfig.pixCheckUrl) {
+                        throw new Error('Configurações N8N não encontradas no banco de dados.');
+                    }
+                    N8N_PIX_CREATE_URL = n8nConfig.pixCreateUrl;
+                    N8N_PIX_CHECK_URL = n8nConfig.pixCheckUrl;
+
+                    // Carregar configurações Cloudinary (OBRIGATÓRIO - do banco)
+                    const cloudinaryConfig = await window.configService.getCloudinaryConfig();
+                    if (!cloudinaryConfig.cloudName || !cloudinaryConfig.uploadPreset) {
+                        throw new Error('Configurações Cloudinary não encontradas no banco de dados.');
+                    }
+                    CLOUDINARY_CONFIG = {
+                        cloudName: cloudinaryConfig.cloudName,
+                        uploadPreset: cloudinaryConfig.uploadPreset
+                    };
+                } else {
+                    throw new Error('ConfigService não disponível. Verifique se os scripts foram carregados corretamente.');
+                }
+            } catch (error) {
+                // Em caso de erro, mostrar mensagem clara e não continuar
+                const errorMsg = `Erro ao carregar configurações do banco de dados: ${error.message}`;
+                console.error(errorMsg, error);
+                if (window.toast && window.toast.container) {
+                    window.toast.error(errorMsg);
+                } else {
+                    alert(errorMsg + '\n\nO sistema não pode continuar sem as configurações do banco de dados.');
+                }
+                throw error; // Propagar erro para que a página não continue sem configurações
+            }
+        }
+        
+        // Variáveis globais para controle do PIX
+        let pixCheckIntervalPublicidade = null;
+        let currentPixIdPublicidade = null;
+        
+        // Variável global para subscription realtime de publicidades
+        let publicidadesAdminSubscription = null;
 
         // Funções para controlar o modal de criação
         function abrirModalNovaPublicidade() {
@@ -976,11 +1206,38 @@
         }
 
         function fecharModalPagamento() {
+            // Parar verificação de PIX se estiver ativa
+            if (pixCheckIntervalPublicidade) {
+                clearInterval(pixCheckIntervalPublicidade);
+                pixCheckIntervalPublicidade = null;
+            }
+            
+            currentPixIdPublicidade = null;
+            
             const modal = document.getElementById('modalPagamentoPublicidade');
             if (modal) {
                 modal.style.display = 'none';
                 document.body.style.overflow = 'auto';
                 publicidadePagamentoId = null;
+                
+                // Resetar estado do modal
+                const pixSection = document.getElementById('pixSectionPublicidade');
+                if (pixSection) {
+                    pixSection.style.display = 'none';
+                }
+                
+                // Mostrar calculadora novamente
+                const calculadora = document.querySelector('.modal-body > div:nth-child(2)');
+                if (calculadora) {
+                    calculadora.style.display = 'block';
+                }
+                
+                const btnPagar = document.getElementById('btnPagarPublicidade');
+                if (btnPagar) {
+                    btnPagar.style.display = 'block';
+                    btnPagar.disabled = false;
+                    btnPagar.textContent = '💳 Gerar PIX';
+                }
                 
                 // Limpar mensagens
                 const message = document.getElementById('paymentMessage');
@@ -1063,18 +1320,50 @@
 
             containerEl.appendChild(bannerItem);
             
-            // Configurar preview se houver imagem
+            // Configurar preview e event listeners
+            const imageInput = bannerItem.querySelector('.banner-image-input');
+            const preview = bannerItem.querySelector('.banner-preview');
+            const previewImg = bannerItem.querySelector('.banner-preview img');
+            const fileInput = bannerItem.querySelector('.banner-file-input');
+            const uploadBtn = bannerItem.querySelector('.btn-secondary');
+            const removeBtn = bannerItem.querySelector('.btn-danger');
+            
+            // Se já houver imagem URL, mostrar preview
             if (imagemUrl) {
-                const imageInput = bannerItem.querySelector('.banner-image-input');
-                imageInput.addEventListener('input', function() {
-                    const preview = bannerItem.querySelector('.banner-preview');
-                    const previewImg = bannerItem.querySelector('.banner-preview img');
-                    if (this.value) {
-                        previewImg.src = this.value;
-                        preview.style.display = 'block';
-                    } else {
-                        preview.style.display = 'none';
+                previewImg.src = imagemUrl;
+                preview.style.display = 'block';
+            }
+            
+            // Event listener para mudanças no input de URL
+            imageInput.addEventListener('input', function() {
+                if (this.value && this.value.startsWith('http')) {
+                    previewImg.src = this.value;
+                    preview.style.display = 'block';
+                } else {
+                    preview.style.display = 'none';
+                }
+            });
+            
+            // Event listener para upload de arquivo
+            if (fileInput) {
+                fileInput.addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        handleFileUpload(this, 'main');
                     }
+                });
+            }
+            
+            // Event listener para botão de upload
+            if (uploadBtn) {
+                uploadBtn.addEventListener('click', function() {
+                    fileInput.click();
+                });
+            }
+            
+            // Event listener para remover banner
+            if (removeBtn) {
+                removeBtn.addEventListener('click', function() {
+                    removerBanner(this);
                 });
             }
 
@@ -1088,16 +1377,37 @@
         }
 
         function showEditMessage(text, type) {
-            const messageDiv = document.getElementById('editMessage');
-            if (messageDiv) {
-                messageDiv.textContent = text;
-                messageDiv.className = 'message ' + type;
-                messageDiv.style.display = 'block';
-
-                setTimeout(() => {
-                    messageDiv.style.display = 'none';
-                }, 5000);
+            // Usar toast system
+            if (window.toast && window.toast.container) {
+                try {
+                    if (type === 'success') {
+                        const result = window.toast.success(text);
+                        if (result) return; // Toast funcionou
+                    } else if (type === 'error') {
+                        const result = window.toast.error(text);
+                        if (result) return; // Toast funcionou
+                    } else {
+                        const result = window.toast.info(text);
+                        if (result) return; // Toast funcionou
+                    }
+                } catch (e) {
+                    // Erro ao mostrar toast, tentar novamente após pequeno delay
+                    setTimeout(() => {
+                        if (window.toast && window.toast.container) {
+                            try {
+                                if (type === 'success') window.toast.success(text);
+                                else if (type === 'error') window.toast.error(text);
+                                else window.toast.info(text);
+                                return;
+                            } catch (e2) {
+                                // Se ainda falhar, usar fallback silencioso (não mostrar alert)
+                            }
+                        }
+                    }, 100);
+                }
             }
+            // Fallback silencioso - não mostrar alert para não interromper o fluxo
+            // O toast será mostrado quando o sistema estiver pronto
         }
 
         // Coletar banners do formulário de edição
@@ -1225,6 +1535,17 @@
 
         // Configurar calculadora de publicidade
         function setupCalculadoraPublicidade() {
+            // Verificar se as configurações foram carregadas
+            if (PUBLICIDADE_PLANOS === null || PUBLICIDADE_DIAS_DISPONIVEIS === null) {
+                console.warn('Configurações de publicidade não carregadas ainda. Tentando novamente...');
+                setTimeout(() => {
+                    if (PUBLICIDADE_PLANOS !== null) {
+                        setupCalculadoraPublicidade();
+                    }
+                }, 1000);
+                return;
+            }
+            
             // Evitar adicionar listeners múltiplas vezes
             if (calculadoraPublicidadeConfigurada) {
                 calcularPrecoPublicidade();
@@ -1238,10 +1559,17 @@
                 return;
             }
 
-            // Botões de dias rápidos
+            // Botões de planos
             daysButtons.forEach(btn => {
                 btn.addEventListener('click', function() {
                     const days = parseInt(btn.dataset.days);
+                    const price = parseFloat(btn.dataset.price);
+                    
+                    // Validar se é um plano válido
+                    if (!PUBLICIDADE_PLANOS[days]) {
+                        return;
+                    }
+                    
                     daysInput.value = days;
                     
                     // Atualizar botões ativos
@@ -1250,45 +1578,25 @@
                         b.style.background = 'white';
                         b.style.color = '#333';
                         b.style.borderColor = '#e0e0e0';
+                        // Restaurar cores dos textos internos
+                        const innerDivs = b.querySelectorAll('div');
+                        if (innerDivs.length > 1) {
+                            innerDivs[1].style.color = '#666';
+                            innerDivs[1].style.opacity = '1';
+                        }
                     });
                     btn.classList.add('active');
                     btn.style.background = '#0077B6';
                     btn.style.color = 'white';
                     btn.style.borderColor = '#0077B6';
+                    // Ajustar opacidade do preço no botão ativo
+                    const innerDivs = btn.querySelectorAll('div');
+                    if (innerDivs.length > 1) {
+                        innerDivs[1].style.opacity = '0.9';
+                    }
                     
                     calcularPrecoPublicidade();
                 });
-            });
-
-            // Input manual
-            daysInput.addEventListener('input', function() {
-                let value = parseInt(daysInput.value) || PUBLICIDADE_DIAS_MAX;
-                
-                if (value < PUBLICIDADE_DIAS_MIN) {
-                    value = PUBLICIDADE_DIAS_MIN;
-                    daysInput.value = value;
-                }
-                if (value > PUBLICIDADE_DIAS_MAX) {
-                    value = PUBLICIDADE_DIAS_MAX;
-                    daysInput.value = value;
-                }
-                
-                // Atualizar botões ativos
-                daysButtons.forEach(btn => {
-                    if (parseInt(btn.dataset.days) === value) {
-                        btn.classList.add('active');
-                        btn.style.background = '#0077B6';
-                        btn.style.color = 'white';
-                        btn.style.borderColor = '#0077B6';
-                    } else {
-                        btn.classList.remove('active');
-                        btn.style.background = 'white';
-                        btn.style.color = '#333';
-                        btn.style.borderColor = '#e0e0e0';
-                    }
-                });
-                
-                calcularPrecoPublicidade();
             });
 
             calculadoraPublicidadeConfigurada = true;
@@ -1297,14 +1605,32 @@
 
         // Calcular preço da publicidade
         function calcularPrecoPublicidade() {
+            // Verificar se as configurações foram carregadas
+            if (PUBLICIDADE_PLANOS === null) {
+                console.warn('Configurações de publicidade não carregadas. Não é possível calcular preço.');
+                return;
+            }
+            
             const daysInput = document.getElementById('publicidadeDaysInput');
             const daysSelected = document.getElementById('publicidadeDaysSelected');
             const totalPrice = document.getElementById('publicidadeTotalPrice');
             
             if (!daysInput || !daysSelected || !totalPrice) return;
             
-            const days = parseInt(daysInput.value) || PUBLICIDADE_DIAS_MAX;
-            const precoTotal = (PUBLICIDADE_PRECO_MES / PUBLICIDADE_DIAS_MAX) * days;
+            const days = parseInt(daysInput.value) || 30;
+            
+            // Validar se é um plano válido
+            if (!PUBLICIDADE_PLANOS[days]) {
+                // Se não for válido, usar 30 dias como padrão
+                daysInput.value = 30;
+                const btn30 = document.querySelector('.days-btn-publicidade[data-days="30"]');
+                if (btn30) {
+                    btn30.click();
+                }
+                return;
+            }
+            
+            const precoTotal = PUBLICIDADE_PLANOS[days];
             
             daysSelected.textContent = `${days} ${days === 1 ? 'dia' : 'dias'}`;
             totalPrice.textContent = formatarMoeda(precoTotal);
@@ -1324,22 +1650,22 @@
 
             const btnPagar = document.getElementById('btnPagarPublicidade');
             const daysInput = document.getElementById('publicidadeDaysInput');
-            const paymentMethod = document.querySelector('input[name="publicidadePaymentMethod"]:checked');
             
-            if (!daysInput || !paymentMethod) {
+            if (!daysInput) {
                 showPaymentMessage('Erro: Campos não encontrados', 'error');
                 return;
             }
 
-            const days = parseInt(daysInput.value) || PUBLICIDADE_DIAS_MAX;
+            const days = parseInt(daysInput.value) || 30;
             
-            if (days < PUBLICIDADE_DIAS_MIN || days > PUBLICIDADE_DIAS_MAX) {
-                showPaymentMessage(`Por favor, selecione entre ${PUBLICIDADE_DIAS_MIN} e ${PUBLICIDADE_DIAS_MAX} dias`, 'error');
+            // Validar se é um plano válido
+            if (!PUBLICIDADE_PLANOS[days]) {
+                showPaymentMessage('Por favor, selecione um plano válido (7, 15 ou 30 dias)', 'error');
                 return;
             }
 
             btnPagar.disabled = true;
-            btnPagar.textContent = '⏳ Processando...';
+            btnPagar.textContent = '⏳ Gerando PIX...';
 
             try {
                 const supabase = await obterSupabaseClient();
@@ -1347,65 +1673,499 @@
                     throw new Error('Não foi possível conectar ao banco de dados');
                 }
 
-                const precoTotal = (PUBLICIDADE_PRECO_MES / PUBLICIDADE_DIAS_MAX) * days;
-                const dataInicio = new Date();
-                const dataFim = new Date();
-                dataFim.setDate(dataFim.getDate() + days);
+                const precoTotal = PUBLICIDADE_PLANOS[days] || 150.00;
+                
+                // Converter valor para centavos (PushinPay usa centavos)
+                const valorCentavos = Math.round(precoTotal * 100);
 
-                // Atualizar publicidade com dados de pagamento
-                const updateData = {
-                    aprovada: true,
-                    visivel: true,
-                    dias_publicacao: days,
-                    valor_pagamento: precoTotal,
-                    data_inicio_publicacao: dataInicio.toISOString(),
-                    data_fim_publicacao: dataFim.toISOString(),
-                    forma_pagamento: paymentMethod.value,
-                    transacao_id: 'simulado_' + Date.now() // TODO: Substituir por ID real do gateway
-                };
+                // Criar PIX no PushinPay via n8n (proxy para evitar CORS)
+                const pixResponse = await fetch(N8N_PIX_CREATE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        api_key: getPushinPayApiKey(),
+                        value: valorCentavos, // Valor em centavos
+                        anuncio_id: publicidadePagamentoId // ID da publicidade
+                    })
+                });
 
-                const { error } = await supabase
-                    .from('publicidades')
-                    .update(updateData)
-                    .eq('id', publicidadePagamentoId);
-
-                if (error) {
-                    throw error;
+                if (!pixResponse.ok) {
+                    const errorData = await pixResponse.json().catch(() => ({ message: 'Erro desconhecido' }));
+                    throw new Error('Erro ao criar PIX: ' + (errorData.message || `Status ${pixResponse.status}`));
                 }
 
-                showPaymentMessage('Pagamento processado com sucesso! Publicidade aprovada e ativada.', 'success');
+                const pixResult = await pixResponse.json();
 
-                // Fechar modal após 2 segundos
-                setTimeout(() => {
-                    fecharModalPagamento();
-                    // Recarregar estatísticas e listagem
-                    carregarEstatisticas();
-                    renderizarPublicidades();
-                }, 2000);
+                // Processar resposta do n8n
+                let resultData;
+                
+                if (Array.isArray(pixResult)) {
+                    const firstItem = pixResult[0];
+                    if (firstItem && firstItem.data) {
+                        resultData = firstItem.data;
+                    } else if (firstItem) {
+                        resultData = firstItem;
+                    }
+                } else if (pixResult.data) {
+                    resultData = pixResult.data;
+                } else {
+                    resultData = pixResult;
+                }
+
+                if (resultData.error || (pixResult.error && !resultData)) {
+                    throw new Error(resultData.error || pixResult.error || 'Erro ao criar PIX');
+                }
+
+                if (!resultData) {
+                    throw new Error('Dados do PIX não encontrados na resposta');
+                }
+
+                // IMPORTANTE: transaction_id vem em MINUSCULA do n8n e deve ser salvo assim
+                let transactionId = resultData.id;
+                const pixCode = resultData.qr_code;
+                
+                if (!transactionId) {
+                    throw new Error('ID da transação não encontrado na resposta');
+                }
+                
+                // GARANTIR que transaction_id está em MINUSCULA antes de salvar
+                transactionId = String(transactionId).toLowerCase();
+                
+                if (!pixCode) {
+                    throw new Error('QR Code não encontrado na resposta');
+                }
+                
+                // Atualizar publicidade com transaction_id
+                const { error: updateError } = await supabase
+                    .from('publicidades')
+                    .update({
+                        transacao_id: transactionId,
+                        dias_publicacao: days,
+                        valor_pagamento: precoTotal,
+                        forma_pagamento: 'pix'
+                        // Não incluir campo 'status' pois não existe na tabela publicidades
+                    })
+                    .eq('id', publicidadePagamentoId);
+                
+                if (updateError) {
+                    throw new Error('Erro ao salvar ID da transação no banco: ' + updateError.message);
+                }
+
+                // Esconder calculadora e botão de pagar, mostrar seção PIX
+                document.querySelector('.modal-body > div:nth-child(2)').style.display = 'none'; // Esconder calculadora
+                btnPagar.style.display = 'none';
+                
+                // Mostrar seção PIX
+                const pixSection = document.getElementById('pixSectionPublicidade');
+                pixSection.style.display = 'block';
+                
+                // Preencher código PIX
+                document.getElementById('pixCodePublicidade').value = pixCode;
+                
+                // Iniciar verificação de pagamento
+                currentPixIdPublicidade = transactionId;
+                startPixCheckPublicidade(transactionId, publicidadePagamentoId, {
+                    days,
+                    total: precoTotal
+                });
 
             } catch (error) {
-                showPaymentMessage('Erro ao processar pagamento: ' + (error.message || 'Erro desconhecido'), 'error');
+                showPaymentMessage('Erro ao gerar PIX: ' + (error.message || 'Erro desconhecido'), 'error');
                 btnPagar.disabled = false;
-                btnPagar.textContent = '💳 Efetuar Pagamento';
+                btnPagar.textContent = '💳 Gerar PIX';
             }
+        }
+
+        // Verificar status do pagamento PIX via n8n
+        async function checkPixStatusPublicidade(transactionId) {
+            try {
+                const response = await fetch(N8N_PIX_CHECK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        api_key: getPushinPayApiKey(),
+                        transaction_id: String(transactionId).toLowerCase()
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erro ao verificar status do PIX');
+                }
+
+                const pixData = await response.json();
+                
+                let resultData;
+                
+                if (Array.isArray(pixData)) {
+                    const firstItem = pixData[0];
+                    if (firstItem && firstItem.data) {
+                        resultData = firstItem.data;
+                    } else if (firstItem) {
+                        resultData = firstItem;
+                    }
+                } else if (pixData.data) {
+                    resultData = pixData.data;
+                } else {
+                    resultData = pixData;
+                }
+
+                if (resultData && resultData.error) {
+                    return { paid: false, status: 'error', data: null };
+                }
+                
+                if (!resultData) {
+                    return { paid: false, status: 'error', data: null };
+                }
+                
+                const status = resultData.status;
+                const isPaid = status === 'paid';
+                
+                return {
+                    paid: isPaid,
+                    status: status,
+                    data: resultData
+                };
+            } catch (error) {
+                return { paid: false, status: 'error', data: null, error: error.message };
+            }
+        }
+
+        // Iniciar verificação periódica do pagamento
+        function startPixCheckPublicidade(transactionId, publicidadeId, paymentData) {
+            // Atualizar status inicial
+            const statusEl = document.getElementById('pixStatusPublicidade');
+            statusEl.textContent = '⏳ Aguardando pagamento...';
+            statusEl.style.color = '#ff9800';
+            
+            // Função para verificar pagamento
+            const checkPayment = async () => {
+                try {
+                    const result = await checkPixStatusPublicidade(transactionId);
+                    
+                    if (result.paid) {
+                        // Pagamento confirmado! PARAR IMEDIATAMENTE de verificar
+                        if (pixCheckIntervalPublicidade) {
+                            clearInterval(pixCheckIntervalPublicidade);
+                            pixCheckIntervalPublicidade = null;
+                        }
+                        
+                        // Atualizar status visual
+                        statusEl.textContent = '✅ Pagamento confirmado!';
+                        statusEl.style.color = '#28a745';
+                        
+                        // Atualizar publicidade no banco de dados
+                        await atualizarPublicidadeAposPagamento(transactionId, publicidadeId, paymentData);
+                        
+                        // Mostrar mensagem de sucesso
+                        setTimeout(() => {
+                            if (window.toast && window.toast.container) {
+                                try {
+                                    window.toast.success('✅ Pagamento confirmado! Publicidade aprovada e ativada.');
+                                } catch (e) {
+                                    // Ignorar erro
+                                }
+                            }
+                            // Fechar modal e recarregar
+                            fecharModalPagamento();
+                            carregarEstatisticas();
+                            renderizarPublicidades();
+                        }, 2000);
+                    } else if (result.status === 'error') {
+                        // Erro na verificação
+                        statusEl.textContent = '⚠️ Erro ao verificar pagamento. Tentando novamente...';
+                        statusEl.style.color = '#dc3545';
+                    } else {
+                        // Ainda aguardando
+                        statusEl.textContent = '⏳ Aguardando pagamento...';
+                        statusEl.style.color = '#ff9800';
+                    }
+                } catch (error) {
+                    statusEl.textContent = '⚠️ Erro ao verificar pagamento. Tentando novamente...';
+                    statusEl.style.color = '#dc3545';
+                }
+            };
+            
+            // Verificar imediatamente
+            checkPayment();
+            
+            // Verificar a cada 10 segundos
+            pixCheckIntervalPublicidade = setInterval(checkPayment, 10000);
+        }
+
+        // Atualizar publicidade após pagamento confirmado
+        async function atualizarPublicidadeAposPagamento(transactionId, publicidadeId, paymentData) {
+            try {
+                const supabase = await obterSupabaseClient();
+                if (!supabase) {
+                    throw new Error('Supabase não disponível');
+                }
+
+                const transactionIdLower = String(transactionId).toLowerCase();
+                const diasPublicacao = paymentData.days || 7;
+                
+                // Calcular datas
+                const agora = new Date();
+                const dataInicio = agora.toISOString();
+                
+                const dataFim = new Date(agora);
+                dataFim.setDate(dataFim.getDate() + diasPublicacao);
+                const dataFimISO = dataFim.toISOString();
+
+                // Atualizar publicidade
+                const { error: updateError } = await supabase
+                    .from('publicidades')
+                    .update({
+                        aprovada: true,
+                        visivel: true,
+                        dias_publicacao: diasPublicacao,
+                        valor_pagamento: paymentData.total,
+                        forma_pagamento: 'pix',
+                        data_inicio_publicacao: dataInicio,
+                        data_fim_publicacao: dataFimISO
+                        // Não incluir campo 'status' pois não existe na tabela publicidades
+                    })
+                    .eq('id', publicidadeId);
+
+                if (updateError) {
+                    throw new Error('Erro ao atualizar publicidade: ' + updateError.message);
+                }
+
+            } catch (error) {
+                throw new Error('Erro ao atualizar publicidade após pagamento: ' + error.message);
+            }
+        }
+
+        // Copiar código PIX
+        function copiarPixCodePublicidade() {
+            const pixCodeInput = document.getElementById('pixCodePublicidade');
+            const btnCopy = document.getElementById('btnCopyPixPublicidade');
+            
+            if (!pixCodeInput || !pixCodeInput.value) {
+                if (window.toast) window.toast.error('Código PIX não disponível.');
+                return;
+            }
+            
+            try {
+                pixCodeInput.select();
+                document.execCommand('copy');
+                
+                const originalText = btnCopy.textContent;
+                btnCopy.textContent = '✅ Copiado!';
+                btnCopy.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    btnCopy.textContent = originalText;
+                    btnCopy.style.background = '#0077B6';
+                }, 2000);
+                
+                if (window.toast) window.toast.success('Código PIX copiado!');
+            } catch (err) {
+                if (window.toast) window.toast.error('Erro ao copiar. Por favor, copie manualmente.');
+            }
+        }
+
+        // Cancelar pagamento PIX
+        function cancelarPixPublicidade() {
+            if (pixCheckIntervalPublicidade) {
+                clearInterval(pixCheckIntervalPublicidade);
+                pixCheckIntervalPublicidade = null;
+            }
+            
+            currentPixIdPublicidade = null;
+            
+            // Esconder seção PIX, mostrar calculadora novamente
+            document.getElementById('pixSectionPublicidade').style.display = 'none';
+            document.querySelector('.modal-body > div:nth-child(2)').style.display = 'block';
+            document.getElementById('btnPagarPublicidade').style.display = 'block';
+            document.getElementById('btnPagarPublicidade').disabled = false;
+            document.getElementById('btnPagarPublicidade').textContent = '💳 Gerar PIX';
         }
 
         // Mostrar mensagem no modal de pagamento
         function showPaymentMessage(text, type) {
-            const messageDiv = document.getElementById('paymentMessage');
-            if (messageDiv) {
-                messageDiv.textContent = text;
-                messageDiv.className = 'message ' + type;
-                messageDiv.style.display = 'block';
+            // Usar toast system
+            if (window.toast && window.toast.container) {
+                try {
+                    if (type === 'success') {
+                        const result = window.toast.success(text);
+                        if (result) return; // Toast funcionou
+                    } else if (type === 'error') {
+                        const result = window.toast.error(text);
+                        if (result) return; // Toast funcionou
+                    } else {
+                        const result = window.toast.info(text);
+                        if (result) return; // Toast funcionou
+                    }
+                } catch (e) {
+                    // Erro ao mostrar toast, tentar novamente após pequeno delay
+                    setTimeout(() => {
+                        if (window.toast && window.toast.container) {
+                            try {
+                                if (type === 'success') window.toast.success(text);
+                                else if (type === 'error') window.toast.error(text);
+                                else window.toast.info(text);
+                                return;
+                            } catch (e2) {
+                                // Se ainda falhar, usar fallback silencioso (não mostrar alert)
+                            }
+                        }
+                    }, 100);
+                }
+            }
+            // Fallback silencioso - não mostrar alert para não interromper o fluxo
+            // O toast será mostrado quando o sistema estiver pronto
+        }
 
-                setTimeout(() => {
-                    messageDiv.style.display = 'none';
-                }, 5000);
+        // Função para alternar ambiente PushinPay (agora salva no banco)
+        async function togglePushinPayEnvironment(isProductionValue = null) {
+            let isProduction;
+            const toggle = document.getElementById('pushinpayProductionToggle');
+            
+            if (isProductionValue !== null) {
+                isProduction = isProductionValue;
+            } else if (toggle) {
+                isProduction = toggle.checked;
+            } else {
+                return; // Não há toggle e nem valor fornecido
+            }
+            
+            // Salvar no banco de dados
+            try {
+                const supabase = await obterSupabaseClient();
+                if (supabase) {
+                    const { error } = await supabase
+                        .from('configuracoes')
+                        .update({ 
+                            valor: isProduction ? 'true' : 'false',
+                            atualizado_em: new Date().toISOString()
+                        })
+                        .eq('chave', 'pushinpay_production');
+                    
+                    if (error) {
+                        throw error;
+                    }
+                    
+                    // Limpar cache do configService para forçar recarregamento
+                    if (window.configService) {
+                        window.configService.clearCache();
+                    }
+                }
+            } catch (error) {
+                // Em caso de erro, salvar no localStorage como fallback
+                localStorage.setItem('pushinpay_production', isProduction ? 'true' : 'false');
+            }
+            
+            // Atualizar label se existir
+            const labelElement = document.getElementById('pushinpayEnvLabel');
+            if (labelElement) {
+                labelElement.textContent = isProduction ? 'Produção' : 'Sandbox';
+                labelElement.style.color = isProduction ? '#28a745' : '#ff9800';
+            }
+            
+            // Atualizar variável global
+            pushinpayIsProduction = isProduction;
+            
+            // Atualizar status no resumo
+            atualizarResumoConfiguracoes();
+            
+            // Recarregar configurações para atualizar variáveis globais
+            await loadConfigurations();
+            
+            // Mostrar mensagem de confirmação
+            if (window.toast && window.toast.container) {
+                try {
+                    const envText = isProduction ? 'Produção' : 'Sandbox';
+                    window.toast.success(`Ambiente PushinPay alterado para: ${envText}`);
+                } catch (e) {
+                    // Ignorar erro
+                }
+            }
+        }
+
+        // Carregar estado do PushinPay do banco (atualiza variáveis globais)
+        async function carregarEstadoPushinPay() {
+            try {
+                if (window.configService) {
+                    await window.configService.initialize();
+                    // Limpar cache para forçar recarregamento
+                    window.configService.clearCache();
+                    const pushinpayConfig = await window.configService.getPushinPayConfig(true); // forceRefresh = true
+                    const isProduction = pushinpayConfig.isProduction === true; // Comparar explicitamente com true
+                    
+                    // Atualizar variável global
+                    pushinpayIsProduction = isProduction;
+                    
+                    // Atualizar toggle se existir (no modal de configurações)
+                    const toggle = document.getElementById('pushinpayProductionToggle');
+                    const labelElement = document.getElementById('pushinpayEnvLabel');
+                    
+                    if (toggle) {
+                        toggle.checked = isProduction;
+                    }
+                    if (labelElement) {
+                        labelElement.textContent = isProduction ? 'Produção' : 'Sandbox';
+                        labelElement.style.color = isProduction ? '#28a745' : '#ff9800';
+                    }
+                    
+                    // Atualizar status no resumo
+                    atualizarResumoConfiguracoes();
+                }
+            } catch (error) {
+                // Fallback: usar localStorage (se ainda existir)
+                const storedValue = localStorage.getItem('pushinpay_production');
+                const isProduction = storedValue === null || storedValue === 'true';
+                pushinpayIsProduction = isProduction;
+                
+                const toggle = document.getElementById('pushinpayProductionToggle');
+                const labelElement = document.getElementById('pushinpayEnvLabel');
+                
+                if (toggle) {
+                    toggle.checked = isProduction;
+                }
+                if (labelElement) {
+                    labelElement.textContent = isProduction ? 'Produção' : 'Sandbox';
+                    labelElement.style.color = isProduction ? '#28a745' : '#ff9800';
+                }
+            }
+        }
+
+        // Função para atualizar resumo de configurações
+        async function atualizarResumoConfiguracoes() {
+            try {
+                if (window.configService) {
+                    const pushinpayConfig = await window.configService.getPushinPayConfig();
+                    const pricingConfig = await window.configService.getPricingConfig();
+                    
+                    const envStatus = document.getElementById('pushinpayEnvStatus');
+                    const dailyStatus = document.getElementById('pricingDailyStatus');
+                    const maxStatus = document.getElementById('pricingMaxStatus');
+                    
+                    if (envStatus) {
+                        envStatus.textContent = pushinpayConfig.isProduction ? '✅ Produção' : '🧪 Sandbox';
+                        envStatus.style.color = pushinpayConfig.isProduction ? '#28a745' : '#ff9800';
+                    }
+                    
+                    if (dailyStatus) {
+                        dailyStatus.textContent = `R$ ${pricingConfig.dailyPrice?.toFixed(2) || '5.00'}`;
+                    }
+                    
+                    if (maxStatus) {
+                        maxStatus.textContent = `R$ ${pricingConfig.maxPrice?.toFixed(2) || '150.00'}`;
+                    }
+                }
+            } catch (error) {
+                // Ignorar erros
             }
         }
 
         // Fechar modais ao clicar no overlay (fora do conteúdo) e com ESC
         document.addEventListener('DOMContentLoaded', function() {
+            // Carregar estado do PushinPay
+            carregarEstadoPushinPay();
             // Modal de criação
             const modalCriacao = document.getElementById('modalNovaPublicidade');
             if (modalCriacao) {
@@ -1560,12 +2320,24 @@
                 if (client) return client;
             }
 
-            // Fallback: criar cliente diretamente
+            // Fallback: usar configuração centralizada
             if (typeof window.supabase !== 'undefined') {
-                return window.supabase.createClient(
-                    'https://svgmuxdxxrapepbodbgv.supabase.co',
-                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2Z211eGR4eHJhcGVwYm9kYmd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0MTU2MTQsImV4cCI6MjA3Njk5MTYxNH0.U0rQ8-EXC6b0dkcCQBoE-VuNjNgNQREvcs3fWfZ1UGM'
-                );
+                try {
+                    let supabaseConfig;
+                    if (typeof window.getSupabaseConfig === 'function') {
+                        supabaseConfig = window.getSupabaseConfig();
+                    } else if (typeof SUPABASE_CONFIG !== 'undefined') {
+                        supabaseConfig = SUPABASE_CONFIG;
+                    } else if (typeof window.SUPABASE_CONFIG !== 'undefined') {
+                        supabaseConfig = window.SUPABASE_CONFIG;
+                    }
+                    
+                    if (supabaseConfig && supabaseConfig.url && supabaseConfig.anonKey) {
+                        return window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
+                    }
+                } catch (e) {
+                    console.warn('Erro ao criar cliente Supabase:', e);
+                }
             }
 
             return null;
@@ -1578,10 +2350,22 @@
                 // Se não conseguir cliente autenticado, tentar cliente anônimo para leitura
                 if (!supabase) {
                     if (typeof window.supabase !== 'undefined') {
-                        supabase = window.supabase.createClient(
-                            'https://svgmuxdxxrapepbodbgv.supabase.co',
-                            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2Z211eGR4eHJhcGVwYm9kYmd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0MTU2MTQsImV4cCI6MjA3Njk5MTYxNH0.U0rQ8-EXC6b0dkcCQBoE-VuNjNgNQREvcs3fWfZ1UGM'
-                        );
+                        try {
+                            let supabaseConfig;
+                            if (typeof window.getSupabaseConfig === 'function') {
+                                supabaseConfig = window.getSupabaseConfig();
+                            } else if (typeof SUPABASE_CONFIG !== 'undefined') {
+                                supabaseConfig = SUPABASE_CONFIG;
+                            } else if (typeof window.SUPABASE_CONFIG !== 'undefined') {
+                                supabaseConfig = window.SUPABASE_CONFIG;
+                            }
+                            
+                            if (supabaseConfig && supabaseConfig.url && supabaseConfig.anonKey) {
+                                supabase = window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
+                            }
+                        } catch (e) {
+                            console.warn('Erro ao criar cliente Supabase anônimo:', e);
+                        }
                     }
                 }
                 
@@ -1846,6 +2630,12 @@
                 } else {
                     renderizarPublicidadesLista(todasPublicidades);
                 }
+
+                // Configurar realtime subscription após carregar pela primeira vez
+                const supabase = await obterSupabaseClient();
+                if (supabase && !window.publicidadesAdminSubscription) {
+                    configurarRealtimePublicidadesAdmin(supabase);
+                }
             } catch (error) {
                 // Em caso de erro, mostrar mensagem
                 const container = document.getElementById('publicidadesList');
@@ -1858,10 +2648,8 @@
         }
 
         // ===== CONFIGURAÇÃO DO CLOUDINARY =====
-        const CLOUDINARY_CONFIG = {
-            cloudName: 'demv63uh4', // Cloud name do Cloudinary
-            uploadPreset: 'produtos' // Upload preset (deve ser unsigned)
-        };
+        // Variável (será carregada do banco - SEM valores hardcoded)
+        let CLOUDINARY_CONFIG = null;
 
         // Função para fazer upload de imagem para Cloudinary
         async function uploadToCloudinary(file) {
@@ -1883,6 +2671,11 @@
                     throw new Error('Arquivo muito grande. Máximo 10MB');
                 }
 
+                // Verificar se Cloudinary está configurado
+                if (!CLOUDINARY_CONFIG || !CLOUDINARY_CONFIG.cloudName || !CLOUDINARY_CONFIG.uploadPreset) {
+                    throw new Error('Configurações Cloudinary não foram carregadas do banco de dados.');
+                }
+                
                 const formData = new FormData();
                 formData.append('file', file);
                 formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
@@ -2118,12 +2911,24 @@
 
                 let supabase = await obterSupabaseClient();
                 
-                // Fallback: criar cliente diretamente se obterSupabaseClient falhar
+                // Fallback: usar configuração centralizada
                 if (!supabase && typeof window.supabase !== 'undefined') {
-                    supabase = window.supabase.createClient(
-                        'https://svgmuxdxxrapepbodbgv.supabase.co',
-                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2Z211eGR4eHJhcGVwYm9kYmd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0MTU2MTQsImV4cCI6MjA3Njk5MTYxNH0.U0rQ8-EXC6b0dkcCQBoE-VuNjNgNQREvcs3fWfZ1UGM'
-                    );
+                    try {
+                        let supabaseConfig;
+                        if (typeof window.getSupabaseConfig === 'function') {
+                            supabaseConfig = window.getSupabaseConfig();
+                        } else if (typeof SUPABASE_CONFIG !== 'undefined') {
+                            supabaseConfig = SUPABASE_CONFIG;
+                        } else if (typeof window.SUPABASE_CONFIG !== 'undefined') {
+                            supabaseConfig = window.SUPABASE_CONFIG;
+                        }
+                        
+                        if (supabaseConfig && supabaseConfig.url && supabaseConfig.anonKey) {
+                            supabase = window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
+                        }
+                    } catch (e) {
+                        console.warn('Erro ao criar cliente Supabase:', e);
+                    }
                 }
 
                 if (!supabase) {
@@ -2234,13 +3039,25 @@
             const adminData = JSON.parse(adminLogado);
             let supabase = await obterSupabaseClient();
             
-            // Se não conseguir pelo método padrão, criar cliente diretamente
+            // Se não conseguir pelo método padrão, usar configuração centralizada
             if (!supabase) {
                 if (typeof window.supabase !== 'undefined') {
-                    supabase = window.supabase.createClient(
-                        'https://svgmuxdxxrapepbodbgv.supabase.co',
-                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2Z211eGR4eHJhcGVwYm9kYmd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0MTU2MTQsImV4cCI6MjA3Njk5MTYxNH0.U0rQ8-EXC6b0dkcCQBoE-VuNjNgNQREvcs3fWfZ1UGM'
-                    );
+                    try {
+                        let supabaseConfig;
+                        if (typeof window.getSupabaseConfig === 'function') {
+                            supabaseConfig = window.getSupabaseConfig();
+                        } else if (typeof SUPABASE_CONFIG !== 'undefined') {
+                            supabaseConfig = SUPABASE_CONFIG;
+                        } else if (typeof window.SUPABASE_CONFIG !== 'undefined') {
+                            supabaseConfig = window.SUPABASE_CONFIG;
+                        }
+                        
+                        if (supabaseConfig && supabaseConfig.url && supabaseConfig.anonKey) {
+                            supabase = window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
+                        }
+                    } catch (e) {
+                        console.warn('Erro ao criar cliente Supabase:', e);
+                    }
                 }
             }
             
@@ -2440,6 +3257,12 @@
             const preview = bannerItem.querySelector('.banner-preview');
             const previewImg = bannerItem.querySelector('.banner-preview img');
 
+            // Se já houver imagem URL, mostrar preview
+            if (imagemUrl) {
+                previewImg.src = imagemUrl;
+                preview.style.display = 'block';
+            }
+
             // Preview quando URL é inserida
             imageInput.addEventListener('input', function() {
                 if (this.value && this.value.startsWith('http')) {
@@ -2451,21 +3274,27 @@
             });
 
             // Upload button
-            uploadBtn.addEventListener('click', function() {
-                fileInput.click();
-            });
+            if (uploadBtn) {
+                uploadBtn.addEventListener('click', function() {
+                    fileInput.click();
+                });
+            }
 
             // File upload
-            fileInput.addEventListener('change', function() {
-                if (this.files && this.files[0]) {
-                    handleFileUpload(this, 'main');
-                }
-            });
+            if (fileInput) {
+                fileInput.addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        handleFileUpload(this, 'main');
+                    }
+                });
+            }
 
             // Remove button
-            removeBtn.addEventListener('click', function() {
-                removerBanner(this);
-            });
+            if (removeBtn) {
+                removeBtn.addEventListener('click', function() {
+                    removerBanner(this);
+                });
+            }
         }
 
         async function editarPublicidade(id) {
@@ -2548,14 +3377,37 @@
         }
 
         function showMessage(text, type) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = text;
-            messageDiv.className = 'message ' + type;
-            messageDiv.style.display = 'block';
-
+            // Usar toast system
+            if (window.toast && window.toast.container) {
+                try {
+                    if (type === 'success') {
+                        const result = window.toast.success(text);
+                        if (result) return; // Toast funcionou
+                    } else if (type === 'error') {
+                        const result = window.toast.error(text);
+                        if (result) return; // Toast funcionou
+                    } else {
+                        const result = window.toast.info(text);
+                        if (result) return; // Toast funcionou
+                    }
+                } catch (e) {
+                    // Erro ao mostrar toast, tentar novamente após pequeno delay
             setTimeout(() => {
-                messageDiv.style.display = 'none';
-            }, 3000);
+                        if (window.toast && window.toast.container) {
+                            try {
+                                if (type === 'success') window.toast.success(text);
+                                else if (type === 'error') window.toast.error(text);
+                                else window.toast.info(text);
+                                return;
+                            } catch (e2) {
+                                // Se ainda falhar, usar fallback silencioso (não mostrar alert)
+                            }
+                        }
+                    }, 100);
+                }
+            }
+            // Fallback silencioso - não mostrar alert para não interromper o fluxo
+            // O toast será mostrado quando o sistema estiver pronto
         }
 
         function sairAdmin() {
@@ -2587,6 +3439,10 @@
                 // Carregar conteúdo apenas se admin estiver logado e ativo
                 await carregarEstatisticas();
                 await renderizarPublicidades();
+                
+                // Carregar estado do PushinPay e atualizar resumo
+                await carregarEstadoPushinPay();
+                await atualizarResumoConfiguracoes();
                 
                 // Chamar funções opcionais se existirem
                 if (typeof atualizarContadores === 'function') {
@@ -2623,6 +3479,355 @@
                     }
                 }, 1500);
             }
+        });
+
+        // Função para configurar realtime subscription de publicidades no admin
+        async function configurarRealtimePublicidadesAdmin(supabaseClient) {
+            // Se já existe uma subscription, remover antes de criar nova
+            if (publicidadesAdminSubscription) {
+                supabaseClient.removeChannel(publicidadesAdminSubscription);
+            }
+
+            // Criar subscription para escutar mudanças na tabela publicidades
+            publicidadesAdminSubscription = supabaseClient
+                .channel('publicidades-admin-realtime')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*', // Escutar INSERT, UPDATE, DELETE
+                        schema: 'public',
+                        table: 'publicidades'
+                    },
+                    (payload) => {
+                        // Quando houver mudança, recarregar publicidades e estatísticas
+                    setTimeout(() => {
+                            carregarEstatisticas();
+                            renderizarPublicidades();
+                        }, 500);
+                    }
+                )
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        // Subscription ativa com sucesso
+                    } else if (status === 'CHANNEL_ERROR') {
+                        // Erro na subscription - tentar reconectar após delay
+                        setTimeout(() => {
+                            obterSupabaseClient().then(supabase => {
+                                if (supabase) {
+                                    configurarRealtimePublicidadesAdmin(supabase);
+                                }
+                            });
+                        }, 5000);
+                    }
+                });
+        }
+
+        // Limpar subscription quando a página for fechada
+        window.addEventListener('beforeunload', async function() {
+            if (publicidadesAdminSubscription) {
+                const supabase = await obterSupabaseClient();
+                if (supabase) {
+                    supabase.removeChannel(publicidadesAdminSubscription);
+                }
+            }
+            if (configuracoesSubscription) {
+                const supabase = await obterSupabaseClient();
+                if (supabase) {
+                    supabase.removeChannel(configuracoesSubscription);
+                }
+            }
+        });
+
+        // ===== FUNÇÕES DE GERENCIAMENTO DE CONFIGURAÇÕES =====
+        let configuracoesSubscription = null;
+
+        async function abrirModalConfiguracoes() {
+            const modal = document.getElementById('modalConfiguracoes');
+            if (modal) {
+                modal.style.display = 'flex';
+                await carregarConfiguracoesParaEdicao();
+                
+                // Configurar realtime para atualizar automaticamente
+                if (!configuracoesSubscription) {
+                    configurarRealtimeConfiguracoes();
+                }
+            }
+        }
+
+        function fecharModalConfiguracoes() {
+            const modal = document.getElementById('modalConfiguracoes');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        async function carregarConfiguracoesParaEdicao() {
+            try {
+                const container = document.getElementById('configuracoesList');
+                if (!container) return;
+
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">Carregando...</div>';
+
+                const supabase = await obterSupabaseClient();
+                if (!supabase) {
+                    throw new Error('Supabase não disponível');
+                }
+
+                const { data: configs, error } = await supabase
+                    .from('configuracoes')
+                    .select('*')
+                    .eq('ativo', true)
+                    .order('categoria', { ascending: true })
+                    .order('chave', { ascending: true });
+
+                if (error) {
+                    throw error;
+                }
+
+                // Agrupar por categoria
+                const configsPorCategoria = {};
+                (configs || []).forEach(config => {
+                    if (!configsPorCategoria[config.categoria]) {
+                        configsPorCategoria[config.categoria] = [];
+                    }
+                    configsPorCategoria[config.categoria].push(config);
+                });
+
+                // Renderizar configurações
+                container.innerHTML = '';
+                
+                Object.keys(configsPorCategoria).forEach(categoria => {
+                    const categoriaDiv = document.createElement('div');
+                    categoriaDiv.style.cssText = 'border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; background: #f9f9f9;';
+                    
+                    const categoriaTitle = document.createElement('h3');
+                    categoriaTitle.textContent = getCategoriaNome(categoria);
+                    categoriaTitle.style.cssText = 'margin: 0 0 15px 0; color: #333; font-size: 18px; border-bottom: 2px solid #0077B6; padding-bottom: 10px;';
+                    categoriaDiv.appendChild(categoriaTitle);
+
+                    configsPorCategoria[categoria].forEach(config => {
+                        const configItem = criarItemConfiguracao(config);
+                        categoriaDiv.appendChild(configItem);
+                    });
+
+                    container.appendChild(categoriaDiv);
+                });
+            } catch (error) {
+                const container = document.getElementById('configuracoesList');
+                if (container) {
+                    container.innerHTML = `<div style="color: #dc3545; padding: 20px; text-align: center;">Erro ao carregar configurações: ${error.message}</div>`;
+                }
+            }
+        }
+
+        function getCategoriaNome(categoria) {
+            const nomes = {
+                'supabase': '🔐 Supabase',
+                'cloudinary': '☁️ Cloudinary',
+                'pushinpay': '💳 PushinPay',
+                'n8n': '🔗 N8N',
+                'pricing': '💰 Preços',
+                'limits': '📊 Limites'
+            };
+            return nomes[categoria] || categoria;
+        }
+
+        function criarItemConfiguracao(config) {
+            const itemDiv = document.createElement('div');
+            itemDiv.style.cssText = 'margin-bottom: 15px; padding: 15px; background: white; border-radius: 8px; border: 1px solid #e0e0e0;';
+            
+            const label = document.createElement('label');
+            label.textContent = config.descricao || config.chave;
+            label.style.cssText = 'display: block; font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px;';
+            itemDiv.appendChild(label);
+
+            const chaveDiv = document.createElement('div');
+            chaveDiv.textContent = `Chave: ${config.chave}`;
+            chaveDiv.style.cssText = 'font-size: 12px; color: #666; margin-bottom: 10px; font-family: monospace;';
+            itemDiv.appendChild(chaveDiv);
+
+            if (config.tipo === 'boolean') {
+                // Toggle para boolean
+                const toggleWrapper = document.createElement('div');
+                toggleWrapper.style.cssText = 'display: flex; align-items: center; gap: 10px;';
+                
+                const toggle = document.createElement('input');
+                toggle.type = 'checkbox';
+                toggle.checked = config.valor === 'true' || config.valor === true;
+                toggle.style.cssText = 'width: 50px; height: 25px;';
+                
+                const toggleLabel = document.createElement('span');
+                toggleLabel.textContent = toggle.checked ? 'Ativado' : 'Desativado';
+                toggleLabel.style.cssText = 'font-weight: 600; color: #333;';
+                
+                toggle.onchange = () => {
+                    const newValue = toggle.checked ? 'true' : 'false';
+                    toggleLabel.textContent = toggle.checked ? 'Ativado' : 'Desativado';
+                    salvarConfiguracao(config.chave, newValue, config.tipo);
+                    
+                    // Se for pushinpay_production, atualizar também a função togglePushinPayEnvironment
+                    if (config.chave === 'pushinpay_production') {
+                        togglePushinPayEnvironment(toggle.checked);
+                    }
+                };
+                
+                toggleWrapper.appendChild(toggle);
+                toggleWrapper.appendChild(toggleLabel);
+                itemDiv.appendChild(toggleWrapper);
+            } else {
+                // Input para string/number
+                const input = document.createElement('input');
+                input.type = config.tipo === 'number' ? 'number' : 'text';
+                input.value = config.valor;
+                input.style.cssText = 'width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;';
+                
+                // Debounce para salvar após parar de digitar
+                let timeout;
+                input.addEventListener('input', () => {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => {
+                        salvarConfiguracao(config.chave, input.value, config.tipo);
+                    }, 1000);
+                });
+                
+                itemDiv.appendChild(input);
+            }
+
+            return itemDiv;
+        }
+
+        async function salvarConfiguracao(chave, valor, tipo) {
+            try {
+                const supabase = await obterSupabaseClient();
+                if (!supabase) {
+                    throw new Error('Supabase não disponível');
+                }
+
+                // Converter valor baseado no tipo
+                let valorFinal = valor;
+                if (tipo === 'number') {
+                    valorFinal = parseFloat(valor).toString();
+                } else if (tipo === 'boolean') {
+                    valorFinal = valor === 'true' || valor === true ? 'true' : 'false';
+                }
+
+                const { error } = await supabase
+                    .from('configuracoes')
+                    .update({ 
+                        valor: valorFinal,
+                        atualizado_em: new Date().toISOString()
+                    })
+                    .eq('chave', chave);
+
+                if (error) {
+                    throw error;
+                }
+
+                // Limpar cache do configService
+                if (window.configService) {
+                    window.configService.clearCache();
+                }
+
+                // Atualizar resumo se for configuração relevante
+                if (chave === 'pushinpay_production' || chave.startsWith('pricing_')) {
+                    await atualizarResumoConfiguracoes();
+                    await carregarEstadoPushinPay();
+                    
+                    // Recarregar configurações
+                    await loadConfigurations();
+                }
+
+                if (window.toast && window.toast.container) {
+                    try {
+                        window.toast.success('Configuração salva com sucesso!');
+                    } catch (e) {
+                        // Ignorar
+                    }
+                }
+            } catch (error) {
+                if (window.toast && window.toast.container) {
+                    try {
+                        window.toast.error('Erro ao salvar configuração: ' + error.message);
+                    } catch (e) {
+                        // Ignorar
+                    }
+                }
+            }
+        }
+
+        function configurarRealtimeConfiguracoes() {
+            obterSupabaseClient().then(async (supabase) => {
+                if (!supabase) return;
+
+                // Remover subscription existente
+                if (configuracoesSubscription) {
+                    supabase.removeChannel(configuracoesSubscription);
+                }
+
+                // Criar subscription para escutar mudanças nas configurações
+                configuracoesSubscription = supabase
+                    .channel('configuracoes-realtime')
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: '*',
+                            schema: 'public',
+                            table: 'configuracoes'
+                        },
+                        (payload) => {
+                            // Quando houver mudança, recarregar configurações e atualizar UI
+                            setTimeout(async () => {
+                                // Limpar cache
+                                if (window.configService) {
+                                    window.configService.clearCache();
+                                }
+                                
+                                // Recarregar configurações
+                                await loadConfigurations();
+                                await atualizarResumoConfiguracoes();
+                                await carregarEstadoPushinPay();
+                                
+                                // Se modal estiver aberto, recarregar lista
+                                const modal = document.getElementById('modalConfiguracoes');
+                                if (modal && modal.style.display !== 'none') {
+                                    await carregarConfiguracoesParaEdicao();
+                                }
+                            }, 500);
+                        }
+                    )
+                    .subscribe((status) => {
+                        if (status === 'SUBSCRIBED') {
+                            // Subscription ativa
+                        } else if (status === 'CHANNEL_ERROR') {
+                            // Tentar reconectar
+                            setTimeout(() => {
+                                configurarRealtimeConfiguracoes();
+                            }, 5000);
+                        }
+                    });
+            });
+        }
+
+        // Fechar modal ao clicar no overlay
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalConfig = document.getElementById('modalConfiguracoes');
+            if (modalConfig) {
+                modalConfig.addEventListener('click', function(e) {
+                    if (e.target === modalConfig) {
+                        fecharModalConfiguracoes();
+                    }
+                });
+            }
+
+            // Fechar modal com ESC
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const modalConfig = document.getElementById('modalConfiguracoes');
+                    if (modalConfig && modalConfig.style.display !== 'none') {
+                        fecharModalConfiguracoes();
+                    }
+                }
+            });
         });
 
         // Header não é necessário na página admin

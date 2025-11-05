@@ -232,10 +232,13 @@
         </div>
     </div>
 
-    <!-- Supabase -->
+    <!-- Sistema de Toast -->
+    <script src="../../assets/js/toast.js"></script>
+    <!-- Supabase CDN (DEVE SER PRIMEIRO) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="../../assets/js/supabase-auth-service.js"></script>
+    <!-- Configuração e Serviços -->
     <script src="../../assets/js/supabase-config.js"></script>
+    <script src="../../assets/js/supabase-auth-service.js"></script>
 
     <script>
         const form = document.getElementById('cadastroForm');
@@ -316,9 +319,15 @@
 
             try {
                 // Verificar se o AuthService está disponível
-                if (typeof authService === 'undefined') {
-                    throw new Error('Serviço de autenticação não está disponível');
+                if (typeof window.authService === 'undefined') {
+                    // Tentar aguardar um pouco mais para o script carregar
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    if (typeof window.authService === 'undefined') {
+                        throw new Error('Serviço de autenticação não está disponível');
+                    }
                 }
+
+                const authService = window.authService;
 
                 // Aguardar inicialização do serviço
                 if (!authService.isInitialized) {
@@ -374,10 +383,29 @@
         });
 
         function showMessage(text, type) {
-            messageDiv.textContent = text;
-            messageDiv.className = 'message ' + type;
-            messageDiv.style.display = 'block';
-
+            // Usar toast system
+            if (window.toast && window.toast.container) {
+                try {
+                    if (type === 'success') {
+                        const result = window.toast.success(text);
+                        if (result) return; // Toast funcionou
+                    } else if (type === 'error') {
+                        const result = window.toast.error(text);
+                        if (result) {
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'Criar Conta';
+                            return; // Toast funcionou
+                        }
+                    } else {
+                        const result = window.toast.info(text);
+                        if (result) return; // Toast funcionou
+                    }
+                } catch (e) {
+                    // Erro ao mostrar toast, usar fallback
+                }
+            }
+            // Fallback caso toast não esteja disponível ou tenha erro
+            alert(text);
             if (type === 'error') {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Criar Conta';

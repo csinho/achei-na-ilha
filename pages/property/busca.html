@@ -8,7 +8,8 @@
     <link rel="alternate icon" href="../../assets/images/logo-achei-na-ilha.png">
     <link rel="stylesheet" href="../../assets/css/header.css">
     
-    <!-- Carregar configuração do Supabase -->
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../../assets/js/supabase-config.js"></script>
     
     <style>
@@ -927,9 +928,6 @@
                     "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400",
                     "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400"
                 ],
-                videos: [
-                    "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4"
-                ],
                 descricao: "Linda casa de praia com vista panorâmica para o mar. Possui 4 quartos, 3 banheiros, sala ampla, cozinha completa e área de lazer com churrasqueira.",
                 likes: 12,
                 comentarios: [],
@@ -956,7 +954,6 @@
                     "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400",
                     "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400"
                 ],
-                videos: [],
                 descricao: "Apartamento moderno e bem localizado no centro da ilha. 2 quartos com armários, banheiro social, sala integrada com cozinha americana.",
                 likes: 8,
                 comentarios: [],
@@ -982,7 +979,6 @@
                 imagens: [
                     "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400"
                 ],
-                videos: [],
                 descricao: "Excelente terreno plano com 500m², localizado a apenas 200 metros da Praia Grande. Documentação em dia, área residencial consolidada.",
                 likes: 5,
                 comentarios: [],
@@ -1011,9 +1007,6 @@
                     "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400",
                     "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400"
                 ],
-                videos: [
-                    "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4"
-                ],
                 descricao: "Casa espaçosa com 3 quartos, sendo 1 suíte, área de lazer completa com piscina, churrasqueira e espaço gourmet.",
                 likes: 15,
                 comentarios: [],
@@ -1039,7 +1032,6 @@
                 imagens: [
                     "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400"
                 ],
-                videos: [],
                 descricao: "Loja comercial em ponto estratégico na rua principal. Ótima para diversos tipos de negócio. 80m² com banheiro e espaço para estoque.",
                 likes: 3,
                 comentarios: [],
@@ -1066,9 +1058,6 @@
                     "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400",
                     "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400",
                     "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400"
-                ],
-                videos: [
-                    "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4"
                 ],
                 descricao: "Cobertura duplex de alto padrão com vista privilegiada para o mar. 3 suítes, sala de estar e jantar, cozinha planejada.",
                 likes: 25,
@@ -1098,12 +1087,30 @@
                     }
                 }
 
-                // Se não conseguiu pelo authService, criar cliente direto
+                // Se não conseguiu pelo authService, tentar getSupabaseClient primeiro
+                if (!supabaseClient && typeof window.getSupabaseClient === 'function') {
+                    supabaseClient = window.getSupabaseClient();
+                }
+                
+                // Se ainda não conseguiu, tentar usar configuração centralizada
                 if (!supabaseClient && typeof window.supabase !== 'undefined') {
-                    supabaseClient = window.supabase.createClient(
-                        'https://svgmuxdxxrapepbodbgv.supabase.co',
-                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2Z211eGR4eHJhcGVwYm9kYmd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0MTU2MTQsImV4cCI6MjA3Njk5MTYxNH0.U0rQ8-EXC6b0dkcCQBoE-VuNjNgNQREvcs3fWfZ1UGM'
-                    );
+                    try {
+                        // Usar getSupabaseConfig se disponível, senão usar SUPABASE_CONFIG
+                        let supabaseConfig;
+                        if (typeof window.getSupabaseConfig === 'function') {
+                            supabaseConfig = window.getSupabaseConfig();
+                        } else if (typeof SUPABASE_CONFIG !== 'undefined') {
+                            supabaseConfig = SUPABASE_CONFIG;
+                        } else if (typeof window.SUPABASE_CONFIG !== 'undefined') {
+                            supabaseConfig = window.SUPABASE_CONFIG;
+                        }
+                        
+                        if (supabaseConfig && supabaseConfig.url && supabaseConfig.anonKey) {
+                            supabaseClient = window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
+                        }
+                    } catch (e) {
+                        console.warn('Erro ao criar cliente Supabase:', e);
+                    }
                 }
 
                 if (!supabaseClient) {
@@ -1131,6 +1138,9 @@
                 if (error) {
                     return;
                 }
+
+                // Armazenar cliente globalmente para usar na subscription
+                anunciosSupabaseClient = supabaseClient;
 
                 if (anunciosDB && anunciosDB.length > 0) {
                     // Converter formato do banco para formato usado na página
@@ -1170,6 +1180,11 @@
                     // Aplicar filtros novamente para atualizar a lista
                     aplicarFiltros();
                 } else {
+                }
+
+                // Configurar realtime subscription após carregar pela primeira vez
+                if (anunciosSupabaseClient && !anunciosSubscription) {
+                    configurarRealtimeAnuncios(anunciosSupabaseClient);
                 }
             } catch (error) {
             }
@@ -1744,9 +1759,11 @@
         }
 
 
-        // Variável global para armazenar o cliente Supabase e a subscription
+        // Variáveis globais para armazenar clientes Supabase e subscriptions
         let publicidadesSupabaseClient = null;
         let publicidadesSubscription = null;
+        let anunciosSupabaseClient = null;
+        let anunciosSubscription = null;
 
         // Função para configurar realtime subscription
         function configurarRealtimePublicidades(supabaseClient) {
@@ -1846,12 +1863,26 @@
                     supabaseClient = window.authService.getSupabase();
                 }
                 
-                // Fallback final: criar cliente diretamente
+                // Fallback final: criar cliente diretamente com valores hardcoded
                 if (!supabaseClient && typeof window.supabase !== 'undefined') {
-                    supabaseClient = window.supabase.createClient(
-                        'https://svgmuxdxxrapepbodbgv.supabase.co',
-                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2Z211eGR4eHJhcGVwYm9kYmd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0MTU2MTQsImV4cCI6MjA3Njk5MTYxNH0.U0rQ8-EXC6b0dkcCQBoE-VuNjNgNQREvcs3fWfZ1UGM'
-                    );
+                    // Usar configuração centralizada
+                    let supabaseConfig;
+                    if (typeof window.getSupabaseConfig === 'function') {
+                        supabaseConfig = window.getSupabaseConfig();
+                    } else if (typeof SUPABASE_CONFIG !== 'undefined') {
+                        supabaseConfig = SUPABASE_CONFIG;
+                    } else if (typeof window.SUPABASE_CONFIG !== 'undefined') {
+                        supabaseConfig = window.SUPABASE_CONFIG;
+                    }
+                    
+                    if (!supabaseConfig || !supabaseConfig.url || !supabaseConfig.anonKey) {
+                        console.error('Configuração Supabase não disponível');
+                        return;
+                    }
+                    
+                    const supabaseUrl = supabaseConfig.url;
+                    const supabaseAnonKey = supabaseConfig.anonKey;
+                    supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
                 }
 
                 if (!supabaseClient) {
@@ -1932,10 +1963,82 @@
             }
         }
 
-        // Limpar subscription quando a página for fechada
+        // Função para configurar realtime subscription de anúncios
+        function configurarRealtimeAnuncios(supabaseClient) {
+            // Se já existe uma subscription, remover antes de criar nova
+            if (anunciosSubscription) {
+                supabaseClient.removeChannel(anunciosSubscription);
+            }
+
+            // Criar subscription para escutar mudanças na tabela anuncios
+            anunciosSubscription = supabaseClient
+                .channel('anuncios-realtime')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*', // Escutar INSERT, UPDATE, DELETE
+                        schema: 'public',
+                        table: 'anuncios'
+                    },
+                    (payload) => {
+                        // Quando houver mudança, recarregar anúncios
+                        const agora = new Date().toISOString();
+                        
+                        if (payload.eventType === 'INSERT') {
+                            // Novo anúncio inserido - verificar se está publicado e ativo
+                            const newRecord = payload.new;
+                            if (newRecord && newRecord.ativo === true && newRecord.status === 'publicado') {
+                                const isNotExpired = !newRecord.data_fim_publicacao || new Date(newRecord.data_fim_publicacao) >= new Date(agora);
+                                if (isNotExpired) {
+                                    setTimeout(() => {
+                                        carregarAnunciosDoSupabase();
+                                    }, 500);
+                                }
+                            }
+                        } else if (payload.eventType === 'UPDATE') {
+                            // Anúncio atualizado - recarregar se estava ou agora está publicado e ativo
+                            const oldRecord = payload.old;
+                            const newRecord = payload.new;
+                            const wasVisible = oldRecord && oldRecord.ativo === true && oldRecord.status === 'publicado';
+                            const isVisible = newRecord && newRecord.ativo === true && newRecord.status === 'publicado';
+                            
+                            const wasNotExpired = !oldRecord?.data_fim_publicacao || new Date(oldRecord.data_fim_publicacao) >= new Date(agora);
+                            const isNotExpired = !newRecord?.data_fim_publicacao || new Date(newRecord.data_fim_publicacao) >= new Date(agora);
+                            
+                            if ((wasVisible && wasNotExpired) || (isVisible && isNotExpired)) {
+                                setTimeout(() => {
+                                    carregarAnunciosDoSupabase();
+                                }, 500);
+                            }
+                        } else if (payload.eventType === 'DELETE') {
+                            // Anúncio deletado - sempre recarregar
+                            setTimeout(() => {
+                                carregarAnunciosDoSupabase();
+                            }, 500);
+                        }
+                    }
+                )
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        // Subscription ativa com sucesso
+                    } else if (status === 'CHANNEL_ERROR') {
+                        // Erro na subscription - tentar reconectar após delay
+                        setTimeout(() => {
+                            if (anunciosSupabaseClient) {
+                                configurarRealtimeAnuncios(anunciosSupabaseClient);
+                            }
+                        }, 5000);
+                    }
+                });
+        }
+
+        // Limpar subscriptions quando a página for fechada
         window.addEventListener('beforeunload', function() {
             if (publicidadesSubscription && publicidadesSupabaseClient) {
                 publicidadesSupabaseClient.removeChannel(publicidadesSubscription);
+            }
+            if (anunciosSubscription && anunciosSupabaseClient) {
+                anunciosSupabaseClient.removeChannel(anunciosSubscription);
             }
         });
 

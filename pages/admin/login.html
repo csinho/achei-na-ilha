@@ -239,7 +239,11 @@
         </div>
     </div>
 
-    <!-- Carregar configuração do Supabase -->
+    <!-- Sistema de Toast -->
+    <script src="../../assets/js/toast.js"></script>
+    <!-- Supabase CDN (DEVE SER PRIMEIRO) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Configuração do Supabase -->
     <script src="../../assets/js/supabase-config.js"></script>
     
     <script>
@@ -260,26 +264,49 @@
                 return window.getSupabaseClient();
             }
             
-            // Fallback: criar cliente diretamente
+            // Fallback: usar configuração centralizada
             if (typeof window.supabase !== 'undefined') {
-                return window.supabase.createClient(
-                    'https://svgmuxdxxrapepbodbgv.supabase.co',
-                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2Z211eGR4eHJhcGVwYm9kYmd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0MTU2MTQsImV4cCI6MjA3Njk5MTYxNH0.U0rQ8-EXC6b0dkcCQBoE-VuNjNgNQREvcs3fWfZ1UGM'
-                );
+                try {
+                    let supabaseConfig;
+                    if (typeof window.getSupabaseConfig === 'function') {
+                        supabaseConfig = window.getSupabaseConfig();
+                    } else if (typeof SUPABASE_CONFIG !== 'undefined') {
+                        supabaseConfig = SUPABASE_CONFIG;
+                    } else if (typeof window.SUPABASE_CONFIG !== 'undefined') {
+                        supabaseConfig = window.SUPABASE_CONFIG;
+                    }
+                    
+                    if (supabaseConfig && supabaseConfig.url && supabaseConfig.anonKey) {
+                        return window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
+                    }
+                } catch (e) {
+                    console.warn('Erro ao criar cliente Supabase:', e);
+                }
             }
 
             return null;
         }
 
         function showMessage(text, type) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = text;
-            messageDiv.className = 'message ' + type;
-            messageDiv.style.display = 'block';
-
-            setTimeout(() => {
-                messageDiv.style.display = 'none';
-            }, 5000);
+            // Usar toast system
+            if (window.toast && window.toast.container) {
+                try {
+                    if (type === 'success') {
+                        const result = window.toast.success(text);
+                        if (result) return; // Toast funcionou
+                    } else if (type === 'error') {
+                        const result = window.toast.error(text);
+                        if (result) return; // Toast funcionou
+                    } else {
+                        const result = window.toast.info(text);
+                        if (result) return; // Toast funcionou
+                    }
+                } catch (e) {
+                    // Erro ao mostrar toast, usar fallback
+                }
+            }
+            // Fallback caso toast não esteja disponível ou tenha erro
+            alert(text);
         }
 
         // Verificar se já está logado

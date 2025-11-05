@@ -1,0 +1,115 @@
+{
+  "rewrites": [
+    {
+      "source": "/busca",
+      "destination": "/pages/property/busca.html"
+    },
+    {
+      "source": "/detalhes",
+      "destination": "/pages/property/detalhes.html"
+    },
+    {
+      "source": "/novo-anuncio",
+      "destination": "/pages/property/novo-anuncio.html"
+    },
+    {
+      "source": "/login",
+      "destination": "/pages/auth/login.html"
+    },
+    {
+      "source": "/cadastro",
+      "destination": "/pages/auth/cadastro.html"
+    },
+    {
+      "source": "/confirmar-email",
+      "destination": "/pages/auth/confirmar-email.html"
+    },
+    {
+      "source": "/meus-anuncios",
+      "destination": "/pages/user/meus-anuncios.html"
+    },
+    {
+      "source": "/configuracoes",
+      "destination": "/pages/user/configuracoes.html"
+    },
+    {
+      "source": "/escolha-plano",
+      "destination": "/pages/user/escolha-plano.html"
+    },
+    {
+      "source": "/pagamento",
+      "destination": "/pages/payment/pagamento.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/pages/admin/admin.html"
+    },
+    {
+      "source": "/admin-login",
+      "destination": "/pages/admin/login.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/pages/property/busca.html",
+      "destination": "/busca",
+      "permanent": true
+    },
+    {
+      "source": "/pages/property/detalhes.html",
+      "destination": "/detalhes",
+      "permanent": true
+    },
+    {
+      "source": "/pages/property/novo-anuncio.html",
+      "destination": "/novo-anuncio",
+      "permanent": true
+    },
+    {
+      "source": "/pages/auth/login.html",
+      "destination": "/login",
+      "permanent": true
+    },
+    {
+      "source": "/pages/auth/cadastro.html",
+      "destination": "/cadastro",
+      "permanent": true
+    },
+    {
+      "source": "/pages/auth/confirmar-email.html",
+      "destination": "/confirmar-email",
+      "permanent": true
+    },
+    {
+      "source": "/pages/user/meus-anuncios.html",
+      "destination": "/meus-anuncios",
+      "permanent": true
+    },
+    {
+      "source": "/pages/user/configuracoes.html",
+      "destination": "/configuracoes",
+      "permanent": true
+    },
+    {
+      "source": "/pages/user/escolha-plano.html",
+      "destination": "/escolha-plano",
+      "permanent": true
+    },
+    {
+      "source": "/pages/payment/pagamento.html",
+      "destination": "/pagamento",
+      "permanent": true
+    },
+    {
+      "source": "/pages/admin/admin.html",
+      "destination": "/admin",
+      "permanent": true
+    },
+    {
+      "source": "/pages/admin/login.html",
+      "destination": "/admin-login",
+      "permanent": true
+    }
+  ]
+}
+

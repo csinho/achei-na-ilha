@@ -7,6 +7,14 @@
     <link rel="icon" type="image/svg+xml" href="../../assets/images/logo-achei-na-ilha.png">
     <link rel="alternate icon" href="../../assets/images/logo-achei-na-ilha.png">
     <link rel="stylesheet" href="../../assets/css/header.css">
+    <!-- Sistema de Toast -->
+    <script src="../../assets/js/toast.js"></script>
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../../assets/js/supabase-config.js"></script>
+    <script src="../../assets/js/supabase-auth-service.js"></script>
+    <!-- Serviço de Configurações -->
+    <script src="../../assets/js/config-service.js"></script>
     <style>
         * {
             margin: 0;
@@ -449,16 +457,6 @@
                     <div class="file-list" id="imageList"></div>
                 </div>
 
-                <div class="form-group">
-                    <label>Vídeos do Imóvel</label>
-                    <div class="file-upload" onclick="document.getElementById('videoInput').click()">
-                        <div class="upload-icon">🎥</div>
-                        <div class="upload-text">Clique para adicionar vídeos</div>
-                        <input type="file" id="videoInput" accept="video/*" multiple>
-                    </div>
-                    <div class="limit-info" id="videoLimit"></div>
-                    <div class="file-list" id="videoList"></div>
-                </div>
 
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" id="btnDraft" onclick="salvarRascunho()">
@@ -476,55 +474,48 @@
     </div>
 
     <script>
+        // Array para armazenar URLs das imagens (após upload no Cloudinary)
         let imagensSelecionadas = [];
-        let videosSelecionados = [];
-        const MAX_IMAGENS = 20; // Limite padrão
-        const MAX_VIDEOS = 5; // Limite padrão
+        // Limite de imagens usando configuração centralizada (com fallback)
+        // Variável de configuração (será carregada do banco - SEM valores hardcoded)
+        let MAX_IMAGENS = null;
 
         function atualizarLimites() {
-            document.getElementById('imageLimit').innerHTML = `
+            const limitEl = document.getElementById('imageLimit');
+            if (!limitEl) return;
+            
+            if (MAX_IMAGENS === null) {
+                limitEl.innerHTML = '<span>Carregando configurações...</span>';
+                return;
+            }
+            
+            limitEl.innerHTML = `
                 <span class="${imagensSelecionadas.length >= MAX_IMAGENS ? 'limit-warning' : ''}">
                     ${imagensSelecionadas.length} / ${MAX_IMAGENS} imagens
                 </span>
             `;
-
-            document.getElementById('videoLimit').innerHTML = `
-                <span class="${videosSelecionados.length >= MAX_VIDEOS ? 'limit-warning' : ''}">
-                    ${videosSelecionados.length} / ${MAX_VIDEOS} vídeos
-                </span>
-            `;
         }
 
-        document.getElementById('imageInput').addEventListener('change', function(e) {
+        document.getElementById('imageInput').addEventListener('change', async function(e) {
             const files = Array.from(e.target.files);
 
-            files.forEach(file => {
+            for (const file of files) {
                 if (imagensSelecionadas.length >= MAX_IMAGENS) {
                     showMessage(`Limite de ${MAX_IMAGENS} imagens atingido`, 'error');
-                    return;
+                    break;
                 }
 
-                imagensSelecionadas.push(file);
-            });
+                // Fazer upload para Cloudinary
+                try {
+                    const imageUrl = await uploadToCloudinary(file);
+                    imagensSelecionadas.push(imageUrl);
+                    showMessage('Imagem enviada com sucesso!', 'success');
+                } catch (error) {
+                    showMessage('Erro ao fazer upload: ' + error.message, 'error');
+                }
+            }
 
             renderizarImagensSelecionadas();
-            atualizarLimites();
-            e.target.value = '';
-        });
-
-        document.getElementById('videoInput').addEventListener('change', function(e) {
-            const files = Array.from(e.target.files);
-
-            files.forEach(file => {
-                if (videosSelecionados.length >= MAX_VIDEOS) {
-                    showMessage(`Limite de ${MAX_VIDEOS} vídeos atingido`, 'error');
-                    return;
-                }
-
-                videosSelecionados.push(file);
-            });
-
-            renderizarVideosSelecionados();
             atualizarLimites();
             e.target.value = '';
         });
@@ -543,20 +534,11 @@
 
         function renderizarImagensSelecionadas() {
             const container = document.getElementById('imageList');
-            container.innerHTML = imagensSelecionadas.map((file, index) => `
-                <div class="file-item">
-                    <span>📷 ${file.name}</span>
+            container.innerHTML = imagensSelecionadas.map((imageUrl, index) => `
+                <div class="file-item" style="display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 10px;">
+                    <img src="${imageUrl}" alt="Imagem ${index + 1}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
+                    <span style="flex: 1; word-break: break-all;">${imageUrl.substring(0, 50)}...</span>
                     <button type="button" class="btn-remove" onclick="removerImagem(${index})">Remover</button>
-                </div>
-            `).join('');
-        }
-
-        function renderizarVideosSelecionados() {
-            const container = document.getElementById('videoList');
-            container.innerHTML = videosSelecionados.map((file, index) => `
-                <div class="file-item">
-                    <span>🎥 ${file.name}</span>
-                    <button type="button" class="btn-remove" onclick="removerVideo(${index})">Remover</button>
                 </div>
             `).join('');
         }
@@ -564,12 +546,6 @@
         function removerImagem(index) {
             imagensSelecionadas.splice(index, 1);
             renderizarImagensSelecionadas();
-            atualizarLimites();
-        }
-
-        function removerVideo(index) {
-            videosSelecionados.splice(index, 1);
-            renderizarVideosSelecionados();
             atualizarLimites();
         }
 
@@ -616,10 +592,8 @@
                 garagem: document.getElementById('garagem').value === 'true',
                 vagasGaragem: parseInt(document.getElementById('vagasGaragem').value),
                 caracteristicas: getCaracteristicasSelecionadas(),
-                imagens: imagensSelecionadas,
-                videos: videosSelecionados,
+                imagens: imagensSelecionadas, // Array de URLs das imagens
                 imagensCount: imagensSelecionadas.length,
-                videosCount: videosSelecionados.length,
                 usuarioEmail: getUsuarioEmail(),
                 criadoEm: new Date().toISOString(),
                 status: 'rascunho' // ou 'publicado'
@@ -699,6 +673,7 @@
                     vagas_garagem: dadosAnuncio.vagasGaragem || null,
                     emoji: dadosAnuncio.emoji || null,
                     caracteristicas: dadosAnuncio.caracteristicas || [],
+                    imagens: dadosAnuncio.imagens || [], // Array de URLs das imagens do Cloudinary
                     ativo: false // Rascunho não está ativo
                 };
 
@@ -868,16 +843,135 @@
         }
 
         function showMessage(text, type) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = text;
-            messageDiv.className = 'message ' + type;
-            messageDiv.style.display = 'block';
-
-            setTimeout(() => {
-                if (type !== 'success') {
-                    messageDiv.style.display = 'none';
+            // Usar toast system
+            if (window.toast && window.toast.container) {
+                try {
+                    if (type === 'success') {
+                        const result = window.toast.success(text);
+                        if (result) return; // Toast funcionou
+                    } else if (type === 'error') {
+                        const result = window.toast.error(text);
+                        if (result) return; // Toast funcionou
+                    } else {
+                        const result = window.toast.info(text);
+                        if (result) return; // Toast funcionou
+                    }
+                } catch (e) {
+                    // Erro ao mostrar toast, usar fallback
                 }
-            }, 5000);
+            }
+            // Fallback: mostrar mensagem inline ou alert
+            const messageDiv = document.getElementById('message');
+            if (messageDiv) {
+                messageDiv.textContent = text;
+                messageDiv.className = 'message ' + type;
+                messageDiv.style.display = 'block';
+                setTimeout(() => {
+                    if (type !== 'success') {
+                        messageDiv.style.display = 'none';
+                    }
+                }, 5000);
+            } else {
+                alert(text);
+            }
+        }
+
+        // ===== CONFIGURAÇÃO DO CLOUDINARY =====
+        // Variável (será carregada do banco - SEM valores hardcoded)
+        let CLOUDINARY_CONFIG = null;
+
+        // Função para carregar configurações do banco
+        async function loadConfigurations() {
+            try {
+                if (!window.configService) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+
+                if (window.configService) {
+                    await window.configService.initialize();
+                    
+                    // Carregar configurações de limites (OBRIGATÓRIO - do banco)
+                    const limitsConfig = await window.configService.getLimitsConfig();
+                    if (!limitsConfig.maxImagesPerAd) {
+                        throw new Error('Configuração de limite de imagens não encontrada no banco de dados.');
+                    }
+                    MAX_IMAGENS = limitsConfig.maxImagesPerAd;
+
+                    // Carregar configurações Cloudinary (OBRIGATÓRIO - do banco)
+                    const cloudinaryConfig = await window.configService.getCloudinaryConfig();
+                    if (!cloudinaryConfig.cloudName || !cloudinaryConfig.uploadPreset) {
+                        throw new Error('Configurações Cloudinary não encontradas no banco de dados.');
+                    }
+                    CLOUDINARY_CONFIG = {
+                        cloudName: cloudinaryConfig.cloudName,
+                        uploadPreset: cloudinaryConfig.uploadPreset
+                    };
+                } else {
+                    throw new Error('ConfigService não disponível. Verifique se os scripts foram carregados corretamente.');
+                }
+            } catch (error) {
+                // Em caso de erro, mostrar mensagem clara e não continuar
+                const errorMsg = `Erro ao carregar configurações do banco de dados: ${error.message}`;
+                console.error(errorMsg, error);
+                if (window.toast && window.toast.container) {
+                    window.toast.error(errorMsg);
+                } else {
+                    alert(errorMsg + '\n\nO sistema não pode continuar sem as configurações do banco de dados.');
+                }
+                throw error; // Propagar erro para que a página não continue sem configurações
+            }
+        }
+
+        // Função para fazer upload de imagem para Cloudinary
+        async function uploadToCloudinary(file) {
+            try {
+                // Validar arquivo
+                if (!file) {
+                    throw new Error('Nenhum arquivo selecionado');
+                }
+
+                // Validar tipo de arquivo
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                if (!allowedTypes.includes(file.type)) {
+                    throw new Error('Tipo de arquivo não suportado. Use JPG, PNG, GIF ou WebP');
+                }
+
+                // Validar tamanho (máximo 10MB)
+                const maxSize = 10 * 1024 * 1024; // 10MB
+                if (file.size > maxSize) {
+                    throw new Error('Arquivo muito grande. Máximo 10MB');
+                }
+
+                // Verificar se Cloudinary está configurado
+                if (!CLOUDINARY_CONFIG || !CLOUDINARY_CONFIG.cloudName || !CLOUDINARY_CONFIG.uploadPreset) {
+                    throw new Error('Configurações Cloudinary não foram carregadas do banco de dados.');
+                }
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    if (response.status === 401) {
+                        throw new Error('Erro de autenticação: Verifique as configurações do Cloudinary');
+                    } else if (response.status === 400) {
+                        throw new Error('Erro na requisição: Verifique o upload preset');
+                    } else {
+                        throw new Error(`Erro no upload: ${response.status} - ${response.statusText}`);
+                    }
+                }
+
+                const data = await response.json();
+                return data.secure_url;
+            } catch (error) {
+                throw error;
+            }
         }
 
         async function verificarPermissao() {
@@ -1032,10 +1126,18 @@
                     throw new Error('Supabase não disponível');
                 }
 
-                // Buscar anúncio
+                // Buscar anúncio com suas imagens
                 const { data: anuncio, error } = await supabase
                     .from('anuncios')
-                    .select('*')
+                    .select(`
+                        *,
+                        imagens_anuncio (
+                            id,
+                            url,
+                            ordem,
+                            principal
+                        )
+                    `)
                     .eq('id', anuncioId)
                     .single();
 
@@ -1081,6 +1183,24 @@
                             checkbox.checked = true;
                         }
                     });
+                }
+
+                // Carregar imagens do anúncio
+                if (anuncio.imagens_anuncio && Array.isArray(anuncio.imagens_anuncio) && anuncio.imagens_anuncio.length > 0) {
+                    // Ordenar imagens por ordem
+                    const imagensOrdenadas = anuncio.imagens_anuncio.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+                    
+                    // Preencher array de imagens selecionadas com as URLs
+                    imagensSelecionadas = imagensOrdenadas.map(img => img.url);
+                    
+                    // Renderizar imagens na tela
+                    renderizarImagensSelecionadas();
+                    atualizarLimites();
+                } else {
+                    // Limpar imagens se não houver
+                    imagensSelecionadas = [];
+                    renderizarImagensSelecionadas();
+                    atualizarLimites();
                 }
 
                 // Atualizar título da página
@@ -1188,6 +1308,8 @@
         }
 
         window.addEventListener('load', async function() {
+            // Carregar configurações do banco primeiro
+            await loadConfigurations();
             // Aplicar máscara de moeda no campo de valor
             aplicarMascaraMoeda();
             

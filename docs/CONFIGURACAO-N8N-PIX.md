@@ -22,37 +22,79 @@ Este workflow recebe os dados do frontend e faz a requisição ao PushinPay.
    ```javascript
    const input = $input.item.json;
    const apiKey = input.api_key;
-   const pixData = input.pix_data;
+   const value = input.value; // Valor em centavos
+   const anuncioId = input.anuncio_id; // ID do anúncio para salvar no banco
+   
+   // Webhook URL simples (sem parâmetros, pois vamos buscar pelo transaction_id no banco)
+   const webhookUrl = 'https://hooks.upcaodigital.com.br/webhook/acheinailha';
 
    return {
      api_key: apiKey,
-     pix_data: pixData
+     value: value,
+     webhook_url: webhookUrl,
+     anuncio_id: anuncioId // Passar para salvar no banco após criar PIX
    };
    ```
 
 3. **HTTP Request Node** (Criar PIX no PushinPay)
    - Method: `POST`
-   - URL: `https://api.pushinpay.com.br/pix/qrcode` (ou URL correta da API)
+   - URL: `https://api.pushinpay.com.br/api/pix/cashIn`
    - Headers:
      ```json
      {
        "Authorization": "Bearer {{ $json.api_key }}",
+       "Accept": "application/json",
        "Content-Type": "application/json"
      }
      ```
    - Body:
      ```json
-     {{ $json.pix_data }}
+     {
+       "value": {{ $json.value }},
+       "webhook_url": "{{ $json.webhook_url }}",
+       "split_rules": []
+     }
      ```
 
-4. **Function Node** (Formatar resposta)
+4. **Function Node** (Formatar resposta e salvar transaction_id no banco)
    ```javascript
    const response = $input.item.json;
+   const anuncioId = $('Function Node').item.json.anuncio_id;
+   const transactionId = response.id;
+   
+   // Salvar transaction_id no banco de dados (Supabase)
+   // Usar HTTP Request para Supabase ou Supabase Node
+   // UPDATE anuncios SET transacao_id = transactionId WHERE id = anuncioId
+   
+   // Estrutura esperada da resposta PushinPay:
+   // {
+   //   "id": "A048D601-B4AC-42E6-9618-EDBDEF670D81",
+   //   "qr_code": "00020101021226810014br.gov.bcb.pix...",
+   //   "status": "created",
+   //   "value": 500,
+   //   "qr_code_base64": "data:image/png;base64,..."
+   // }
    
    return {
-     data: response,
-     success: true
+     data: {
+       id: response.id,
+       transaction_id: response.id,
+       qr_code: response.qr_code,
+       qr_code_base64: response.qr_code_base64 || null,
+       status: response.status || 'created',
+       value: response.value,
+       created_at: response.created_at || new Date().toISOString()
+     },
+     success: true,
+     anuncio_id: anuncioId // Para salvar no banco
    };
+   ```
+   
+   **Nota**: Após retornar, você pode adicionar um **Supabase Node** ou **HTTP Request** para salvar o `transaction_id` no banco:
+   ```sql
+   UPDATE anuncios 
+   SET transacao_id = '{{ $json.data.id }}'
+   WHERE id = '{{ $json.anuncio_id }}'
    ```
 
 5. **Respond to Webhook Node**
@@ -62,7 +104,7 @@ Este workflow recebe os dados do frontend e faz a requisição ao PushinPay.
 
 ### 2. Workflow: Verificar PIX (`/webhook/verificar-pix`)
 
-Este workflow verifica o status de um PIX.
+Este workflow verifica o status de uma transação PIX.
 
 #### Estrutura do Workflow:
 
@@ -74,21 +116,22 @@ Este workflow verifica o status de um PIX.
    ```javascript
    const input = $input.item.json;
    const apiKey = input.api_key;
-   const pixId = input.pix_id;
+   const transactionId = input.transaction_id || input.pix_id;
 
    return {
      api_key: apiKey,
-     pix_id: pixId
+     transaction_id: transactionId
    };
    ```
 
-3. **HTTP Request Node** (Consultar PIX no PushinPay)
+3. **HTTP Request Node** (Consultar transação no PushinPay)
    - Method: `GET`
-   - URL: `https://api.pushinpay.com.br/pix/{{ $json.pix_id }}` (ou URL correta)
+   - URL: `https://api.pushinpay.com.br/api/transactions/{{ $json.transaction_id }}`
    - Headers:
      ```json
      {
        "Authorization": "Bearer {{ $json.api_key }}",
+       "Accept": "application/json",
        "Content-Type": "application/json"
      }
      ```
@@ -97,8 +140,35 @@ Este workflow verifica o status de um PIX.
    ```javascript
    const response = $input.item.json;
    
+   // A resposta pode ter diferentes campos de status
+   // Adaptar conforme a estrutura real da resposta
+   // Estrutura esperada da resposta PushinPay:
+   // {
+   //   "id": "A048D601-B4AC-42E6-9618-EDBDEF670D81",
+   //   "status": "paid",
+   //   "value": "500",
+   //   "description": "Pagamento PIX",
+   //   "payment_type": "pix",
+   //   "created_at": "2025-11-05T12:48:05.257000Z",
+   //   "updated_at": "2025-11-05T12:53:28.700000Z",
+   //   "end_to_end_id": "E60701190202511051250DY5AY84R8P4",
+   //   "payer_name": "EMERSON",
+   //   "payer_national_registration": "038******39"
+   // }
+   
    return {
-     data: response,
+     data: {
+       id: response.id,
+       transaction_id: response.id,
+       status: response.status, // "created", "paid", etc.
+       value: parseFloat(response.value) || response.value,
+       payment_type: response.payment_type,
+       end_to_end_id: response.end_to_end_id,
+       payer_name: response.payer_name,
+       payer_national_registration: response.payer_national_registration,
+       created_at: response.created_at,
+       updated_at: response.updated_at
+     },
      success: true
    };
    ```
@@ -129,7 +199,13 @@ Frontend → n8n (/webhook/verificar-pix) → PushinPay API → n8n → Frontend
                                                               ↓
                                                           Status do PIX
                                                               ↓
-PushinPay → n8n (/webhook/acheinailha) → Processa pagamento → Atualiza banco
+PushinPay → n8n (/webhook/acheinailha) [webhook automático quando pagamento confirmado]
+    ↓
+n8n recebe webhook com body.id (transaction_id)
+    ↓
+n8n busca no banco: SELECT * FROM anuncios WHERE transacao_id = body.id
+    ↓
+n8n atualiza anúncio: UPDATE anuncios SET status = 'publicado', ativo = true WHERE id = ...
 ```
 
 ---

@@ -7,6 +7,8 @@
     <link rel="icon" type="image/svg+xml" href="../../assets/images/logo-achei-na-ilha.png">
     <link rel="alternate icon" href="../../assets/images/logo-achei-na-ilha.png">
     <link rel="stylesheet" href="../../assets/css/header.css">
+    <!-- Sistema de Toast -->
+    <script src="../../assets/js/toast.js"></script>
     <style>
         * {
             margin: 0;
@@ -289,10 +291,15 @@
 
             localStorage.setItem('planoEscolhido', JSON.stringify(plano));
 
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = `Plano ${nomePlano.charAt(0).toUpperCase() + nomePlano.slice(1)} selecionado com sucesso!`;
-            messageDiv.className = 'message success';
-            messageDiv.style.display = 'block';
+            // Usar toast system
+            if (window.toast) {
+                window.toast.success(`Plano ${nomePlano.charAt(0).toUpperCase() + nomePlano.slice(1)} selecionado com sucesso!`);
+            } else {
+                const messageDiv = document.getElementById('message');
+                messageDiv.textContent = `Plano ${nomePlano.charAt(0).toUpperCase() + nomePlano.slice(1)} selecionado com sucesso!`;
+                messageDiv.className = 'message success';
+                messageDiv.style.display = 'block';
+            }
 
             setTimeout(() => {
                 const usuarioLogado = localStorage.getItem('usuarioLogado');
@@ -313,10 +320,15 @@
             const planoStr = localStorage.getItem('planoEscolhido');
             if (planoStr) {
                 const plano = JSON.parse(planoStr);
-                const messageDiv = document.getElementById('message');
-                messageDiv.textContent = `Seu plano atual: ${plano.nome.charAt(0).toUpperCase() + plano.nome.slice(1)}`;
-                messageDiv.className = 'message success';
-                messageDiv.style.display = 'block';
+                // Usar toast system
+                if (window.toast) {
+                    window.toast.info(`Seu plano atual: ${plano.nome.charAt(0).toUpperCase() + plano.nome.slice(1)}`);
+                } else {
+                    const messageDiv = document.getElementById('message');
+                    messageDiv.textContent = `Seu plano atual: ${plano.nome.charAt(0).toUpperCase() + plano.nome.slice(1)}`;
+                    messageDiv.className = 'message success';
+                    messageDiv.style.display = 'block';
+                }
             }
         }
 

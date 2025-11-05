@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Achei na Ilha - Entrar</title>
     <link rel="stylesheet" href="../../assets/css/header.css">
+    <link rel="icon" type="image/svg+xml" href="../../assets/images/logo-achei-na-ilha.png">
+    <link rel="alternate icon" href="../../assets/images/logo-achei-na-ilha.png">
     <style>
         * {
             margin: 0;
@@ -210,10 +212,13 @@
         </div>
     </div>
 
-    <!-- Supabase -->
+    <!-- Sistema de Toast -->
+    <script src="../../assets/js/toast.js"></script>
+    <!-- Supabase CDN (DEVE SER PRIMEIRO) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="../../assets/js/supabase-auth-service.js"></script>
+    <!-- Configuração e Serviços -->
     <script src="../../assets/js/supabase-config.js"></script>
+    <script src="../../assets/js/supabase-auth-service.js"></script>
 
     <script>
         const form = document.getElementById('loginForm');
@@ -241,9 +246,15 @@
 
             try {
                 // Verificar se o AuthService está disponível
-                if (typeof authService === 'undefined') {
-                    throw new Error('Serviço de autenticação não está disponível');
+                if (typeof window.authService === 'undefined') {
+                    // Tentar aguardar um pouco mais para o script carregar
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    if (typeof window.authService === 'undefined') {
+                        throw new Error('Serviço de autenticação não está disponível');
+                    }
                 }
+
+                const authService = window.authService;
 
                 // Aguardar inicialização do serviço
                 if (!authService.isInitialized) {
@@ -327,9 +338,25 @@
         }
 
         function showMessage(text, type) {
-            messageDiv.textContent = text;
-            messageDiv.className = 'message ' + type;
-            messageDiv.style.display = 'block';
+            // Usar toast system
+            if (window.toast && window.toast.container) {
+                try {
+                    if (type === 'success') {
+                        const result = window.toast.success(text);
+                        if (result) return; // Toast funcionou
+                    } else if (type === 'error') {
+                        const result = window.toast.error(text);
+                        if (result) return; // Toast funcionou
+                    } else {
+                        const result = window.toast.info(text);
+                        if (result) return; // Toast funcionou
+                    }
+                } catch (e) {
+                    // Erro ao mostrar toast, usar fallback
+                }
+            }
+            // Fallback caso toast não esteja disponível ou tenha erro
+            alert(text);
         }
 
         function validateEmail(email) {
@@ -379,6 +406,20 @@
         }
 
         function loadAuthService() {
+            // Garantir que supabase-config está carregado
+            if (!window.SUPABASE_CONFIG && !document.querySelector('script[src*="supabase-config.js"]')) {
+                const supabaseConfigScript = document.createElement('script');
+                supabaseConfigScript.src = '../../assets/js/supabase-config.js';
+                supabaseConfigScript.onload = function() {
+                    loadAuthServiceFinal();
+                };
+                document.head.appendChild(supabaseConfigScript);
+            } else {
+                loadAuthServiceFinal();
+            }
+        }
+
+        function loadAuthServiceFinal() {
             // Verificar se auth-service já está carregado
             if (typeof window.authService === 'undefined') {
                 const authServiceScript = document.createElement('script');
