@@ -1059,11 +1059,13 @@
                                     .insert(imagensData);
 
                                 if (imagensError) {
-                                    console.warn('Aviso: Erro ao atualizar imagens:', imagensError.message);
+                                    // Erro ao atualizar imagens - é crítico, lançar erro
+                                    throw new Error('Erro ao atualizar imagens: ' + imagensError.message);
                                 }
                             }
                         } catch (imagensError) {
-                            console.warn('Aviso: Erro ao processar imagens:', imagensError);
+                            // Erro ao processar imagens - é crítico, lançar erro
+                            throw new Error('Erro ao processar imagens: ' + (imagensError.message || imagensError));
                         }
                     }
                 } else {
@@ -1097,12 +1099,12 @@
                                 .insert(imagensData);
 
                             if (imagensError) {
-                                // Não é crítico se falhar, mas logar o erro
-                                console.warn('Aviso: Erro ao salvar imagens:', imagensError.message);
+                                // Erro ao salvar imagens - é crítico, lançar erro
+                                throw new Error('Erro ao salvar imagens: ' + imagensError.message);
                             }
                         } catch (imagensError) {
-                            // Não é crítico se falhar, apenas logar
-                            console.warn('Aviso: Erro ao processar imagens:', imagensError);
+                            // Erro ao processar imagens - é crítico, lançar erro
+                            throw new Error('Erro ao processar imagens: ' + (imagensError.message || imagensError));
                         }
                     }
                 }

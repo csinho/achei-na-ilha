@@ -1270,7 +1270,8 @@
         function verDetalhes(id) {
             // Salvar ID como string (pode ser UUID ou número)
             localStorage.setItem('anuncioSelecionado', id);
-            window.location.href = 'detalhes.html';
+            // Passar ID também na URL para permitir compartilhamento de links
+            window.location.href = `detalhes.html?id=${encodeURIComponent(id)}`;
         }
 
         // Funções do carrossel

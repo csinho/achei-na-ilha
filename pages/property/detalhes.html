@@ -623,8 +623,25 @@
         }
 
         async function carregarDetalhes() {
-            const anuncioIdStr = localStorage.getItem('anuncioSelecionado');
+            // Primeiro, tentar obter ID da URL (para compartilhar links)
+            const urlParams = new URLSearchParams(window.location.search);
+            let anuncioIdStr = urlParams.get('id');
+            
+            // Se não houver na URL, tentar do localStorage
             if (!anuncioIdStr) {
+                anuncioIdStr = localStorage.getItem('anuncioSelecionado');
+            }
+            
+            if (!anuncioIdStr) {
+                if (window.toast && window.toast.container) {
+                    try {
+                        window.toast.error('ID do anúncio não encontrado. Redirecionando...');
+                    } catch (e) {
+                        alert('ID do anúncio não encontrado. Redirecionando...');
+                    }
+                } else {
+                    alert('ID do anúncio não encontrado. Redirecionando...');
+                }
                 window.location.href = 'busca.html';
                 return;
             }
@@ -685,7 +702,8 @@
                 
                 if (supabaseClient) {
                     // Primeiro, tentar buscar sem relacionamento (mais simples)
-                    let { data: anuncio, error } = await supabaseClient
+                    let anuncio = null;
+                    let { data, error } = await supabaseClient
                         .from('anuncios')
                         .select(`
                             *,
@@ -694,8 +712,61 @@
                         .eq('id', anuncioIdStr)
                         .single();
                     
+                    if (!error && data) {
+                        anuncio = data;
+                    }
+                    
                     if (error) {
-                    } else if (anuncio) {
+                        // Logar erro para debugging
+                        console.error('Erro ao buscar anúncio do Supabase:', error);
+                        // Se for erro de RLS ou permissão, tentar com cliente anônimo
+                        if (error.code === 'PGRST301' || error.message?.includes('406') || error.message?.includes('Not Acceptable') || error.message?.includes('permission denied') || error.message?.includes('row-level security')) {
+                            // Tentar criar cliente anônimo
+                            try {
+                                let supabaseConfig;
+                                if (typeof window.getSupabaseConfig === 'function') {
+                                    supabaseConfig = window.getSupabaseConfig();
+                                } else if (typeof SUPABASE_CONFIG !== 'undefined') {
+                                    supabaseConfig = SUPABASE_CONFIG;
+                                } else if (typeof window.SUPABASE_CONFIG !== 'undefined') {
+                                    supabaseConfig = window.SUPABASE_CONFIG;
+                                }
+                                
+                                if (supabaseConfig && supabaseConfig.url && supabaseConfig.anonKey) {
+                                    const anonClient = window.supabase?.createClient?.(supabaseConfig.url, supabaseConfig.anonKey);
+                                    if (anonClient) {
+                                        const { data: anuncioAnon, error: errorAnon } = await anonClient
+                                            .from('anuncios')
+                                            .select(`
+                                                *,
+                                                imagens_anuncio:imagens_anuncio(url, principal, ordem)
+                                            `)
+                                            .eq('id', anuncioIdStr)
+                                            .eq('ativo', true)
+                                            .eq('status', 'publicado')
+                                            .single();
+                                        
+                                        if (!errorAnon && anuncioAnon) {
+                                            anuncio = anuncioAnon;
+                                            supabaseClient = anonClient; // Usar cliente anônimo para o resto
+                                        } else {
+                                            throw new Error('Anúncio não encontrado ou não está publicado: ' + (errorAnon?.message || 'Erro desconhecido'));
+                                        }
+                                    } else {
+                                        throw new Error('Erro ao criar cliente Supabase anônimo');
+                                    }
+                                } else {
+                                    throw new Error('Configuração do Supabase não encontrada');
+                                }
+                            } catch (anonError) {
+                                throw new Error('Erro ao buscar anúncio: ' + (anonError.message || error.message || 'Erro desconhecido'));
+                            }
+                        } else {
+                            throw new Error('Erro ao buscar anúncio: ' + (error.message || 'Erro desconhecido'));
+                        }
+                    }
+                    
+                    if (anuncio) {
                         // Verificar se o anúncio está pausado ou não ativo - redirecionar se sim
                         if (anuncio.status === 'pausado' || !anuncio.ativo || anuncio.status === 'rascunho') {
                             // Redirecionar para listagem se anúncio estiver pausado, inativo ou for rascunho
@@ -737,19 +808,21 @@
                                             
                                             if (supabaseConfig && supabaseConfig.url && supabaseConfig.anonKey) {
                                                 const anonClient = window.supabase?.createClient?.(supabaseConfig.url, supabaseConfig.anonKey);
-                                            
-                                            if (anonClient) {
-                                                const { data: usuarioAnon, error: errorAnon } = await anonClient
-                                                    .from('users')
-                                                    .select('nome, email, telefone')
-                                                    .eq('id', anuncio.usuario_id)
-                                                    .maybeSingle();
                                                 
-                                                if (!errorAnon && usuarioAnon) {
-                                                    usuario = usuarioAnon;
+                                                if (anonClient) {
+                                                    const { data: usuarioAnon, error: errorAnon } = await anonClient
+                                                        .from('users')
+                                                        .select('nome, email, telefone')
+                                                        .eq('id', anuncio.usuario_id)
+                                                        .maybeSingle();
+                                                    
+                                                    if (!errorAnon && usuarioAnon) {
+                                                        usuario = usuarioAnon;
+                                                    }
                                                 }
                                             }
                                         } catch (e) {
+                                            // Ignorar erro ao buscar usuário anônimo
                                         }
                                     }
                                 }
@@ -759,17 +832,31 @@
                                     anuncio.anunciante_email = usuario.email;
                                     anuncio.anunciante_telefone = usuario.telefone;
                                 } else {
+                                    // Usuário não encontrado, usar valores padrão
+                                    anuncio.anunciante_nome = 'Anunciante';
+                                    anuncio.anunciante_email = '';
+                                    anuncio.anunciante_telefone = '';
                                 }
                             } catch (e) {
+                                // Erro ao buscar usuário, usar valores padrão
+                                anuncio.anunciante_nome = 'Anunciante';
+                                anuncio.anunciante_email = '';
+                                anuncio.anunciante_telefone = '';
                             }
                         }
                         
                         anuncioDoSupabase = anuncio;
                     } else {
+                        // Anúncio não encontrado após tentar cliente anônimo
+                        throw new Error('Anúncio não encontrado');
                     }
                 } else {
+                    // Supabase client não disponível
+                    throw new Error('Supabase client não disponível após múltiplas tentativas');
                 }
             } catch (error) {
+                // Re-lançar erro para ser capturado no nível superior
+                throw error;
             }
 
             const anunciosExemplo = [
@@ -2017,19 +2104,21 @@
                                         
                                         if (supabaseConfig && supabaseConfig.url && supabaseConfig.anonKey) {
                                             const anonClient = window.supabase?.createClient?.(supabaseConfig.url, supabaseConfig.anonKey);
-                                        
-                                        if (anonClient) {
-                                            const { data: usuarioAnon, error: errorAnon } = await anonClient
-                                                .from('users')
-                                                .select('telefone')
-                                                .eq('id', anuncioAtual.usuario_id)
-                                                .maybeSingle();
                                             
-                                            if (!errorAnon && usuarioAnon) {
-                                                usuario = usuarioAnon;
+                                            if (anonClient) {
+                                                const { data: usuarioAnon, error: errorAnon } = await anonClient
+                                                    .from('users')
+                                                    .select('telefone')
+                                                    .eq('id', anuncioAtual.usuario_id)
+                                                    .maybeSingle();
+                                                
+                                                if (!errorAnon && usuarioAnon) {
+                                                    usuario = usuarioAnon;
+                                                }
                                             }
                                         }
                                     } catch (e) {
+                                        // Ignorar erro ao buscar usuário anônimo
                                     }
                                 }
                             }
@@ -2042,10 +2131,12 @@
                                 }
                                 anuncioAtual.anunciante.telefone = telefoneAnunciante;
                             } else {
+                                // Telefone não encontrado
                             }
                         }
                     }
                 } catch (e) {
+                    // Erro ao buscar telefone do anunciante, continuar sem telefone
                 }
             }
             
