@@ -7,6 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="/assets/images/logo-achei-na-ilha.png">
     <link rel="alternate icon" href="/assets/images/logo-achei-na-ilha.png">
     <link rel="stylesheet" href="assets/css/header.css">
+    <script src="assets/js/supabase-config.js"></script>
     <style>
         * {
             margin: 0;
@@ -16,128 +17,460 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #f5f5f5;
+            background: #1a1a1a;
             min-height: 100vh;
         }
 
-        .hero-section {
+        /* Slider de Publicidades */
+        .publicidades-slider {
+            width: 100%;
+            position: relative;
+            margin-top: 0;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .publicidades-slider-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            aspect-ratio: 6 / 1;
+        }
+
+        .publicidades-slides {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+            height: 100%;
+        }
+
+        .publicidades-slide {
+            min-width: 100%;
+            height: 100%;
+            position: relative;
+            display: none;
+        }
+
+        .publicidades-slide.active {
+            display: block;
+        }
+
+        .publicidades-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            aspect-ratio: 6 / 1;
+        }
+
+        .publicidades-slide a {
+            display: block;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .publicidades-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            z-index: 10;
+            transition: all 0.3s;
+        }
+
+        .publicidades-nav:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .publicidades-nav.prev {
+            left: 20px;
+        }
+
+        .publicidades-nav.next {
+            right: 20px;
+        }
+
+        .publicidades-dots {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .publicidades-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .publicidades-dot.active {
             background: white;
-            padding: 40px 0;
-            text-align: center;
+            width: 30px;
+            border-radius: 6px;
         }
 
-        .hero-content {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .hero-title {
-            font-size: 48px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 16px;
-            line-height: 1.2;
-        }
-
-        .hero-subtitle {
-            font-size: 20px;
-            color: #666;
-            margin-bottom: 40px;
-            line-height: 1.4;
-        }
-
+        /* Campo de Busca */
         .search-section {
-            background: white;
-            padding: 30px 0;
-            border-top: 1px solid #e0e0e0;
+            /*background-image: url('assets/images/grid-background.webp');*/
+            background-image: url('https://img3.wallspic.com/previews/3/3/1/6/6/166133/166133-beach-hawaiian_beaches-water-water_resources-daytime-x750.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: scroll;
+            padding: 80px 0;
+            margin-top: 0;
+            margin-bottom: 0;
+            position: relative;
+            z-index: 2;
+            border-bottom: none;
+            border-top: none;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .search-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, rgba(135, 206, 250, 0.2), rgba(255, 165, 0, 0.3)); 
+            z-index: 1;
+        }
+
+        .search-section > * {
+            position: relative;
+            z-index: 2;
         }
 
         .search-container {
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
+            width: 100%;
+            position: relative;
+            z-index: 2;
+        }
+
+        .search-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .search-logo {
+            display: block;
+            margin: 0 auto 30px auto;
+            height: 250px;
+            width: auto;
+            max-width: 300px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.3));
+        }
+
+        .search-title {
+            font-size: 48px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .search-subtitle {
+            font-size: 20px;
+            color: #ffffff;
+            font-weight: 400;
+            text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.7), 0 0 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .search-box {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 0;
+            box-shadow: none;
         }
 
         .search-bar {
             display: flex;
             gap: 12px;
-            margin-bottom: 20px;
+            margin-bottom: 0;
         }
 
         .search-input {
             flex: 1;
-            padding: 16px;
-            border: 2px solid #e0e0e0;
+            padding: 18px 24px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
             border-radius: 8px;
             font-size: 16px;
-            transition: border-color 0.2s;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            color: #333;
+        }
+
+        .search-input::placeholder {
+            color: rgba(0, 0, 0, 0.6);
         }
 
         .search-input:focus {
             outline: none;
+            background: rgba(255, 255, 255, 1);
             border-color: #0077B6;
+            box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.2);
+        }
+
+        .search-input:focus::placeholder {
+            color: rgba(0, 0, 0, 0.4);
         }
 
         .btn-search {
-            background: #0077B6;
+            background: #e60012;
             color: white;
             border: none;
-            padding: 16px 32px;
+            padding: 18px 40px;
             border-radius: 8px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.3s;
+            white-space: nowrap;
+            opacity: 0.5;
+            pointer-events: none;
         }
 
-        .btn-search:hover {
+        .btn-search:enabled,
+        .btn-search.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .btn-search:hover:enabled,
+        .btn-search:hover.active {
+            background: #cc0010;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(230, 0, 18, 0.3);
+        }
+
+        /* Seção de Anúncios em Destaque */
+        .featured-section {
+            max-width: 1400px;
+            border-top: none;
+            margin: 60px auto;
+            padding: 0 20px;
+            display: none;
+            position: relative;
+        }
+
+        .featured-section-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .featured-list-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .featured-list {
+            display: flex;
+            gap: 24px;
+            overflow-x: auto;
+            padding: 10px 0 20px 0;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            justify-content: center;
+            flex-wrap: nowrap;
+        }
+
+        .featured-list::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Botões de navegação */
+        .featured-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: white;
+            border: 2px solid #0077B6;
+            color: #0077B6;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 119, 182, 0.2);
+        }
+
+        .featured-nav-btn:hover {
+            background: #0077B6;
+            color: white;
+            box-shadow: 0 6px 16px rgba(0, 119, 182, 0.3);
+        }
+
+        .featured-nav-btn.prev {
+            left: -24px;
+        }
+
+        .featured-nav-btn.next {
+            right: -24px;
+        }
+
+        .featured-nav-btn.visible {
+            display: flex;
+        }
+
+        .featured-list.scrollable {
+            scrollbar-width: thin;
+            -ms-overflow-style: auto;
+        }
+
+        .featured-list.scrollable::-webkit-scrollbar {
+            display: block;
+            height: 8px;
+        }
+
+        .featured-list.scrollable::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .featured-list.scrollable::-webkit-scrollbar-thumb {
+            background: #0077B6;
+            border-radius: 10px;
+        }
+
+        .featured-list.scrollable::-webkit-scrollbar-thumb:hover {
             background: #005a8d;
         }
 
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 40px;
-        }
-
-        .action-card {
+        .featured-card {
+            min-width: 300px;
+            max-width: 300px;
             background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 24px;
-            text-align: center;
-            transition: all 0.2s;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
         }
 
-        .action-card:hover {
-            border-color: #0077B6;
-            box-shadow: 0 4px 12px rgba(0, 119, 182, 0.1);
+        .featured-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
         }
 
-        .action-icon {
-            font-size: 32px;
-            margin-bottom: 12px;
+        .featured-card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #f5f5f5;
         }
 
-        .action-title {
+        .featured-card-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .featured-card-title {
             font-size: 18px;
             font-weight: 600;
             color: #333;
-            margin-bottom: 8px;
-        }
-
-        .action-description {
-            color: #666;
-            font-size: 14px;
+            margin: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
             line-height: 1.4;
         }
 
+        .featured-card-price {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0077B6;
+        }
+
+        .featured-card-location {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .featured-card-details {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .featured-card-detail {
+            font-size: 12px;
+            padding: 5px 10px;
+            background: #e8f4fd;
+            color: #0077B6;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
         .features-section {
-            background: #f8f9fa;
-            padding: 60px 0;
+            background-color: #f0f8ff;
+            background-image: url('assets/images/grid-background.webp');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            padding: 80px 0;
+            margin-top: 0;
+            border-top: none;
+            position: relative;
+        }
+
+        .features-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(135, 206, 250, 0.2) 0%, rgba(255, 215, 0, 0.15) 100%);
+            z-index: 0;
+        }
+
+        .features-section > * {
+            position: relative;
+            z-index: 1;
         }
 
         .features-container {
@@ -148,7 +481,7 @@
 
         .features-title {
             text-align: center;
-            font-size: 36px;
+            font-size: 40px;
             font-weight: 700;
             color: #333;
             margin-bottom: 16px;
@@ -156,9 +489,9 @@
 
         .features-subtitle {
             text-align: center;
-            font-size: 18px;
+            font-size: 20px;
             color: #666;
-            margin-bottom: 40px;
+            margin-bottom: 50px;
         }
 
         .features-grid {
@@ -168,20 +501,34 @@
         }
 
         .feature-card {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(135, 206, 250, 0.15) 0%, rgba(255, 215, 0, 0.2) 100%);
+            padding: 40px 30px;
+            border-radius: 16px;
             text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(135, 206, 250, 0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        .feature-card-full-width {
+            grid-column: 1 / -1;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 119, 182, 0.25);
+            border-color: rgba(135, 206, 250, 0.5);
+            background: linear-gradient(135deg, rgba(135, 206, 250, 0.25) 0%, rgba(255, 215, 0, 0.3) 100%);
         }
 
         .feature-icon {
-            font-size: 48px;
-            margin-bottom: 20px;
+            font-size: 56px;
+            margin-bottom: 24px;
         }
 
         .feature-title {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 600;
             color: #333;
             margin-bottom: 12px;
@@ -189,34 +536,72 @@
 
         .feature-description {
             color: #666;
-            line-height: 1.5;
+            line-height: 1.6;
+            font-size: 15px;
         }
 
         @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 16px;
+            .publicidades-slider-container {
+                aspect-ratio: 6 / 1;
             }
 
-            .nav-links {
-                flex-direction: column;
-                gap: 12px;
+            .publicidades-nav {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
             }
 
-            .hero-title {
-                font-size: 36px;
+            .publicidades-nav.prev {
+                left: 10px;
             }
 
-            .hero-subtitle {
-                font-size: 18px;
+            .publicidades-nav.next {
+                right: 10px;
+            }
+
+            .search-title {
+                font-size: 22px;
+            }
+
+            .search-subtitle {
+                font-size: 14px;
             }
 
             .search-bar {
                 flex-direction: column;
             }
 
-            .quick-actions {
-                grid-template-columns: 1fr;
+            .btn-search {
+                width: 100%;
+            }
+
+            .featured-section-title {
+                font-size: 24px;
+            }
+
+            .featured-card {
+                min-width: 260px;
+                max-width: 260px;
+            }
+
+            .featured-card-image {
+                height: 160px;
+            }
+
+            .featured-nav-btn {
+                display: none !important;
+            }
+
+            .featured-list-container {
+                padding: 0;
+            }
+
+            .features-title {
+                font-size: 28px;
+            }
+
+            .features-subtitle {
+                font-size: 16px;
             }
         }
     </style>
@@ -225,19 +610,40 @@
     <!-- Header será carregado via JavaScript -->
     <div id="header-container"></div>
 
-    <section class="hero-section">
-        <div class="hero-content">
-            <h1 class="hero-title">Encontre o Imóvel Perfeito na Ilha</h1>
-            <p class="hero-subtitle">Conectamos você com as melhores oportunidades de compra e aluguel em um só lugar</p>
+    <!-- Slider de Publicidades -->
+    <section class="publicidades-slider" id="publicidadesSlider" style="display: none;">
+        <div class="publicidades-slider-container">
+            <div class="publicidades-slides" id="publicidadesSlides"></div>
+            <button class="publicidades-nav prev" onclick="navigatePublicidade('prev')">‹</button>
+            <button class="publicidades-nav next" onclick="navigatePublicidade('next')">›</button>
+            <div class="publicidades-dots" id="publicidadesDots"></div>
         </div>
     </section>
 
+    <!-- Campo de Busca -->
     <section class="search-section">
         <div class="search-container">
-            <div class="search-bar">
-                <input type="text" class="search-input" placeholder="Buscar por título, localização..." onclick="window.location.href='pages/property/busca.html'">
-                <button class="btn-search" onclick="window.location.href='pages/property/busca.html'">Buscar</button>
+            <div class="search-header">
+                <!--<img src="assets/images/logo-achei-na-ilha.png" alt="Achei na Ilha" class="search-logo"> -->
+                <h2 class="search-title">Encontre o Imóvel Perfeito</h2>
+                <p class="search-subtitle">Busque por título, localização ou características</p>
             </div>
+            <div class="search-box">
+                <div class="search-bar">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Descreva o que você está procurando..." onkeypress="if(event.key === 'Enter') buscarImoveis()">
+                    <button class="btn-search" onclick="buscarImoveis()">Buscar</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção de Anúncios em Destaque -->
+    <section class="featured-section" id="featuredSection">
+        <h2 class="featured-section-title">Imóveis em destaque</h2>
+        <div class="featured-list-container">
+            <button class="featured-nav-btn prev" id="featuredPrevBtn" onclick="scrollFeatured('prev')">‹</button>
+            <div class="featured-list" id="featuredList"></div>
+            <button class="featured-nav-btn next" id="featuredNextBtn" onclick="scrollFeatured('next')">›</button>
         </div>
     </section>
 
@@ -264,49 +670,395 @@
                     <h3 class="feature-title">Preços Justos</h3>
                     <p class="feature-description">Transparência total nos preços e condições de negociação</p>
                 </div>
+                
+                <div class="feature-card feature-card-full-width" style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.25) 0%, rgba(135, 206, 250, 0.2) 100%); border: 2px solid rgba(255, 165, 0, 0.4);">
+                    <div class="feature-icon">🎁</div>
+                    <h3 class="feature-title">1 Anúncio Gratuito por Mês</h3>
+                    <p class="feature-description">Todo usuário tem direito a <strong>1 anúncio gratuito por mês</strong>. Publique seu imóvel sem custos!</p>
+                </div>
             </div>
         </div>
     </section>
-
-    <div class="quick-actions" style="max-width: 1200px; margin: 40px auto; padding: 0 20px;">
-        <div class="action-card" onclick="window.location.href='pages/property/busca.html'">
-            <div class="action-icon">🔍</div>
-            <h3 class="action-title">Buscar Imóveis</h3>
-            <p class="action-description">Encontre casas, apartamentos e terrenos na ilha</p>
-        </div>
-        
-        <div class="action-card" onclick="window.location.href='pages/auth/cadastro.html'">
-            <div class="action-icon">📝</div>
-            <h3 class="action-title">Criar Conta</h3>
-            <p class="action-description">Cadastre-se para anunciar ou salvar buscas</p>
-        </div>
-        
-        <div class="action-card" onclick="window.location.href='pages/auth/login.html'">
-            <div class="action-icon">🔑</div>
-            <h3 class="action-title">Entrar</h3>
-            <p class="action-description">Acesse sua conta e gerencie seus anúncios</p>
-        </div>
-    </div>
 
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <script>
-        // Funções de autenticação serão carregadas do header-auth.js
+        const IMAGEM_PADRAO = 'https://via.placeholder.com/400x300?text=Sem+Imagem';
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // checkUserLogin será chamado pelo header-auth.js
+        // ============================================
+        // SISTEMA DE PUBLICIDADES
+        // ============================================
+        let publicidadesBanners = [];
+        let publicidadeCurrentIndex = 0;
+        let publicidadeInterval = null;
 
-            const buttons = document.querySelectorAll('.btn');
-            buttons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    this.style.transform = 'scale(0.98)';
-                    setTimeout(() => {
-                        this.style.transform = '';
-                    }, 100);
+        // Função para carregar publicidades
+        async function carregarPublicidades() {
+            try {
+                let supabaseClient = null;
+                
+                if (typeof window.getSupabaseClient === 'function') {
+                    supabaseClient = window.getSupabaseClient();
+                } else if (typeof window.authService !== 'undefined' && window.authService && window.authService.isInitialized) {
+                    supabaseClient = window.authService.getSupabase();
+                }
+
+                if (!supabaseClient) {
+                    document.getElementById('publicidadesSlider').style.display = 'none';
+                    return;
+                }
+
+                const agora = new Date();
+                const agoraISO = agora.toISOString();
+                
+                const { data: publicidades, error } = await supabaseClient
+                    .from('publicidades')
+                    .select('*')
+                    .eq('aprovada', true)
+                    .eq('visivel', true)
+                    .eq('admin', true) // Apenas publicidades do admin
+                    .or(`data_fim_publicacao.is.null,data_fim_publicacao.gte.${agoraISO}`)
+                    .order('criada_em', { ascending: false });
+
+                if (error) {
+                    document.getElementById('publicidadesSlider').style.display = 'none';
+                    return;
+                }
+
+                const publicidadesFiltradas = (publicidades || []).filter(pub => {
+                    if (!pub.data_fim_publicacao) return true;
+                    return new Date(pub.data_fim_publicacao) >= agora;
                 });
+
+                const todosBanners = [];
+                (publicidadesFiltradas || []).forEach(pub => {
+                    if (pub.banners_principais && Array.isArray(pub.banners_principais)) {
+                        pub.banners_principais.forEach(banner => {
+                            if (banner.ativo !== false && banner.imagem) {
+                                todosBanners.push({
+                                    id: `${pub.id}-${banner.imagem}`,
+                                    imagem: banner.imagem,
+                                    link: banner.link || pub.link_externo || '',
+                                    descricao: pub.descricao || pub.titulo || ''
+                                });
+                            }
+                        });
+                    }
+                });
+
+                if (todosBanners.length === 0) {
+                    document.getElementById('publicidadesSlider').style.display = 'none';
+                    return;
+                }
+
+                publicidadesBanners = todosBanners;
+                renderizarPublicidades();
+            } catch (error) {
+                document.getElementById('publicidadesSlider').style.display = 'none';
+            }
+        }
+
+        // Função para renderizar publicidades
+        function renderizarPublicidades() {
+            const slidesContainer = document.getElementById('publicidadesSlides');
+            const dotsContainer = document.getElementById('publicidadesDots');
+            const sliderSection = document.getElementById('publicidadesSlider');
+
+            if (!slidesContainer || !sliderSection) return;
+
+            if (publicidadesBanners.length === 0) {
+                sliderSection.style.display = 'none';
+                return;
+            }
+
+            sliderSection.style.display = 'block';
+            slidesContainer.innerHTML = '';
+            dotsContainer.innerHTML = '';
+
+            publicidadesBanners.forEach((banner, index) => {
+                const slide = document.createElement('div');
+                slide.className = `publicidades-slide ${index === 0 ? 'active' : ''}`;
+                
+                const link = banner.link ? `<a href="${banner.link}" target="_blank" rel="noopener noreferrer">` : '';
+                const linkClose = banner.link ? '</a>' : '';
+                
+                slide.innerHTML = `
+                    ${link}
+                        <img src="${banner.imagem}" alt="${banner.descricao}" onerror="this.style.display='none'">
+                    ${linkClose}
+                `;
+                slidesContainer.appendChild(slide);
+
+                const dot = document.createElement('div');
+                dot.className = `publicidades-dot ${index === 0 ? 'active' : ''}`;
+                dot.onclick = () => goToPublicidade(index);
+                dotsContainer.appendChild(dot);
             });
-        });
+
+            iniciarSliderPublicidades();
+        }
+
+        // Função para navegar publicidades
+        function navigatePublicidade(direction) {
+            if (publicidadesBanners.length === 0) return;
+
+            publicidadeCurrentIndex += direction;
+
+            if (publicidadeCurrentIndex >= publicidadesBanners.length) {
+                publicidadeCurrentIndex = 0;
+            } else if (publicidadeCurrentIndex < 0) {
+                publicidadeCurrentIndex = publicidadesBanners.length - 1;
+            }
+
+            goToPublicidade(publicidadeCurrentIndex);
+        }
+
+        // Função para ir para publicidade específica
+        function goToPublicidade(index) {
+            const slides = document.querySelectorAll('.publicidades-slide');
+            const dots = document.querySelectorAll('.publicidades-dot');
+
+            if (index >= publicidadesBanners.length || index < 0) return;
+
+            publicidadeCurrentIndex = index;
+
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+
+            reiniciarSliderPublicidades();
+        }
+
+        // Função para iniciar slider automático
+        function iniciarSliderPublicidades() {
+            pararSliderPublicidades();
+            if (publicidadesBanners.length <= 1) return;
+
+            publicidadeInterval = setInterval(() => {
+                navigatePublicidade(1);
+            }, 5000);
+        }
+
+        // Função para parar slider
+        function pararSliderPublicidades() {
+            if (publicidadeInterval) {
+                clearInterval(publicidadeInterval);
+                publicidadeInterval = null;
+            }
+        }
+
+        // Função para reiniciar slider
+        function reiniciarSliderPublicidades() {
+            pararSliderPublicidades();
+            iniciarSliderPublicidades();
+        }
+
+        // Função para scroll dos anúncios em destaque
+        function scrollFeatured(direction) {
+            const container = document.getElementById('featuredList');
+            if (!container) return;
+
+            const scrollAmount = 324;
+            const currentScroll = container.scrollLeft;
+            const newScroll = direction === 'next' 
+                ? currentScroll + scrollAmount 
+                : currentScroll - scrollAmount;
+
+            container.scrollTo({
+                left: newScroll,
+                behavior: 'smooth'
+            });
+        }
+
+        // Variável para armazenar o handler de scroll
+        let scrollUpdateHandler = null;
+
+        // Função para atualizar visibilidade dos botões de navegação
+        function atualizarBotoesNavegacao() {
+            const container = document.getElementById('featuredList');
+            const prevBtn = document.getElementById('featuredPrevBtn');
+            const nextBtn = document.getElementById('featuredNextBtn');
+            
+            if (!container || !prevBtn || !nextBtn) return;
+
+            const isMobile = window.innerWidth <= 768;
+            
+            if (isMobile) {
+                prevBtn.classList.remove('visible');
+                nextBtn.classList.remove('visible');
+                container.classList.remove('scrollable');
+                if (scrollUpdateHandler) {
+                    container.removeEventListener('scroll', scrollUpdateHandler);
+                    scrollUpdateHandler = null;
+                }
+                return;
+            }
+
+            const cards = container.querySelectorAll('.featured-card');
+            const numCards = cards.length;
+
+            if (numCards <= 4) {
+                prevBtn.classList.remove('visible');
+                nextBtn.classList.remove('visible');
+                container.classList.remove('scrollable');
+                container.style.justifyContent = 'center';
+                if (scrollUpdateHandler) {
+                    container.removeEventListener('scroll', scrollUpdateHandler);
+                    scrollUpdateHandler = null;
+                }
+            } else {
+                container.classList.add('scrollable');
+                container.style.justifyContent = 'flex-start';
+                
+                if (scrollUpdateHandler) {
+                    container.removeEventListener('scroll', scrollUpdateHandler);
+                }
+                
+                scrollUpdateHandler = () => {
+                    const isAtStart = container.scrollLeft <= 10;
+                    const isAtEnd = container.scrollLeft >= container.scrollWidth - container.clientWidth - 10;
+                    
+                    prevBtn.classList.toggle('visible', !isAtStart);
+                    nextBtn.classList.toggle('visible', !isAtEnd);
+                };
+
+                scrollUpdateHandler();
+                container.addEventListener('scroll', scrollUpdateHandler);
+            }
+        }
+
+        // Função para buscar imóveis
+        function buscarImoveis() {
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            if (searchTerm) {
+                // Passar o termo de busca via URL
+                window.location.href = `pages/property/busca.html?search=${encodeURIComponent(searchTerm)}`;
+            } else {
+                window.location.href = 'pages/property/busca.html';
+            }
+        }
+
+        // Carregar anúncios em destaque
+        async function carregarAnunciosDestaque() {
+            try {
+                let supabaseClient = null;
+                
+                if (typeof window.getSupabaseClient === 'function') {
+                    supabaseClient = window.getSupabaseClient();
+                } else if (typeof window.authService !== 'undefined' && window.authService && window.authService.isInitialized) {
+                    supabaseClient = window.authService.getSupabase();
+                }
+
+                if (!supabaseClient) {
+                    const featuredSection = document.getElementById('featuredSection');
+                    if (featuredSection) {
+                        featuredSection.style.display = 'none';
+                    }
+                    return;
+                }
+
+                const agora = new Date().toISOString();
+                
+                const { data: anunciosDestaque, error } = await supabaseClient
+                    .from('anuncios')
+                    .select(`
+                        *,
+                        imagens_anuncio:imagens_anuncio(url, principal, ordem)
+                    `)
+                    .eq('ativo', true)
+                    .eq('status', 'publicado')
+                    .eq('em_destaque', true)
+                    .or(`data_fim_publicacao.is.null,data_fim_publicacao.gte.${agora}`)
+                    .order('criado_em', { ascending: false })
+                    .limit(10);
+
+                if (error) {
+                    const featuredSection = document.getElementById('featuredSection');
+                    if (featuredSection) {
+                        featuredSection.style.display = 'none';
+                    }
+                    return;
+                }
+
+                if (!anunciosDestaque || anunciosDestaque.length === 0) {
+                    const featuredSection = document.getElementById('featuredSection');
+                    if (featuredSection) {
+                        featuredSection.style.display = 'none';
+                    }
+                    return;
+                }
+
+                renderizarAnunciosDestaque(anunciosDestaque);
+            } catch (error) {
+                const featuredSection = document.getElementById('featuredSection');
+                if (featuredSection) {
+                    featuredSection.style.display = 'none';
+                }
+            }
+        }
+
+        // Função para renderizar anúncios em destaque
+        function renderizarAnunciosDestaque(anuncios) {
+            const container = document.getElementById('featuredList');
+            const featuredSection = document.getElementById('featuredSection');
+            
+            if (!container || !featuredSection) {
+                return;
+            }
+
+            if (anuncios.length === 0) {
+                featuredSection.style.display = 'none';
+                return;
+            }
+
+            featuredSection.style.display = 'block';
+
+            container.innerHTML = anuncios.map(anuncio => {
+                const imagemPrincipal = anuncio.imagens_anuncio && anuncio.imagens_anuncio.length > 0
+                    ? anuncio.imagens_anuncio.find(img => img.principal) || anuncio.imagens_anuncio[0]
+                    : null;
+                const imagemUrl = imagemPrincipal ? imagemPrincipal.url : IMAGEM_PADRAO;
+
+                const cidade = anuncio.cidade || 'Ilha';
+                const estado = anuncio.estado || 'BA';
+                const localizacao = anuncio.endereco || `${cidade}, ${estado}`;
+
+                const preco = anuncio.valor ? Number(anuncio.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00';
+
+                const detalhes = [];
+                if (anuncio.quartos > 0) detalhes.push(`🛏️ ${anuncio.quartos} quarto${anuncio.quartos > 1 ? 's' : ''}`);
+                if (anuncio.banheiros > 0) detalhes.push(`🚿 ${anuncio.banheiros} banheiro${anuncio.banheiros > 1 ? 's' : ''}`);
+                if (anuncio.area) detalhes.push(`📐 ${anuncio.area}m²`);
+                if (anuncio.vagas_garagem > 0) detalhes.push(`🚗 ${anuncio.vagas_garagem} vaga${anuncio.vagas_garagem > 1 ? 's' : ''}`);
+
+                return `
+                    <div class="featured-card" onclick="window.location.href='pages/property/detalhes.html?id=${anuncio.id}'">
+                        <img src="${imagemUrl}" alt="${anuncio.titulo}" class="featured-card-image" onerror="this.src='${IMAGEM_PADRAO}'">
+                        <div class="featured-card-content">
+                            <h3 class="featured-card-title">${anuncio.titulo}</h3>
+                            <div class="featured-card-price">R$ ${preco}</div>
+                            <div class="featured-card-location">📍 ${localizacao}</div>
+                            ${detalhes.length > 0 ? `
+                                <div class="featured-card-details">
+                                    ${detalhes.map(d => `<span class="featured-card-detail">${d}</span>`).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.scrollLeft = 0;
+            
+            setTimeout(() => {
+                atualizarBotoesNavegacao();
+            }, 100);
+        }
 
         // Carregar header dinamicamente
         function loadHeader() {
@@ -315,7 +1067,6 @@
                 .then(html => {
                     document.getElementById('header-container').innerHTML = html;
                     
-                    // Aguardar o header ser renderizado antes de carregar os scripts
                     setTimeout(() => {
                         loadAuthScripts();
                     }, 100);
@@ -326,7 +1077,6 @@
 
         // Carregar scripts de autenticação na ordem correta
         function loadAuthScripts() {
-            // Verificar se Supabase CDN já está carregado
             if (typeof window.supabase === 'undefined') {
                 const supabaseCDN = document.createElement('script');
                 supabaseCDN.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
@@ -340,7 +1090,6 @@
         }
 
         function loadAuthService() {
-            // Verificar se auth-service já está carregado
             if (typeof window.authService === 'undefined') {
                 const authServiceScript = document.createElement('script');
                 authServiceScript.src = 'assets/js/supabase-auth-service.js';
@@ -354,31 +1103,67 @@
         }
 
         function loadHeaderAuth() {
-            // Verificar se header-auth já está carregado
             if (!document.querySelector('script[src*="header-auth.js"]')) {
                 const headerAuthScript = document.createElement('script');
                 headerAuthScript.src = 'assets/js/header-auth.js';
                 headerAuthScript.onload = function() {
-                    // Forçar verificação após carregar
                     setTimeout(() => {
                         if (typeof checkUserLogin === 'function') {
                             checkUserLogin();
                         }
+                        setTimeout(() => {
+                            carregarPublicidades();
+                            carregarAnunciosDestaque();
+                        }, 500);
                     }, 500);
                 };
                 document.head.appendChild(headerAuthScript);
             } else {
-                // Script já está carregado, apenas verificar
                 setTimeout(() => {
                     if (typeof checkUserLogin === 'function') {
                         checkUserLogin();
                     }
+                    setTimeout(() => {
+                        carregarPublicidades();
+                        carregarAnunciosDestaque();
+                    }, 500);
                 }, 500);
             }
         }
 
+        // Atualizar botões quando a janela for redimensionada
+        window.addEventListener('resize', function() {
+            atualizarBotoesNavegacao();
+        });
+
         // Carregar header quando a página carregar
+        // Função para controlar estado do botão de busca
+        function atualizarEstadoBotaoBusca() {
+            const searchInput = document.getElementById('searchInput');
+            const btnSearch = document.querySelector('.btn-search');
+            
+            if (searchInput && btnSearch) {
+                const temTexto = searchInput.value.trim().length > 0;
+                
+                if (temTexto) {
+                    btnSearch.classList.add('active');
+                    btnSearch.disabled = false;
+                } else {
+                    btnSearch.classList.remove('active');
+                    btnSearch.disabled = true;
+                }
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            // Configurar controle do botão de busca
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', atualizarEstadoBotaoBusca);
+                searchInput.addEventListener('keyup', atualizarEstadoBotaoBusca);
+                // Estado inicial
+                atualizarEstadoBotaoBusca();
+            }
             loadHeader();
         });
     </script>

@@ -9,6 +9,10 @@
     <link rel="stylesheet" href="../../assets/css/header.css">
     <!-- Sistema de Toast -->
     <script src="../../assets/js/toast.js"></script>
+    <!-- Serviço de Configurações -->
+    <script src="../../assets/js/config-service.js"></script>
+    <!-- Função para deletar imagens do Cloudinary -->
+    <script src="../../assets/js/cloudinary-delete.js"></script>
     <style>
         * {
             margin: 0;
@@ -18,15 +22,56 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #f5f5f5;
+            background-color: #f0f8ff;
+            background-image: url('../../assets/images/grid-background.webp');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
             min-height: 100vh;
             padding-bottom: 80px;
+            position: relative;
         }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(135, 206, 250, 0.2) 0%, rgba(255, 215, 0, 0.15) 100%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
 
         .main-content {
             max-width: 1200px;
             margin: 30px auto;
             padding: 0 20px;
+        }
+
+        .btn-voltar {
+            background: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-voltar:hover {
+            background: #e0e0e0;
+            border-color: #bbb;
+            transform: translateX(-3px);
         }
 
         .page-header {
@@ -133,7 +178,7 @@
             padding: 25px;
             box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
             display: grid;
-            grid-template-columns: 80px 1fr auto;
+            grid-template-columns: 200px 1fr auto;
             gap: 20px;
             align-items: center;
         }
@@ -141,6 +186,34 @@
         .anuncio-icon {
             font-size: 64px;
             text-align: center;
+            position: relative;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #e0e0e0, #f5f5f5);
+        }
+
+        .anuncio-emoji-desktop {
+            display: none;
+        }
+
+        .anuncio-image-desktop {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .anuncio-image-desktop[style*="display: none"] + .anuncio-emoji-desktop {
+            display: block;
+        }
+
+        .anuncio-image-mobile {
+            display: none;
         }
 
         .anuncio-info {
@@ -330,18 +403,138 @@
         }
 
         @media (max-width: 768px) {
-            .anuncio-card {
-                grid-template-columns: 1fr;
-                text-align: center;
+            .main-content {
+                margin: 15px auto;
+                padding: 0 12px;
             }
 
-            .anuncio-actions {
-                flex-direction: row;
-                justify-content: center;
+            .page-header {
+                padding: 20px;
+                border-radius: 12px;
+                margin-bottom: 15px;
+            }
+
+            .page-title {
+                font-size: 24px;
             }
 
             .stats {
                 justify-content: space-between;
+            }
+
+            .anuncios-list {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .anuncio-card {
+                display: flex;
+                flex-direction: row;
+                grid-template-columns: none;
+                padding: 0;
+                border-radius: 12px;
+                min-height: 140px;
+                align-items: stretch;
+                gap: 0;
+                overflow: hidden;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .anuncio-icon {
+                width: 140px;
+                min-width: 140px;
+                height: 140px;
+                font-size: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(135deg, #e0e0e0, #f5f5f5);
+                border-radius: 12px 0 0 12px;
+                flex-shrink: 0;
+                overflow: hidden;
+                position: relative;
+            }
+
+            .anuncio-emoji-desktop {
+                display: none;
+            }
+
+            .anuncio-image-mobile {
+                display: block;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .anuncio-emoji-mobile {
+                font-size: 48px;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .anuncio-info {
+                flex: 1;
+                padding: 12px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                min-width: 0;
+                gap: 4px;
+            }
+
+            .anuncio-title {
+                font-size: 14px;
+                font-weight: 600;
+                margin-bottom: 4px;
+                line-height: 1.3;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                color: #333;
+            }
+
+            .anuncio-details {
+                font-size: 11px;
+                margin-bottom: 2px;
+                color: #666;
+                line-height: 1.4;
+            }
+
+            .anuncio-price {
+                font-size: 18px;
+                font-weight: 700;
+                color: #0077B6;
+                margin-top: 4px;
+                margin-bottom: 0;
+            }
+
+            .anuncio-actions {
+                flex-direction: column;
+                gap: 4px;
+                padding: 8px;
+                width: auto;
+                min-width: 70px;
+                flex-shrink: 0;
+                justify-content: flex-start;
+            }
+
+            .btn-small {
+                font-size: 10px;
+                padding: 6px 10px;
+                white-space: nowrap;
+                min-height: 32px;
+            }
+
+            .status-badge {
+                font-size: 10px;
+                padding: 2px 6px;
+                margin-left: 6px;
             }
         }
     </style>
@@ -351,6 +544,9 @@
     <div id="header-container"></div>
 
     <div class="main-content">
+        <button class="btn-voltar" onclick="voltar()" title="Voltar">
+            ← Voltar
+        </button>
         <div class="page-header">
             <h1 class="page-title">Meus Anúncios</h1>
             <p class="page-subtitle">Gerencie seus imóveis anunciados</p>
@@ -454,10 +650,13 @@
                     .limit(10);
                 
                 
-                // Agora buscar apenas os do usuário
+                // Agora buscar apenas os do usuário com imagens
                 const { data: anuncios, error } = await supabase
                     .from('anuncios')
-                    .select('*')
+                    .select(`
+                        *,
+                        imagens_anuncio:imagens_anuncio(url, principal, ordem)
+                    `)
                     .eq('usuario_id', user.id)
                     .order('criado_em', { ascending: false });
                 // Se não encontrou anúncios, verificar se o ID do usuário está correto
@@ -620,9 +819,18 @@
                         }
                     }
                     
+                    const imagemUrl = imagemPrincipal.url || IMAGEM_PADRAO;
+                    const emojiFallback = anuncio.emoji || '🏠';
+                    const tituloAnuncio = anuncio.titulo || 'Imóvel';
+                    
                     return `
                 <div class="anuncio-card">
-                    <div class="anuncio-icon">${anuncio.emoji || '🏠'}</div>
+                    <div class="anuncio-icon">
+                        <img class="anuncio-image-desktop" src="${imagemUrl}" alt="${tituloAnuncio}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                        <span class="anuncio-emoji-desktop">${emojiFallback}</span>
+                        <img class="anuncio-image-mobile" src="${imagemUrl}" alt="${tituloAnuncio}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                        <span class="anuncio-emoji-mobile" style="display: none;">${emojiFallback}</span>
+                    </div>
                     <div class="anuncio-info">
                         <div class="anuncio-title">${anuncio.titulo || 'Sem título'} ${statusBadge}</div>
                         <div class="anuncio-details">📍 ${localizacao}</div>
@@ -892,7 +1100,29 @@
                     throw new Error('Supabase não disponível');
                 }
 
-                // Excluir anúncio do Supabase
+                // Buscar imagens do anúncio antes de deletar
+                const { data: imagens, error: imagensError } = await supabase
+                    .from('imagens_anuncio')
+                    .select('cloudinary_public_id')
+                    .eq('anuncio_id', anuncioParaExcluir);
+
+                // Deletar imagens do Cloudinary se tiverem public_id
+                if (!imagensError && imagens && Array.isArray(imagens)) {
+                    for (const imagem of imagens) {
+                        if (imagem.cloudinary_public_id) {
+                            try {
+                                // Função de deleção do Cloudinary (precisa estar disponível globalmente)
+                                if (typeof deletarImagemCloudinary === 'function') {
+                                    await deletarImagemCloudinary(imagem.cloudinary_public_id);
+                                }
+                            } catch (error) {
+                                // Continuar mesmo se der erro em alguma deleção
+                            }
+                        }
+                    }
+                }
+
+                // Excluir anúncio do Supabase (as imagens serão deletadas automaticamente por CASCADE)
                 const { error } = await supabase
                     .from('anuncios')
                     .delete()
@@ -1125,6 +1355,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadHeader();
         });
+
+        function voltar() {
+            window.location.href = '../property/busca.html';
+        }
     </script>
 </body>
 </html>

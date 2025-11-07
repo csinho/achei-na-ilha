@@ -20,10 +20,29 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
+            background-color: #f0f8ff;
+            background-image: url('../../assets/images/grid-background.webp');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
             min-height: 100vh;
             padding-bottom: 40px;
+            position: relative;
         }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(135, 206, 250, 0.2) 0%, rgba(255, 215, 0, 0.15) 100%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
 
         .container {
             max-width: 1200px;
@@ -681,7 +700,6 @@
             } catch (error) {
                 // Em caso de erro, mostrar mensagem clara e não continuar
                 const errorMsg = `Erro ao carregar configurações do banco de dados: ${error.message}`;
-                console.error(errorMsg, error);
                 if (window.toast && window.toast.container) {
                     window.toast.error(errorMsg);
                 } else {
@@ -801,7 +819,6 @@
         function setupCalculators() {
             // Verificar se as configurações foram carregadas
             if (MIN_DAYS === null || MAX_DAYS === null || DAILY_PRICE === null || HIGHLIGHT_PRICE === null || MAX_PRICE === null) {
-                console.warn('Configurações não carregadas ainda. Tentando novamente...');
                 setTimeout(() => {
                     if (MIN_DAYS !== null && MAX_DAYS !== null) {
                         setupCalculators();
@@ -871,7 +888,6 @@
         function calculatePrice() {
             // Verificar se as configurações foram carregadas
             if (DAILY_PRICE === null || HIGHLIGHT_PRICE === null || MAX_PRICE === null || MIN_DAYS === null || MAX_DAYS === null) {
-                console.warn('Configurações não carregadas. Não é possível calcular preço.');
                 return;
             }
             
@@ -1002,11 +1018,12 @@
                     tipo_imovel: dadosCompletos.tipo,
                     categoria: dadosCompletos.categoria,
                     valor: dadosCompletos.preco,
-                    endereco: dadosCompletos.localizacao || '',
-                    bairro: null,
-                    cidade: 'Ilha',
-                    estado: 'BA',
-                    cep: null,
+                    endereco: dadosCompletos.endereco || '', // Formato: "Bairro, Cidade- Estado"
+                    bairro: dadosCompletos.bairro || null,
+                    cidade: dadosCompletos.cidade || null,
+                    estado: dadosCompletos.uf || null,
+                    cep: dadosCompletos.cep || null,
+                    area: dadosCompletos.area || null,
                     area_terreno: null,
                     area_construida: null,
                     quartos: dadosCompletos.quartos || null,
@@ -1017,7 +1034,8 @@
                     // Nota: imagens não é uma coluna direta na tabela anuncios
                     // As imagens são armazenadas em outra estrutura ou tabela relacionada
                     ativo: false, // Ainda não publicado
-                    status: 'pendente_pagamento' // Aguardando pagamento
+                    status: 'pendente_pagamento', // Aguardando pagamento
+                    anuncio_gratuito: false // Anúncios via pagamento não são gratuitos
                 };
 
                 // Criar ou atualizar anúncio no banco de dados
@@ -1047,12 +1065,18 @@
 
                             // Inserir novas imagens (se houver)
                             if (dadosCompletos.imagens.length > 0) {
-                                const imagensData = dadosCompletos.imagens.map((url, index) => ({
-                                    anuncio_id: anuncioId,
-                                    url: url,
-                                    ordem: index,
-                                    principal: index === 0 // Primeira imagem é principal
-                                }));
+                                // Preparar dados das imagens com public_id se disponível
+                                const imagensComPublicId = dadosCompletos.imagensComPublicId || [];
+                                const imagensData = dadosCompletos.imagens.map((url, index) => {
+                                    const imagemComPublicId = imagensComPublicId[index];
+                                    return {
+                                        anuncio_id: anuncioId,
+                                        url: url,
+                                        ordem: index,
+                                        principal: index === 0, // Primeira imagem é principal
+                                        cloudinary_public_id: imagemComPublicId?.public_id || null
+                                    };
+                                });
 
                                 const { error: imagensError } = await supabase
                                     .from('imagens_anuncio')
@@ -1085,13 +1109,18 @@
                     // Salvar imagens na tabela imagens_anuncio (se houver imagens)
                     if (dadosCompletos.imagens && Array.isArray(dadosCompletos.imagens) && dadosCompletos.imagens.length > 0) {
                         try {
-                            // Preparar dados das imagens para inserção
-                            const imagensData = dadosCompletos.imagens.map((url, index) => ({
-                                anuncio_id: anuncioId,
-                                url: url,
-                                ordem: index,
-                                principal: index === 0 // Primeira imagem é principal
-                            }));
+                            // Preparar dados das imagens com public_id se disponível
+                            const imagensComPublicId = dadosCompletos.imagensComPublicId || [];
+                            const imagensData = dadosCompletos.imagens.map((url, index) => {
+                                const imagemComPublicId = imagensComPublicId[index];
+                                return {
+                                    anuncio_id: anuncioId,
+                                    url: url,
+                                    ordem: index,
+                                    principal: index === 0, // Primeira imagem é principal
+                                    cloudinary_public_id: imagemComPublicId?.public_id || null
+                                };
+                            });
 
                             // Inserir todas as imagens de uma vez
                             const { error: imagensError } = await supabase
@@ -1319,7 +1348,6 @@
                         }
                     }, (error) => {
                         if (error) {
-                            console.error('Erro ao gerar QR code:', error);
                             // Se falhar, mostrar mensagem
                             if (window.toast && window.toast.container) {
                                 try {
@@ -1330,8 +1358,6 @@
                             }
                         }
                     });
-                } else {
-                    console.warn('Biblioteca QRCode não disponível. Exibindo apenas código PIX.');
                 }
             }
             
@@ -1433,7 +1459,6 @@
                     data: resultData
                 };
             } catch (error) {
-                console.error('Erro ao verificar status do PIX:', error);
                 return { paid: false, status: 'error', data: null, error: error.message };
             }
         }
@@ -1469,7 +1494,6 @@
                     try {
                         await atualizarAnuncioAposPagamento(transactionIdUpper, pixPendingData.paymentData);
                     } catch (updateError) {
-                        console.error('Erro ao atualizar anúncio após pagamento:', updateError);
                         // Tentar usar anuncioId do localStorage como fallback
                         if (pixPendingData.anuncioId) {
                             try {
@@ -1496,7 +1520,7 @@
                                         .eq('id', pixPendingData.anuncioId);
                                 }
                             } catch (fallbackError) {
-                                console.error('Erro no fallback:', fallbackError);
+                                // Erro no fallback
                             }
                         }
                     }
@@ -1559,7 +1583,6 @@
                     return true;
                 }
             } catch (error) {
-                console.error('Erro ao verificar PIX pendente:', error);
                 // Em caso de erro, limpar localStorage e mostrar tela normal
                 localStorage.removeItem('pixPendingPayment');
                 return false;
@@ -1597,7 +1620,6 @@
                             await atualizarAnuncioAposPagamento(transactionIdUpper, paymentData);
                             atualizacaoSucesso = true;
                         } catch (updateError) {
-                            console.error('Erro ao atualizar anúncio após pagamento:', updateError);
                             // Tentar usar anuncioId do paymentData como fallback
                             if (paymentData.anuncioId) {
                                 try {
@@ -1625,7 +1647,7 @@
                                         atualizacaoSucesso = true;
                                     }
                                 } catch (fallbackError) {
-                                    console.error('Erro no fallback:', fallbackError);
+                                    // Erro no fallback
                                 }
                             }
                         }
@@ -1663,7 +1685,6 @@
                         // Ainda não pago, continuar verificando
                     }
                 } catch (error) {
-                    console.error('Erro ao verificar status do PIX:', error);
                     // Continuar tentando mesmo em caso de erro
                 }
             };
@@ -1765,7 +1786,8 @@
                     dias_publicacao: diasPublicacao,
                     valor_pagamento: paymentData.total,
                     forma_pagamento: 'pix',
-                    em_destaque: paymentData.hasHighlight || false
+                    em_destaque: paymentData.hasHighlight || false,
+                    anuncio_gratuito: false // Garantir que anúncios pagos não sejam marcados como gratuitos
                 };
 
                 // Adicionar data de fim do destaque se aplicável

@@ -9,7 +9,7 @@
             <a href="/pages/user/meus-anuncios.html" class="nav-link hidden" id="btnMeusAnuncios">Meus Anúncios</a>
             <a href="/pages/auth/login.html" class="btn-login" id="btnLogin">Entrar</a>
             <div class="user-menu hidden" id="userMenu">
-                <div class="user-info" onclick="toggleUserDropdown()">
+                <div class="user-info" onclick="toggleUserDropdown(event)">
                     <div class="user-avatar" id="userAvatar">U</div>
                     <div class="user-details">
                         <div class="user-name" id="userName">Usuário</div>
@@ -32,5 +32,79 @@
                 </div>
             </div>
         </nav>
+        <!-- Botão de menu mobile -->
+        <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
     </div>
 </header>
+
+<!-- Menu lateral (drawer) mobile -->
+<div class="mobile-drawer" id="mobileDrawer">
+    <div class="drawer-overlay" onclick="closeMobileMenu()"></div>
+    <div class="drawer-content">
+        <div class="drawer-header">
+            <button class="drawer-close" onclick="closeMobileMenu()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <a href="/index.html" class="drawer-logo">
+                <img src="/assets/images/logo-achei-na-ilha.png" alt="Achei na Ilha" class="drawer-logo-icon" />
+            </a>
+        </div>
+        <nav class="drawer-menu">
+            <div class="drawer-item drawer-user hidden" id="drawerUser">
+                <span class="drawer-icon">👤</span>
+                <span id="drawerUserName">Usuário</span>
+            </div>
+            <a href="/pages/auth/login.html" class="drawer-item" id="drawerLogin">
+                <span class="drawer-icon">🔐</span>
+                <span>Entrar</span>
+            </a>
+            <a href="/pages/property/novo-anuncio.html" class="drawer-item" id="drawerAnnounce">
+                <span class="drawer-icon">➕</span>
+                <span>Anunciar</span>
+            </a>
+            <a href="/pages/user/meus-anuncios.html" class="drawer-item hidden" id="drawerMeusAnuncios">
+                <span class="drawer-icon">📋</span>
+                <span>Meus Anúncios</span>
+            </a>
+            <button class="drawer-item drawer-logout hidden" id="drawerLogout" onclick="logout()">
+                <span class="drawer-icon">🚪</span>
+                <span>Sair</span>
+            </button>
+        </nav>
+    </div>
+</div>
+
+<!-- Menu inferior flutuante mobile -->
+<nav class="bottom-nav" id="bottomNav">
+    <a href="/index.html" class="bottom-nav-item">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        <span>Início</span>
+    </a>
+    <a href="/pages/property/busca.html" class="bottom-nav-item">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <span>Buscar</span>
+    </a>
+    <a href="/pages/property/novo-anuncio.html" class="bottom-nav-item">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="16"></line>
+            <line x1="8" y1="12" x2="16" y2="12"></line>
+        </svg>
+        <span>Anunciar</span>
+    </a>
+</nav>

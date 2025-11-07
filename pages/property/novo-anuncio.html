@@ -15,6 +15,8 @@
     <script src="../../assets/js/supabase-auth-service.js"></script>
     <!-- Serviço de Configurações -->
     <script src="../../assets/js/config-service.js"></script>
+    <!-- Função para deletar imagens do Cloudinary -->
+    <script src="../../assets/js/cloudinary-delete.js"></script>
     <style>
         * {
             margin: 0;
@@ -24,15 +26,56 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #f5f5f5;
+            background-color: #f0f8ff;
+            background-image: url('../../assets/images/grid-background.webp');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
             min-height: 100vh;
             padding-bottom: 100px;
+            position: relative;
         }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(135, 206, 250, 0.2) 0%, rgba(255, 215, 0, 0.15) 100%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
 
         .main-content {
             max-width: 800px;
             margin: 30px auto;
             padding: 0 20px;
+        }
+
+        .btn-voltar {
+            background: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-voltar:hover {
+            background: #e0e0e0;
+            border-color: #bbb;
+            transform: translateX(-3px);
         }
 
         .form-card {
@@ -55,6 +98,26 @@
 
         .form-group {
             margin-bottom: 25px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-help {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
         }
 
         label {
@@ -230,14 +293,20 @@
         }
 
         .form-actions {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 15px;
             margin-top: 30px;
         }
 
         .form-actions .btn {
             margin-top: 0;
+        }
+
+        .form-actions-buttons-row {
+            display: flex;
+            gap: 15px;
+            width: 100%;
         }
 
         .message {
@@ -290,6 +359,9 @@
     <div id="header-container"></div>
 
     <div class="main-content">
+        <button class="btn-voltar" onclick="voltar()" title="Voltar">
+            ← Voltar
+        </button>
         <div class="form-card">
             <h1 class="form-title">Criar Novo Anúncio</h1>
             <p class="form-subtitle">Preencha as informações do seu imóvel</p>
@@ -344,8 +416,38 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="localizacao">Localização *</label>
-                    <input type="text" id="localizacao" required placeholder="Ex: Praia do Centro">
+                    <label for="cep">CEP *</label>
+                    <input type="text" id="cep" required placeholder="00000-000" maxlength="9" pattern="[0-9]{5}-?[0-9]{3}">
+                    <small class="form-help">Digite o CEP para preencher automaticamente o endereço</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="rua">Rua/Logradouro *</label>
+                    <input type="text" id="rua" required placeholder="Ex: Rua da Praia">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bairro">Bairro *</label>
+                        <input type="text" id="bairro" required placeholder="Ex: Centro">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cidade">Cidade *</label>
+                        <input type="text" id="cidade" required placeholder="Ex: Ilha">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="uf">UF (Estado) *</label>
+                        <input type="text" id="uf" required placeholder="Ex: BA" maxlength="2" style="text-transform: uppercase;">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="numero">Número (opcional)</label>
+                        <input type="text" id="numero" placeholder="Ex: 123">
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -378,6 +480,11 @@
                         <option value="4">4</option>
                         <option value="5">5+</option>
                     </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="area">Área (m²)</label>
+                    <input type="number" id="area" placeholder="Ex: 120" min="0" step="0.01">
                 </div>
 
                 <div class="form-group">
@@ -458,13 +565,29 @@
                 </div>
 
 
+                <!-- Mensagem informativa sobre anúncio gratuito -->
+                <div id="infoAnuncioGratuito" class="info-banner" style="display: none; background: linear-gradient(135deg, #e8f4fd, #d1e9f6); border-left: 4px solid #0077B6; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 24px;">🎉</span>
+                        <div style="flex: 1;">
+                            <strong style="color: #0077B6; font-size: 16px;">Anúncio Gratuito Disponível!</strong>
+                            <p style="margin: 5px 0 0 0; color: #333; font-size: 14px;">Você tem direito a <strong>1 anúncio gratuito por mês</strong>. Este anúncio será publicado imediatamente, sem necessidade de pagamento. Anúncios gratuitos não podem ter destaque.</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" id="btnDraft" onclick="salvarRascunho()">
-                        💾 Salvar como Rascunho
+                    <button type="button" class="btn btn-success" id="btnPublishGratuito" onclick="publicarAnuncioGratuito()" style="display: none; width: 100%; align-self: center;">
+                        🎁 Publicar Gratuitamente
                     </button>
-                    <button type="button" class="btn btn-primary" id="btnPublish" onclick="publicarAnuncio()">
-                        🚀 Publicar Anúncio
-                    </button>
+                    <div class="form-actions-buttons-row">
+                        <button type="button" class="btn btn-secondary" id="btnDraft" onclick="salvarRascunho()" style="flex: 1;">
+                            💾 Salvar como Rascunho
+                        </button>
+                        <button type="button" class="btn btn-primary" id="btnPublish" onclick="publicarAnuncio()" style="flex: 1;">
+                            🚀 Publicar Anúncio
+                        </button>
+                    </div>
                     <button type="button" class="btn btn-primary" id="btnSaveChanges" onclick="salvarAlteracoes()" style="display: none;">
                         💾 Salvar alterações
                     </button>
@@ -507,8 +630,11 @@
 
                 // Fazer upload para Cloudinary
                 try {
-                    const imageUrl = await uploadToCloudinary(file);
-                    imagensSelecionadas.push(imageUrl);
+                    const uploadResult = await uploadToCloudinary(file);
+                    imagensSelecionadas.push({
+                        url: uploadResult.url,
+                        public_id: uploadResult.public_id
+                    });
                     showMessage('Imagem enviada com sucesso!', 'success');
                 } catch (error) {
                     showMessage('Erro ao fazer upload: ' + error.message, 'error');
@@ -534,16 +660,32 @@
 
         function renderizarImagensSelecionadas() {
             const container = document.getElementById('imageList');
-            container.innerHTML = imagensSelecionadas.map((imageUrl, index) => `
+            container.innerHTML = imagensSelecionadas.map((image, index) => {
+                const imageUrl = typeof image === 'string' ? image : image.url;
+                return `
                 <div class="file-item" style="display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 10px;">
                     <img src="${imageUrl}" alt="Imagem ${index + 1}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
                     <span style="flex: 1; word-break: break-all;">${imageUrl.substring(0, 50)}...</span>
                     <button type="button" class="btn-remove" onclick="removerImagem(${index})">Remover</button>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
-        function removerImagem(index) {
+        async function removerImagem(index) {
+            const imagem = imagensSelecionadas[index];
+            
+            // Se tiver public_id, deletar do Cloudinary
+            if (imagem && typeof imagem === 'object' && imagem.public_id) {
+                try {
+                    if (typeof window.deletarImagemCloudinary === 'function') {
+                        await window.deletarImagemCloudinary(imagem.public_id);
+                    }
+                } catch (error) {
+                    // Continuar mesmo se der erro na deleção
+                }
+            }
+            
             imagensSelecionadas.splice(index, 1);
             renderizarImagensSelecionadas();
             atualizarLimites();
@@ -577,22 +719,74 @@
             return true;
         }
 
+        // Função para buscar CEP via ViaCEP
+        async function buscarCEP(cep) {
+            // Remove caracteres não numéricos
+            const cepLimpo = cep.replace(/\D/g, '');
+            
+            // Valida se tem 8 dígitos
+            if (cepLimpo.length !== 8) {
+                return null;
+            }
+
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+                const data = await response.json();
+                
+                // Verifica se houve erro na busca
+                if (data.erro) {
+                    return null;
+                }
+                
+                return data;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        // Função para formatar CEP (adiciona hífen)
+        function formatarCEP(cep) {
+            const cepLimpo = cep.replace(/\D/g, '');
+            if (cepLimpo.length === 8) {
+                return cepLimpo.replace(/(\d{5})(\d{3})/, '$1-$2');
+            }
+            return cepLimpo;
+        }
+
         function coletarDadosAnuncio() {
+            const areaValue = document.getElementById('area').value;
+            const bairro = document.getElementById('bairro').value;
+            const cidade = document.getElementById('cidade').value;
+            const uf = document.getElementById('uf').value;
+            
+            // Formatar endereco como "Bairro, Cidade- Estado"
+            const enderecoFormatado = bairro && cidade && uf 
+                ? `${bairro}, ${cidade}- ${uf}` 
+                : '';
+            
             return {
                 id: anuncioEditandoId || 'temp_' + Date.now(),
                 titulo: document.getElementById('titulo').value,
                 descricao: document.getElementById('descricao').value,
                 categoria: document.getElementById('categoria').value,
                 tipo: document.getElementById('tipoImovel').value,
-                localizacao: document.getElementById('localizacao').value,
+                cep: document.getElementById('cep').value.replace(/\D/g, ''),
+                rua: document.getElementById('rua').value,
+                bairro: bairro,
+                cidade: cidade,
+                uf: uf,
+                numero: document.getElementById('numero').value || null,
+                endereco: enderecoFormatado, // Formato: "Bairro, Cidade- Estado"
                 preco: converterMoedaParaNumero(document.getElementById('valor').value),
                 emoji: document.getElementById('emoji').value,
                 quartos: parseInt(document.getElementById('quartos').value),
                 banheiros: parseInt(document.getElementById('banheiros').value),
+                area: areaValue ? parseFloat(areaValue) : null,
                 garagem: document.getElementById('garagem').value === 'true',
                 vagasGaragem: parseInt(document.getElementById('vagasGaragem').value),
                 caracteristicas: getCaracteristicasSelecionadas(),
-                imagens: imagensSelecionadas, // Array de URLs das imagens
+                imagens: imagensSelecionadas.map(img => typeof img === 'string' ? img : img.url), // Array de URLs das imagens
+                imagensComPublicId: imagensSelecionadas.map(img => typeof img === 'string' ? { url: img, public_id: null } : img), // Array com public_id
                 imagensCount: imagensSelecionadas.length,
                 usuarioEmail: getUsuarioEmail(),
                 criadoEm: new Date().toISOString(),
@@ -661,11 +855,12 @@
                     tipo_imovel: dadosAnuncio.tipo,
                     categoria: dadosAnuncio.categoria,
                     valor: dadosAnuncio.preco,
-                    endereco: dadosAnuncio.localizacao || '',
-                    bairro: null, // Pode ser adicionado depois se necessário
-                    cidade: 'Ilha',
-                    estado: 'BA',
-                    cep: null,
+                    endereco: dadosAnuncio.endereco || '', // Formato: "Bairro, Cidade- Estado"
+                    bairro: dadosAnuncio.bairro || null,
+                    cidade: dadosAnuncio.cidade || null,
+                    estado: dadosAnuncio.uf || null,
+                    cep: dadosAnuncio.cep || null,
+                    area: dadosAnuncio.area || null,
                     area_terreno: null,
                     area_construida: null,
                     quartos: dadosAnuncio.quartos || null,
@@ -673,8 +868,9 @@
                     vagas_garagem: dadosAnuncio.vagasGaragem || null,
                     emoji: dadosAnuncio.emoji || null,
                     caracteristicas: dadosAnuncio.caracteristicas || [],
-                    imagens: dadosAnuncio.imagens || [], // Array de URLs das imagens do Cloudinary
                     ativo: false // Rascunho não está ativo
+                    // Nota: imagens não são salvas diretamente na tabela anuncios
+                    // Elas são salvas na tabela imagens_anuncio separadamente após criar/atualizar o anúncio
                 };
 
                 // Adicionar campo status se existir na tabela
@@ -709,6 +905,51 @@
                 if (error) {
                     throw error;
                 }
+
+                // Salvar imagens na tabela imagens_anuncio
+                const anuncioId = data.id;
+                if (dadosAnuncio.imagens && Array.isArray(dadosAnuncio.imagens) && dadosAnuncio.imagens.length > 0) {
+                    try {
+                        // Se for edição, remover imagens antigas primeiro
+                        if (anuncioEditandoId) {
+                            await supabase
+                                .from('imagens_anuncio')
+                                .delete()
+                                .eq('anuncio_id', anuncioId);
+                        }
+
+                        // Preparar dados das imagens para inserção (com public_id se disponível)
+                        const imagensComPublicId = dadosAnuncio.imagensComPublicId || [];
+                        const imagensData = dadosAnuncio.imagens.map((url, index) => {
+                            const imagemComPublicId = imagensComPublicId[index];
+                            return {
+                                anuncio_id: anuncioId,
+                                url: url,
+                                ordem: index,
+                                principal: index === 0, // Primeira imagem é principal
+                                cloudinary_public_id: imagemComPublicId?.public_id || null
+                            };
+                        });
+
+                        // Inserir todas as imagens de uma vez
+                        const { error: imagensError } = await supabase
+                            .from('imagens_anuncio')
+                            .insert(imagensData);
+
+                        if (imagensError) {
+                            throw new Error('Erro ao salvar imagens: ' + imagensError.message);
+                        }
+                    } catch (imagensError) {
+                        throw new Error('Erro ao processar imagens: ' + (imagensError.message || imagensError));
+                    }
+                } else if (anuncioEditandoId) {
+                    // Se estiver editando e não houver imagens, remover todas as imagens antigas
+                    await supabase
+                        .from('imagens_anuncio')
+                        .delete()
+                        .eq('anuncio_id', anuncioId);
+                }
+
                 showMessage('Rascunho salvo com sucesso!', 'success');
 
                 setTimeout(() => {
@@ -719,6 +960,80 @@
             } finally {
                 btnDraft.disabled = false;
                 btnDraft.textContent = '💾 Salvar como Rascunho';
+            }
+        }
+
+        // Função para verificar se o usuário tem direito a anúncio gratuito no mês atual
+        async function verificarAnuncioGratuitoDisponivel() {
+            try {
+                let service = null;
+                if (typeof window.authService !== 'undefined') {
+                    service = window.authService;
+                } else if (typeof authService !== 'undefined') {
+                    service = authService;
+                }
+
+                if (!service || !service.isInitialized) {
+                    if (service && !service.isInitialized) {
+                        await service.initialize();
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    } else {
+                        return false;
+                    }
+                }
+
+                const user = await service.getCurrentUser();
+                if (!user || !user.id) {
+                    return false;
+                }
+
+                const supabase = service.getSupabase();
+                if (!supabase) {
+                    return false;
+                }
+
+                // Calcular início e fim do mês atual
+                const agora = new Date();
+                const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+                const fimMes = new Date(agora.getFullYear(), agora.getMonth() + 1, 0, 23, 59, 59);
+
+                // Buscar anúncios gratuitos do usuário no mês atual
+                const { data: anunciosGratuitos, error } = await supabase
+                    .from('anuncios')
+                    .select('id')
+                    .eq('usuario_id', user.id)
+                    .eq('anuncio_gratuito', true)
+                    .gte('criado_em', inicioMes.toISOString())
+                    .lte('criado_em', fimMes.toISOString());
+
+                if (error) {
+                    return false;
+                }
+
+                // Se não tem nenhum anúncio gratuito no mês, está disponível
+                return !anunciosGratuitos || anunciosGratuitos.length === 0;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        // Função para atualizar UI com informação de anúncio gratuito
+        async function atualizarInfoAnuncioGratuito() {
+            // Só mostrar se não estiver editando
+            if (anuncioEditandoId) {
+                return;
+            }
+
+            const temDireito = await verificarAnuncioGratuitoDisponivel();
+            const infoBanner = document.getElementById('infoAnuncioGratuito');
+            const btnGratuito = document.getElementById('btnPublishGratuito');
+
+            if (temDireito) {
+                if (infoBanner) infoBanner.style.display = 'block';
+                if (btnGratuito) btnGratuito.style.display = 'inline-block';
+            } else {
+                if (infoBanner) infoBanner.style.display = 'none';
+                if (btnGratuito) btnGratuito.style.display = 'none';
             }
         }
 
@@ -747,6 +1062,132 @@
                 showMessage('Erro ao preparar publicação', 'error');
                 btnPublish.disabled = false;
                 btnPublish.textContent = '🚀 Publicar Anúncio';
+            }
+        }
+
+        // Função para publicar anúncio gratuito
+        async function publicarAnuncioGratuito() {
+            if (!validarFormulario()) return;
+
+            // Verificar se ainda tem direito
+            const temDireito = await verificarAnuncioGratuitoDisponivel();
+            if (!temDireito) {
+                showMessage('Você já utilizou seu anúncio gratuito deste mês. Por favor, realize o pagamento para publicar.', 'error');
+                return;
+            }
+
+            const btnGratuito = document.getElementById('btnPublishGratuito');
+            btnGratuito.disabled = true;
+            btnGratuito.textContent = '⏳ Publicando...';
+
+            try {
+                let service = null;
+                if (typeof window.authService !== 'undefined') {
+                    service = window.authService;
+                } else if (typeof authService !== 'undefined') {
+                    service = authService;
+                }
+
+                if (!service || !service.isInitialized) {
+                    if (service && !service.isInitialized) {
+                        await service.initialize();
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    } else {
+                        throw new Error('AuthService não disponível');
+                    }
+                }
+
+                const user = await service.getCurrentUser();
+                if (!user) {
+                    throw new Error('Usuário não logado');
+                }
+
+                const supabase = service.getSupabase();
+                if (!supabase) {
+                    throw new Error('Supabase não disponível');
+                }
+
+                const dadosAnuncio = coletarDadosAnuncio();
+                
+                // Preparar dados do anúncio gratuito
+                const agora = new Date();
+                const dataFim = new Date(agora);
+                dataFim.setDate(dataFim.getDate() + 30); // 30 dias de publicação gratuita
+
+                const anuncioData = {
+                    usuario_id: user.id,
+                    titulo: dadosAnuncio.titulo,
+                    descricao: dadosAnuncio.descricao,
+                    tipo_imovel: dadosAnuncio.tipo,
+                    categoria: dadosAnuncio.categoria,
+                    valor: dadosAnuncio.preco,
+                    endereco: dadosAnuncio.endereco || '',
+                    bairro: dadosAnuncio.bairro || null,
+                    cidade: dadosAnuncio.cidade || null,
+                    estado: dadosAnuncio.uf || null,
+                    cep: dadosAnuncio.cep || null,
+                    area: dadosAnuncio.area || null,
+                    quartos: dadosAnuncio.quartos || null,
+                    banheiros: dadosAnuncio.banheiros || null,
+                    vagas_garagem: dadosAnuncio.vagasGaragem || null,
+                    emoji: dadosAnuncio.emoji || null,
+                    caracteristicas: dadosAnuncio.caracteristicas || [],
+                    ativo: true,
+                    status: 'publicado',
+                    anuncio_gratuito: true, // Marcar como gratuito
+                    em_destaque: false, // Anúncios gratuitos não podem ter destaque
+                    data_inicio_publicacao: agora.toISOString(),
+                    data_fim_publicacao: dataFim.toISOString(),
+                    dias_publicacao: 30,
+                    valor_pagamento: 0.00,
+                    forma_pagamento: 'gratuito'
+                };
+
+                // Criar anúncio
+                const { data: novoAnuncio, error: insertError } = await supabase
+                    .from('anuncios')
+                    .insert([anuncioData])
+                    .select()
+                    .single();
+
+                if (insertError || !novoAnuncio) {
+                    throw new Error('Erro ao criar anúncio: ' + (insertError?.message || 'Erro desconhecido'));
+                }
+
+                const anuncioId = novoAnuncio.id;
+
+                // Salvar imagens na tabela imagens_anuncio
+                if (dadosAnuncio.imagens && Array.isArray(dadosAnuncio.imagens) && dadosAnuncio.imagens.length > 0) {
+                    const imagensComPublicId = dadosAnuncio.imagensComPublicId || [];
+                    const imagensData = dadosAnuncio.imagens.map((url, index) => {
+                        const imagemComPublicId = imagensComPublicId[index];
+                        return {
+                            anuncio_id: anuncioId,
+                            url: url,
+                            ordem: index,
+                            principal: index === 0,
+                            cloudinary_public_id: imagemComPublicId?.public_id || null
+                        };
+                    });
+
+                    const { error: imagensError } = await supabase
+                        .from('imagens_anuncio')
+                        .insert(imagensData);
+
+                    if (imagensError) {
+                        throw new Error('Erro ao salvar imagens: ' + imagensError.message);
+                    }
+                }
+
+                showMessage('Anúncio publicado gratuitamente com sucesso!', 'success');
+
+                setTimeout(() => {
+                    window.location.href = '../user/meus-anuncios.html';
+                }, 2000);
+            } catch (error) {
+                showMessage('Erro ao publicar anúncio: ' + (error.message || 'Erro desconhecido'), 'error');
+                btnGratuito.disabled = false;
+                btnGratuito.textContent = '🎁 Publicar Gratuitamente';
             }
         }
 
@@ -912,7 +1353,6 @@
             } catch (error) {
                 // Em caso de erro, mostrar mensagem clara e não continuar
                 const errorMsg = `Erro ao carregar configurações do banco de dados: ${error.message}`;
-                console.error(errorMsg, error);
                 if (window.toast && window.toast.container) {
                     window.toast.error(errorMsg);
                 } else {
@@ -968,7 +1408,11 @@
                 }
 
                 const data = await response.json();
-                return data.secure_url;
+                // Retornar tanto a URL quanto o public_id para permitir deleção posterior
+                return {
+                    url: data.secure_url,
+                    public_id: data.public_id
+                };
             } catch (error) {
                 throw error;
             }
@@ -1150,7 +1594,19 @@
                 document.getElementById('descricao').value = anuncio.descricao || '';
                 document.getElementById('categoria').value = anuncio.categoria || '';
                 document.getElementById('tipoImovel').value = anuncio.tipo_imovel || '';
-                document.getElementById('localizacao').value = anuncio.endereco || '';
+                
+                // Preencher campos de endereço
+                if (anuncio.cep) {
+                    document.getElementById('cep').value = formatarCEP(anuncio.cep);
+                }
+                // Tentar extrair rua do endereco se não houver campo separado
+                // Por enquanto, deixar vazio se não houver campo rua no banco
+                document.getElementById('rua').value = '';
+                document.getElementById('bairro').value = anuncio.bairro || '';
+                document.getElementById('cidade').value = anuncio.cidade || '';
+                document.getElementById('uf').value = anuncio.estado || '';
+                document.getElementById('numero').value = '';
+                
                 document.getElementById('emoji').value = anuncio.emoji || '🏠';
                 
                 // Formatar valor para exibição
@@ -1164,6 +1620,10 @@
 
                 document.getElementById('quartos').value = anuncio.quartos || '';
                 document.getElementById('banheiros').value = anuncio.banheiros || '';
+                
+                // Área
+                const areaValue = anuncio.area || anuncio.area_construida || anuncio.area_terreno || '';
+                document.getElementById('area').value = areaValue;
                 
                 // Garagem
                 if (anuncio.vagas_garagem && anuncio.vagas_garagem > 0) {
@@ -1190,8 +1650,11 @@
                     // Ordenar imagens por ordem
                     const imagensOrdenadas = anuncio.imagens_anuncio.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
                     
-                    // Preencher array de imagens selecionadas com as URLs
-                    imagensSelecionadas = imagensOrdenadas.map(img => img.url);
+                    // Preencher array de imagens selecionadas com objetos {url, public_id}
+                    imagensSelecionadas = imagensOrdenadas.map(img => ({
+                        url: img.url,
+                        public_id: img.cloudinary_public_id || null
+                    }));
                     
                     // Renderizar imagens na tela
                     renderizarImagensSelecionadas();
@@ -1274,7 +1737,12 @@
                     tipo_imovel: dadosAnuncio.tipo,
                     categoria: dadosAnuncio.categoria,
                     valor: dadosAnuncio.preco,
-                    endereco: dadosAnuncio.localizacao || '',
+                    endereco: dadosAnuncio.endereco || '', // Formato: "Bairro, Cidade- Estado"
+                    bairro: dadosAnuncio.bairro || null,
+                    cidade: dadosAnuncio.cidade || null,
+                    estado: dadosAnuncio.uf || null,
+                    cep: dadosAnuncio.cep || null,
+                    area: dadosAnuncio.area || null,
                     quartos: dadosAnuncio.quartos || null,
                     banheiros: dadosAnuncio.banheiros || null,
                     vagas_garagem: dadosAnuncio.vagasGaragem || null,
@@ -1294,6 +1762,69 @@
                     throw error;
                 }
 
+                // Salvar imagens na tabela imagens_anuncio
+                const anuncioId = data.id;
+                if (dadosAnuncio.imagens && Array.isArray(dadosAnuncio.imagens) && dadosAnuncio.imagens.length > 0) {
+                    try {
+                        // Buscar imagens antigas para deletar do Cloudinary
+                        const { data: imagensAntigas } = await supabase
+                            .from('imagens_anuncio')
+                            .select('cloudinary_public_id')
+                            .eq('anuncio_id', anuncioId);
+
+                        // Remover imagens antigas primeiro
+                        await supabase
+                            .from('imagens_anuncio')
+                            .delete()
+                            .eq('anuncio_id', anuncioId);
+
+                        // Deletar imagens antigas do Cloudinary
+                        if (imagensAntigas && Array.isArray(imagensAntigas)) {
+                            for (const imagemAntiga of imagensAntigas) {
+                                if (imagemAntiga.cloudinary_public_id) {
+                                    try {
+                                        if (typeof window.deletarImagemCloudinary === 'function') {
+                                            await window.deletarImagemCloudinary(imagemAntiga.cloudinary_public_id);
+                                        }
+                                    } catch (error) {
+                                        // Continuar mesmo se der erro em alguma deleção
+                                    }
+                                }
+                            }
+                        }
+
+                        // Preparar dados das imagens para inserção (com public_id se disponível)
+                        const imagensComPublicId = dadosAnuncio.imagensComPublicId || [];
+                        const imagensData = dadosAnuncio.imagens.map((url, index) => {
+                            const imagemComPublicId = imagensComPublicId[index];
+                            return {
+                                anuncio_id: anuncioId,
+                                url: url,
+                                ordem: index,
+                                principal: index === 0, // Primeira imagem é principal
+                                cloudinary_public_id: imagemComPublicId?.public_id || null
+                            };
+                        });
+
+                        // Inserir todas as imagens de uma vez
+                        const { error: imagensError } = await supabase
+                            .from('imagens_anuncio')
+                            .insert(imagensData);
+
+                        if (imagensError) {
+                            throw new Error('Erro ao salvar imagens: ' + imagensError.message);
+                        }
+                    } catch (imagensError) {
+                        throw new Error('Erro ao processar imagens: ' + (imagensError.message || imagensError));
+                    }
+                } else {
+                    // Se não houver imagens, remover todas as imagens antigas
+                    await supabase
+                        .from('imagens_anuncio')
+                        .delete()
+                        .eq('anuncio_id', anuncioId);
+                }
+
                 showMessage('Alterações salvas com sucesso!', 'success');
 
                 setTimeout(() => {
@@ -1307,11 +1838,58 @@
             }
         }
 
+        // Event listener para o campo CEP
+        function configurarBuscaCEP() {
+            const cepInput = document.getElementById('cep');
+            if (cepInput) {
+                // Formatar CEP enquanto digita
+                cepInput.addEventListener('input', function(e) {
+                    const valor = e.target.value;
+                    const cepFormatado = formatarCEP(valor);
+                    e.target.value = cepFormatado;
+                });
+
+                // Buscar CEP quando perder o foco e tiver 8 dígitos
+                cepInput.addEventListener('blur', async function(e) {
+                    const cep = e.target.value.replace(/\D/g, '');
+                    if (cep.length === 8) {
+                        const cepInputElement = e.target;
+                        cepInputElement.disabled = true;
+                        cepInputElement.style.opacity = '0.6';
+                        
+                        const dados = await buscarCEP(cep);
+                        
+                        if (dados) {
+                            // Preencher campos automaticamente
+                            document.getElementById('rua').value = dados.logradouro || '';
+                            document.getElementById('bairro').value = dados.bairro || '';
+                            document.getElementById('cidade').value = dados.localidade || '';
+                            document.getElementById('uf').value = dados.uf || '';
+                            
+                            // Focar no campo número se existir
+                            const numeroInput = document.getElementById('numero');
+                            if (numeroInput) {
+                                numeroInput.focus();
+                            }
+                        } else {
+                            showMessage('CEP não encontrado. Por favor, preencha os campos manualmente.', 'error');
+                        }
+                        
+                        cepInputElement.disabled = false;
+                        cepInputElement.style.opacity = '1';
+                    }
+                });
+            }
+        }
+
         window.addEventListener('load', async function() {
             // Carregar configurações do banco primeiro
             await loadConfigurations();
             // Aplicar máscara de moeda no campo de valor
             aplicarMascaraMoeda();
+            
+            // Configurar busca de CEP
+            configurarBuscaCEP();
             
             // Aguardar um pouco antes de verificar (para dar tempo do header carregar)
             await new Promise(resolve => setTimeout(resolve, 1500));
@@ -1323,6 +1901,9 @@
             
             // Atualizar visibilidade dos botões após carregar
             atualizarVisibilidadeBotoes();
+            
+            // Verificar e mostrar opção de anúncio gratuito
+            await atualizarInfoAnuncioGratuito();
             
             // Forçar atualização do header após tudo carregar
             setTimeout(async () => {
@@ -1418,6 +1999,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadHeader();
         });
+
+        function voltar() {
+            window.location.href = '../user/meus-anuncios.html';
+        }
     </script>
 </body>
 </html>

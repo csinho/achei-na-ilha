@@ -13,7 +13,7 @@
     <script src="../../assets/js/supabase-config.js"></script>
     
     <style>
-        * {
+         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -21,14 +21,33 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #f5f5f5;
+            background-color: #f0f8ff;
+            background-image: url('../../assets/images/grid-background.webp');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
             min-height: 100vh;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(135, 206, 250, 0.2) 0%, rgba(255, 215, 0, 0.15) 100%);
+            z-index: 0;
+            pointer-events: none;
         }
 
         .search-section {
             background: white;
             padding: 20px 0;
             border-bottom: 1px solid #e0e0e0;
+            position: relative;
         }
 
         .search-container {
@@ -89,195 +108,125 @@
             background: #c82333;
         }
 
-        /* Banner Principal Slider */
-        .main-banner-section {
-            max-width: 1280px;
-            margin: 20px auto;
-            padding: 0 20px;
-        }
-
-        .main-banner-slider {
-            position: relative;
+        /* Slider de Publicidades */
+        .publicidades-slider {
             width: 100%;
-            aspect-ratio: 1280 / 420; /* Proporção 16:9 para banner 1280x720 */
-            max-height: 720px;
-            border-radius: 8px;
+            position: relative;
+            margin-top: 0;
+            background: #000;
             overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            background: #f5f5f5;
         }
 
-        .main-banner-slides {
+        .publicidades-slider-container {
             position: relative;
             width: 100%;
+            overflow: hidden;
+            aspect-ratio: 6 / 1;
+        }
+
+        .publicidades-slides {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
             height: 100%;
         }
 
-        .main-banner-slide {
-            position: absolute;
-            width: 100%;
+        .publicidades-slide {
+            min-width: 100%;
             height: 100%;
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out;
-            pointer-events: none; /* Desabilitar cliques em slides inativos */
-            z-index: 1;
+            position: relative;
+            display: none;
         }
 
-        .main-banner-slide.active {
-            opacity: 1;
-            pointer-events: auto; /* Habilitar cliques apenas no slide ativo */
-            z-index: 2;
-        }
-
-        .main-banner-slide a {
+        .publicidades-slide.active {
             display: block;
-            width: 100%;
-            height: 100%;
         }
 
-        .main-banner-slide img {
+        .publicidades-slide img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            aspect-ratio: 6 / 1;
         }
 
-        /* Tooltip para banners */
-        .banner-tooltip-container {
-            position: relative;
-            display: inline-block;
+        .publicidades-slide a {
+            display: block;
             width: 100%;
             height: 100%;
+            position: relative;
         }
 
-        .banner-tooltip {
-            visibility: hidden;
-            opacity: 0;
-            position: absolute;
-            bottom: calc(100% + 15px);
-            left: 50%;
-            transform: translateX(-50%) translateY(-10px);
-            background-color: rgba(0, 0, 0, 0.9);
-            color: white;
-            text-align: center;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            line-height: 1.5;
-            white-space: normal;
-            max-width: 300px;
-            width: max-content;
-            min-width: 200px;
-            z-index: 10000;
-            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
-            pointer-events: none;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            word-wrap: break-word;
-        }
-
-        .banner-tooltip::after {
-            content: "";
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 8px solid transparent;
-            border-top-color: rgba(0, 0, 0, 0.9);
-        }
-
-        .main-banner-slide.active .banner-tooltip-container:hover .banner-tooltip {
-            visibility: visible;
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-
-        @media (max-width: 768px) {
-            .banner-tooltip {
-                max-width: 250px;
-                min-width: 150px;
-                font-size: 12px;
-                padding: 10px 12px;
-            }
-        }
-
-        .main-banner-nav {
+        .publicidades-nav {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
             border: none;
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-            font-weight: bold;
-            color: #333;
-            transition: all 0.3s ease;
+            font-size: 24px;
             z-index: 10;
+            transition: all 0.3s;
         }
 
-        .main-banner-nav:hover {
-            background: rgba(255, 255, 255, 1);
-            transform: translateY(-50%) scale(1.1);
+        .publicidades-nav:hover {
+            background: rgba(0, 0, 0, 0.8);
         }
 
-        .main-banner-nav.prev {
-            left: 15px;
+        .publicidades-nav.prev {
+            left: 20px;
         }
 
-        .main-banner-nav.next {
-            right: 15px;
+        .publicidades-nav.next {
+            right: 20px;
         }
 
-        .main-banner-dots {
+        .publicidades-dots {
             position: absolute;
-            bottom: 15px;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 8px;
+            gap: 10px;
             z-index: 10;
         }
 
-        .main-banner-dot {
-            width: 10px;
-            height: 10px;
+        .publicidades-dot {
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.5);
-            border: 2px solid rgba(255, 255, 255, 0.8);
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
         }
 
-        .main-banner-dot.active {
-            background: #0077B6;
-            border-color: #0077B6;
+        .publicidades-dot.active {
+            background: white;
+            width: 30px;
+            border-radius: 6px;
         }
-
 
         @media (max-width: 768px) {
-            .main-banner-section {
-                padding: 0 10px;
+            .publicidades-slider-container {
+                aspect-ratio: 6 / 1;
             }
 
-            .main-banner-slider {
-                border-radius: 4px;
+            .publicidades-nav {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
             }
 
-            .main-banner-nav {
-                width: 30px;
-                height: 30px;
-                font-size: 16px;
-            }
-
-            .main-banner-nav.prev {
+            .publicidades-nav.prev {
                 left: 10px;
             }
 
-            .main-banner-nav.next {
+            .publicidades-nav.next {
                 right: 10px;
             }
         }
@@ -299,6 +248,7 @@
             height: fit-content;
             position: sticky;
             top: 20px;
+            z-index: 1;
         }
 
         .sidebar-title {
@@ -452,6 +402,41 @@
             min-height: 200px;
         }
 
+        /* Anúncios em destaque - borda dourada e efeito pulsante */
+        .listing-card-destaque {
+            border: 3px solid #FFD700 !important;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+            animation: pulse-gold 2s ease-in-out infinite;
+            position: relative;
+        }
+
+        @keyframes pulse-gold {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.15);
+                border-color: #FFD700;
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 6px 16px rgba(0, 0, 0, 0.2);
+                border-color: #FFA500;
+            }
+        }
+
+        .listing-card-destaque::before {
+            content: '⭐ DESTAQUE';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 4px;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: 0.5px;
+        }
+
         .listing-card {
             background: white;
             border-radius: 8px;
@@ -462,6 +447,8 @@
             border: 1px solid #e0e0e0;
             margin-bottom: 16px;
             min-height: 200px;
+            display: flex;
+            flex-direction: column;
         }
 
         .listing-card:hover {
@@ -592,11 +579,11 @@
 
         .detail-item {
             display: inline-block;
-            padding: 2px 6px;
+            padding: 4px 8px;
             background: #e8f4fd;
             color: #0077B6;
             border-radius: 4px;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 500;
         }
 
@@ -610,6 +597,86 @@
             font-weight: 500;
         }
 
+        /* Botão de favoritar */
+        .listing-favorite {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .listing-favorite:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.1);
+        }
+
+        .favorite-icon {
+            font-size: 18px;
+            color: #666;
+            transition: all 0.2s ease;
+        }
+
+        .listing-favorite.active .favorite-icon {
+            color: #e91e63;
+        }
+
+        .listing-favorite.active .favorite-icon::after {
+            content: '♥';
+        }
+
+        .listing-favorite:not(.active) .favorite-icon::after {
+            content: '♡';
+        }
+
+        .listing-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .listing-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #f0f0f0;
+            color: #666;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .listing-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: #999;
+            margin-top: auto;
+            padding-top: 4px;
+        }
+
+        .listing-date {
+            color: #999;
+        }
+
+        .listing-location-mobile {
+            color: #999;
+        }
+
         /* Bottom navigation removido - funcionalidades movidas para header e botão flutuante */
 
         .empty-state {
@@ -621,6 +688,113 @@
         .empty-state-icon {
             font-size: 64px;
             margin-bottom: 20px;
+        }
+
+        /* Layout Mobile - Cards horizontais */
+        @media (max-width: 768px) {
+            .listings-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                padding: 0 12px;
+            }
+
+            .listing-card {
+                flex-direction: row;
+                min-height: 140px;
+                border-radius: 12px;
+                margin-bottom: 12px;
+                align-items: stretch;
+            }
+
+            .carousel-container {
+                width: 140px;
+                min-width: 140px;
+                height: 100%;
+                border-radius: 12px 0 0 12px;
+                flex-shrink: 0;
+                align-self: stretch;
+            }
+
+            .listing-content {
+                flex: 1;
+                padding: 12px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                min-width: 0;
+            }
+
+            .listing-title {
+                font-size: 14px;
+                margin-bottom: 6px;
+                -webkit-line-clamp: 2;
+                line-clamp: 2;
+            }
+
+            .listing-emoji {
+                display: none;
+            }
+
+            .listing-price {
+                font-size: 18px;
+                margin-bottom: 4px;
+            }
+
+            .listing-location {
+                display: none;
+            }
+
+            .listing-details {
+                gap: 6px;
+                margin-bottom: 6px;
+                flex-wrap: wrap;
+            }
+
+            .detail-item {
+                font-size: 10px;
+                padding: 2px 6px;
+                background: #e8f4fd;
+                color: #0077B6;
+                border-radius: 3px;
+                font-weight: 500;
+                white-space: nowrap;
+            }
+
+            .listing-type {
+                display: none;
+            }
+
+            .listing-badge {
+                font-size: 10px;
+                padding: 3px 6px;
+            }
+
+            .listing-footer {
+                font-size: 10px;
+            }
+
+            .carousel-button {
+                width: 24px;
+                height: 24px;
+                font-size: 14px;
+            }
+
+            .carousel-button.prev {
+                left: 6px;
+            }
+
+            .carousel-button.next {
+                right: 6px;
+            }
+
+            .listing-favorite {
+                width: 28px;
+                height: 28px;
+            }
+
+            .favorite-icon {
+                font-size: 16px;
+            }
         }
 
         @media (max-width: 768px) {
@@ -696,17 +870,15 @@
         </div>
     </div>
 
-    <!-- Banner Principal Slider -->
-    <div class="main-banner-section" id="mainBannerSection" style="display: none;">
-        <div class="main-banner-slider" id="mainBannerSlider">
-            <div class="main-banner-slides" id="mainBannerSlides">
-                <!-- Banners serão inseridos via JavaScript -->
-            </div>
-            <button class="main-banner-nav prev" onclick="navigateMainBanner(-1)">‹</button>
-            <button class="main-banner-nav next" onclick="navigateMainBanner(1)">›</button>
-            <div class="main-banner-dots" id="mainBannerDots"></div>
+    <!-- Slider de Publicidades -->
+    <section class="publicidades-slider" id="publicidadesSlider" style="display: none;">
+        <div class="publicidades-slider-container">
+            <div class="publicidades-slides" id="publicidadesSlides"></div>
+            <button class="publicidades-nav prev" onclick="navigatePublicidade('prev')">‹</button>
+            <button class="publicidades-nav next" onclick="navigatePublicidade('next')">›</button>
+            <div class="publicidades-dots" id="publicidadesDots"></div>
         </div>
-    </div>
+    </section>
 
 
     <div class="main-layout">
@@ -909,168 +1081,8 @@
         // URL da imagem padrão para anúncios sem imagens
         const IMAGEM_PADRAO = 'https://images.tcdn.com.br/img/img_prod/734896/patch_cord_cat6_amarelo_sohoplus_50_centimetros_2525_1_546d22ba08fae4a55e7ad243dfdc8b90.jpeg';
         
-        const anunciosExemplo = [
-            {
-                id: 1,
-                titulo: "Casa de Praia com Vista para o Mar",
-                preco: 850000,
-                localizacao: "Praia do Centro",
-                tipo: "casa",
-                categoria: "venda",
-                emoji: "🏖️",
-                quartos: 4,
-                banheiros: 3,
-                garagem: true,
-                vagasGaragem: 2,
-                caracteristicas: ["piscina", "vista-mar", "churrasqueira"],
-                imagens: [
-                    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400",
-                    "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400",
-                    "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400"
-                ],
-                descricao: "Linda casa de praia com vista panorâmica para o mar. Possui 4 quartos, 3 banheiros, sala ampla, cozinha completa e área de lazer com churrasqueira.",
-                likes: 12,
-                comentarios: [],
-                anunciante: {
-                    nome: "João Silva",
-                    email: "joao.silva@email.com",
-                    telefone: "71996755745"
-                }
-            },
-            {
-                id: 2,
-                titulo: "Apartamento Moderno 2 Quartos",
-                preco: 2500,
-                localizacao: "Centro da Ilha",
-                tipo: "apartamento",
-                categoria: "aluguel",
-                emoji: "🏢",
-                quartos: 2,
-                banheiros: 1,
-                garagem: true,
-                vagasGaragem: 1,
-                caracteristicas: ["quintal", "coqueiros"],
-                imagens: [
-                    "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400",
-                    "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400"
-                ],
-                descricao: "Apartamento moderno e bem localizado no centro da ilha. 2 quartos com armários, banheiro social, sala integrada com cozinha americana.",
-                likes: 8,
-                comentarios: [],
-                anunciante: {
-                    nome: "Maria Santos",
-                    email: "maria.santos@email.com",
-                    telefone: "71996755745"
-                }
-            },
-            {
-                id: 3,
-                titulo: "Terreno com 500m² Próximo à Praia",
-                preco: 350000,
-                localizacao: "Praia Grande",
-                tipo: "terreno",
-                categoria: "venda",
-                emoji: "🏝️",
-                quartos: 0,
-                banheiros: 0,
-                garagem: false,
-                vagasGaragem: 0,
-                caracteristicas: ["roca", "poco"],
-                imagens: [
-                    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400"
-                ],
-                descricao: "Excelente terreno plano com 500m², localizado a apenas 200 metros da Praia Grande. Documentação em dia, área residencial consolidada.",
-                likes: 5,
-                comentarios: [],
-                anunciante: {
-                    nome: "Carlos Oliveira",
-                    email: "carlos.oliveira@email.com",
-                    telefone: "71996755745"
-                }
-            },
-            {
-                id: 4,
-                titulo: "Casa 3 Quartos com Piscina",
-                preco: 4500,
-                localizacao: "Bairro das Palmeiras",
-                tipo: "casa",
-                categoria: "aluguel",
-                emoji: "🏊",
-                quartos: 3,
-                banheiros: 2,
-                garagem: true,
-                vagasGaragem: 2,
-                caracteristicas: ["piscina"],
-                imagens: [
-                    "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400",
-                    "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400",
-                    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400",
-                    "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400"
-                ],
-                descricao: "Casa espaçosa com 3 quartos, sendo 1 suíte, área de lazer completa com piscina, churrasqueira e espaço gourmet.",
-                likes: 15,
-                comentarios: [],
-                anunciante: {
-                    nome: "Ana Costa",
-                    email: "ana.costa@email.com",
-                    telefone: "71996755745"
-                }
-            },
-            {
-                id: 5,
-                titulo: "Loja Comercial no Centro",
-                preco: 3000,
-                localizacao: "Rua Principal",
-                tipo: "comercial",
-                categoria: "aluguel",
-                emoji: "🏪",
-                quartos: 0,
-                banheiros: 1,
-                garagem: false,
-                vagasGaragem: 0,
-                caracteristicas: [],
-                imagens: [
-                    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400"
-                ],
-                descricao: "Loja comercial em ponto estratégico na rua principal. Ótima para diversos tipos de negócio. 80m² com banheiro e espaço para estoque.",
-                likes: 3,
-                comentarios: [],
-                anunciante: {
-                    nome: "Roberto Lima",
-                    email: "roberto.lima@email.com",
-                    telefone: "71996755745"
-                }
-            },
-            {
-                id: 6,
-                titulo: "Cobertura Duplex Vista Mar",
-                preco: 1200000,
-                localizacao: "Orla da Praia",
-                tipo: "apartamento",
-                categoria: "venda",
-                emoji: "🌅",
-                quartos: 3,
-                banheiros: 3,
-                garagem: true,
-                vagasGaragem: 2,
-                caracteristicas: ["vista-mar"],
-                imagens: [
-                    "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400",
-                    "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400",
-                    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400"
-                ],
-                descricao: "Cobertura duplex de alto padrão com vista privilegiada para o mar. 3 suítes, sala de estar e jantar, cozinha planejada.",
-                likes: 25,
-                comentarios: [],
-                anunciante: {
-                    nome: "Fernanda Alves",
-                    email: "fernanda.alves@email.com",
-                    telefone: "71996755745"
-                }
-            }
-        ];
-
-        let todosAnuncios = [...anunciosExemplo];
+        // Array de anúncios - será preenchido apenas com dados do banco
+        let todosAnuncios = [];
 
         async function carregarAnunciosDoSupabase() {
             try {
@@ -1079,37 +1091,23 @@
                     return;
                 }
 
-                // Obter authService se disponível
+                // Obter cliente Supabase - sempre usar getSupabaseClient para garantir instância única
                 let supabaseClient = null;
-                if (typeof window.authService !== 'undefined' && window.authService) {
-                    if (window.authService.isInitialized) {
-                        supabaseClient = window.authService.getSupabase();
-                    }
-                }
-
-                // Se não conseguiu pelo authService, tentar getSupabaseClient primeiro
-                if (!supabaseClient && typeof window.getSupabaseClient === 'function') {
+                
+                // Prioridade 1: tentar usar getSupabaseClient (que gerencia singleton)
+                if (typeof window.getSupabaseClient === 'function') {
                     supabaseClient = window.getSupabaseClient();
                 }
                 
-                // Se ainda não conseguiu, tentar usar configuração centralizada
-                if (!supabaseClient && typeof window.supabase !== 'undefined') {
-                    try {
-                        // Usar getSupabaseConfig se disponível, senão usar SUPABASE_CONFIG
-                        let supabaseConfig;
-                        if (typeof window.getSupabaseConfig === 'function') {
-                            supabaseConfig = window.getSupabaseConfig();
-                        } else if (typeof SUPABASE_CONFIG !== 'undefined') {
-                            supabaseConfig = SUPABASE_CONFIG;
-                        } else if (typeof window.SUPABASE_CONFIG !== 'undefined') {
-                            supabaseConfig = window.SUPABASE_CONFIG;
-                        }
-                        
-                        if (supabaseConfig && supabaseConfig.url && supabaseConfig.anonKey) {
-                            supabaseClient = window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
-                        }
-                    } catch (e) {
-                        console.warn('Erro ao criar cliente Supabase:', e);
+                // Prioridade 2: se getSupabaseClient não retornou nada, tentar authService
+                if (!supabaseClient && typeof window.authService !== 'undefined' && window.authService) {
+                    // Aguardar inicialização do authService se necessário
+                    if (window.authService.isInitialized) {
+                        supabaseClient = window.authService.getSupabase();
+                    } else {
+                        // Se authService existe mas não está inicializado, aguardar
+                        // Não criar nova instância aqui para evitar múltiplas instâncias
+                        return;
                     }
                 }
 
@@ -1133,7 +1131,7 @@
                     .eq('ativo', true)
                     .eq('status', 'publicado')
                     .or(`data_fim_publicacao.is.null,data_fim_publicacao.gte.${agora}`)
-                    .order('criado_em', { ascending: false });
+                    .order('criado_em', { ascending: false }); // Ordenar por data de criação (a ordenação por destaque será feita no JavaScript)
 
                 if (error) {
                     return;
@@ -1143,8 +1141,19 @@
                 anunciosSupabaseClient = supabaseClient;
 
                 if (anunciosDB && anunciosDB.length > 0) {
+                    // Ordenar anúncios: destaque primeiro, depois por data de criação
+                    const anunciosOrdenados = [...anunciosDB].sort((a, b) => {
+                        // Primeiro: anúncios em destaque vêm primeiro
+                        if (a.em_destaque && !b.em_destaque) return -1;
+                        if (!a.em_destaque && b.em_destaque) return 1;
+                        // Se ambos têm ou não têm destaque, ordenar por data de criação
+                        const dataA = new Date(a.criado_em);
+                        const dataB = new Date(b.criado_em);
+                        return dataB - dataA; // Mais recente primeiro
+                    });
+                    
                     // Converter formato do banco para formato usado na página
-                    const anunciosFormatados = anunciosDB.map(anuncio => {
+                    const anunciosFormatados = anunciosOrdenados.map(anuncio => {
                         // Obter primeira imagem principal
                         const imagemPrincipal = anuncio.imagens_anuncio && anuncio.imagens_anuncio.length > 0
                             ? anuncio.imagens_anuncio.find(img => img.principal) || anuncio.imagens_anuncio[0]
@@ -1167,16 +1176,22 @@
                             emoji: anuncio.emoji || '🏠',
                             quartos: anuncio.quartos || 0,
                             banheiros: anuncio.banheiros || 0,
+                            area: anuncio.area || anuncio.area_construida || anuncio.area_terreno || null,
+                            area_construida: anuncio.area_construida || null,
+                            area_terreno: anuncio.area_terreno || null,
                             garagem: (anuncio.vagas_garagem && anuncio.vagas_garagem > 0) || false,
                             vagasGaragem: anuncio.vagas_garagem || 0,
                             caracteristicas: anuncio.caracteristicas || [],
                             imagens: imagens,
-                            criado_em: anuncio.criado_em
+                            criado_em: anuncio.criado_em,
+                            cidade: anuncio.cidade,
+                            estado: anuncio.estado,
+                            em_destaque: anuncio.em_destaque || false // Incluir campo em_destaque
                         };
                     });
 
-                    // Adicionar aos anúncios existentes (substituir ou mesclar)
-                    todosAnuncios = [...anunciosExemplo, ...anunciosFormatados];
+                    // Substituir anúncios pelos dados do banco
+                    todosAnuncios = anunciosFormatados;
                     // Aplicar filtros novamente para atualizar a lista
                     aplicarFiltros();
                 } else {
@@ -1195,7 +1210,7 @@
             if (anunciosSalvos) {
                 try {
                 const anuncios = JSON.parse(anunciosSalvos);
-                todosAnuncios = [...anunciosExemplo, ...anuncios];
+                todosAnuncios = anuncios;
                 } catch (e) {
                 }
             }
@@ -1218,8 +1233,44 @@
             container.style.display = 'grid';
             emptyState.style.display = 'none';
 
-            container.innerHTML = anuncios.map(anuncio => `
-                <div class="listing-card" onclick="verDetalhes('${anuncio.id}')">
+            // Formatar data relativa
+            const formatarDataRelativa = (data) => {
+                if (!data) return '';
+                const agora = new Date();
+                const dataAnuncio = new Date(data);
+                
+                // Resetar horas para comparar apenas as datas
+                const hoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+                const dataAnuncioDate = new Date(dataAnuncio.getFullYear(), dataAnuncio.getMonth(), dataAnuncio.getDate());
+                const ontem = new Date(hoje);
+                ontem.setDate(ontem.getDate() - 1);
+                
+                const diffMs = hoje - dataAnuncioDate;
+                const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                
+                if (diffDias === 0) return 'Hoje';
+                if (diffDias === 1) return 'Ontem';
+                
+                // Se for mais antigo, formatar como dd/mm/yyyy
+                const dia = String(dataAnuncio.getDate()).padStart(2, '0');
+                const mes = String(dataAnuncio.getMonth() + 1).padStart(2, '0');
+                const ano = dataAnuncio.getFullYear();
+                return `${dia}/${mes}/${ano}`;
+            };
+
+            container.innerHTML = anuncios.map(anuncio => {
+                const dataPublicacao = anuncio.criado_em ? formatarDataRelativa(anuncio.criado_em) : '';
+                const cidade = anuncio.cidade || 'Ilha';
+                const estado = anuncio.estado || 'BA';
+                const localizacaoCompleta = `${cidade}, ${estado}`;
+                const area = anuncio.area || anuncio.area_construida || anuncio.area_terreno || null;
+                
+                // Adicionar classe especial para anúncios em destaque
+                const isDestaque = anuncio.em_destaque === true;
+                const cardClass = isDestaque ? 'listing-card listing-card-destaque' : 'listing-card';
+                
+                return `
+                <div class="${cardClass}" onclick="verDetalhes('${anuncio.id}')" data-anuncio-id="${anuncio.id}">
                     <div class="carousel-container">
                         <div class="carousel-images">
                             ${anuncio.imagens && anuncio.imagens.length > 0 
@@ -1229,27 +1280,36 @@
                                 : `<img src="${IMAGEM_PADRAO}" alt="${anuncio.titulo}" class="carousel-image active" style="width: 100%; height: 100%; object-fit: cover;">`
                             }
                         </div>
+                        <button class="listing-favorite" onclick="event.stopPropagation(); toggleFavorite('${anuncio.id}')" data-anuncio-id="${anuncio.id}" title="Favoritar">
+                            <span class="favorite-icon"></span>
+                        </button>
                         ${anuncio.imagens && anuncio.imagens.length > 1 ? `
                             <button class="carousel-button prev" onclick="event.stopPropagation(); navigateCarousel(this.closest('.carousel-container'), -1)">‹</button>
                             <button class="carousel-button next" onclick="event.stopPropagation(); navigateCarousel(this.closest('.carousel-container'), 1)">›</button>
                         ` : ''}
                     </div>
                     <div class="listing-content">
-                        <h3 class="listing-title">
-                            <span class="listing-emoji">${anuncio.emoji || '🏠'}</span>
-                            ${anuncio.titulo}
-                        </h3>
+                        <div class="listing-header">
+                            <h3 class="listing-title">
+                                ${anuncio.titulo}
+                            </h3>
+                            <div class="listing-badge">${anuncio.categoria === 'venda' ? 'Venda' : 'Aluguel'}</div>
+                        </div>
                         <div class="listing-price">R$ ${anuncio.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                        <div class="listing-location">📍 ${anuncio.localizacao}</div>
                         <div class="listing-details">
                             ${anuncio.quartos > 0 ? `<span class="detail-item">🛏️ ${anuncio.quartos} quarto${anuncio.quartos > 1 ? 's' : ''}</span>` : ''}
                             ${anuncio.banheiros > 0 ? `<span class="detail-item">🚿 ${anuncio.banheiros} banheiro${anuncio.banheiros > 1 ? 's' : ''}</span>` : ''}
-                            ${anuncio.garagem ? `<span class="detail-item">🚗 ${anuncio.vagasGaragem} vaga${anuncio.vagasGaragem > 1 ? 's' : ''}</span>` : ''}
+                            ${anuncio.area ? `<span class="detail-item">📐 ${anuncio.area}m²</span>` : ''}
+                            ${anuncio.garagem && anuncio.vagasGaragem > 0 ? `<span class="detail-item">🚗 ${anuncio.vagasGaragem} vaga${anuncio.vagasGaragem > 1 ? 's' : ''}</span>` : ''}
                         </div>
-                        <span class="listing-type">${anuncio.categoria === 'venda' ? 'Venda' : 'Aluguel'} • ${anuncio.tipo}</span>
+                        <div class="listing-footer">
+                            <span class="listing-location-mobile">${localizacaoCompleta}</span>
+                            ${dataPublicacao ? `<span class="listing-date">${dataPublicacao}</span>` : ''}
+                        </div>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
             
             // Inicializar carrosséis após renderizar
             setTimeout(() => {
@@ -1257,6 +1317,8 @@
                     startCarousel(container);
                     addSwipeSupport(container);
                 });
+                // Carregar estado dos favoritos
+                carregarFavoritos();
             }, 100);
         }
 
@@ -1272,6 +1334,144 @@
             localStorage.setItem('anuncioSelecionado', id);
             // Passar ID também na URL para permitir compartilhamento de links
             window.location.href = `detalhes.html?id=${encodeURIComponent(id)}`;
+        }
+
+        // Função para favoritar anúncio
+        async function toggleFavorite(anuncioId) {
+            // Verificar se está logado
+            if (!window.authService || !window.authService.getCurrentUser) {
+                if (window.toast) {
+                    window.toast.info('Faça login para favoritar anúncios');
+                } else {
+                    alert('Faça login para favoritar anúncios');
+                }
+                return;
+            }
+
+            try {
+                const service = window.authService;
+                if (!service.isInitialized) {
+                    await service.initialize();
+                }
+
+                const user = await service.getCurrentUser();
+                if (!user || !user.id) {
+                    if (window.toast) {
+                        window.toast.error('Erro ao identificar usuário');
+                    }
+                    return;
+                }
+
+                const supabase = service.getSupabase();
+                if (!supabase) {
+                    throw new Error('Supabase não disponível');
+                }
+
+                const favoriteBtn = event.target.closest('.listing-favorite');
+                
+                // Verificar se já está favoritado
+                const { data: favoritosExistentes, error: checkError } = await supabase
+                    .from('favoritos')
+                    .select('id')
+                    .eq('usuario_id', user.id)
+                    .eq('anuncio_id', anuncioId)
+                    .limit(1);
+
+                if (checkError) {
+                    throw checkError;
+                }
+
+                const favoritoExistente = favoritosExistentes && favoritosExistentes.length > 0 ? favoritosExistentes[0] : null;
+
+                if (favoritoExistente) {
+                    // Remover dos favoritos
+                    const { error: deleteError } = await supabase
+                        .from('favoritos')
+                        .delete()
+                        .eq('id', favoritoExistente.id);
+
+                    if (deleteError) {
+                        throw deleteError;
+                    }
+
+                    favoriteBtn.classList.remove('active');
+                    if (window.toast) {
+                        window.toast.success('Removido dos favoritos');
+                    }
+                } else {
+                    // Adicionar aos favoritos
+                    const { error: insertError } = await supabase
+                        .from('favoritos')
+                        .insert({
+                            usuario_id: user.id,
+                            anuncio_id: anuncioId
+                        });
+
+                    if (insertError) {
+                        throw insertError;
+                    }
+
+                    favoriteBtn.classList.add('active');
+                    if (window.toast) {
+                        window.toast.success('Adicionado aos favoritos');
+                    }
+                }
+            } catch (error) {
+                if (window.toast) {
+                    window.toast.error('Erro ao atualizar favoritos: ' + (error.message || 'Erro desconhecido'));
+                } else {
+                    alert('Erro ao atualizar favoritos');
+                }
+            }
+        }
+
+        // Carregar estado dos favoritos ao renderizar
+        async function carregarFavoritos() {
+            // Verificar se está logado
+            if (!window.authService || !window.authService.getCurrentUser) {
+                return;
+            }
+
+            try {
+                const service = window.authService;
+                if (!service.isInitialized) {
+                    await service.initialize();
+                }
+
+                const user = await service.getCurrentUser();
+                if (!user || !user.id) {
+                    return;
+                }
+
+                const supabase = service.getSupabase();
+                if (!supabase) {
+                    return;
+                }
+
+                // Buscar favoritos do usuário
+                const { data: favoritos, error } = await supabase
+                    .from('favoritos')
+                    .select('anuncio_id')
+                    .eq('usuario_id', user.id);
+
+                if (error) {
+                    return;
+                }
+
+                const anunciosFavoritados = favoritos ? favoritos.map(f => f.anuncio_id) : [];
+
+                // Atualizar botões de favorito
+                document.querySelectorAll('.listing-favorite').forEach(btn => {
+                    const anuncioId = btn.getAttribute('data-anuncio-id') || btn.closest('.listing-card')?.getAttribute('data-anuncio-id');
+                    if (anuncioId && anunciosFavoritados.includes(anuncioId)) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            } catch (error) {
+                // Silenciosamente falhar se não conseguir carregar favoritos
+            }
         }
 
         // Funções do carrossel
@@ -1547,6 +1747,22 @@
             }
         }
 
+        // Função para ler parâmetros da URL e preencher campo de busca
+        function lerParametroBusca() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchTerm = urlParams.get('search');
+            if (searchTerm) {
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.value = decodeURIComponent(searchTerm);
+                    // Aplicar filtros automaticamente após preencher o campo
+                    setTimeout(() => {
+                        aplicarFiltros();
+                    }, 500);
+                }
+            }
+        }
+
         window.addEventListener('load', async function() {
             carregarAnunciosSalvos();
             adicionarEventListenersFiltros();
@@ -1557,8 +1773,13 @@
             // Carregar anúncios do Supabase
             await carregarAnunciosDoSupabase();
             
-            // Aplicar filtros
-            aplicarFiltros();
+            // Ler parâmetro de busca da URL e aplicar filtros
+            lerParametroBusca();
+            
+            // Aplicar filtros (será chamado novamente por lerParametroBusca se houver termo de busca)
+            if (!new URLSearchParams(window.location.search).get('search')) {
+                aplicarFiltros();
+            }
         });
 
         // Carregar header dinamicamente
@@ -1634,94 +1855,77 @@
         // ============================================
         // SISTEMA DE PUBLICIDADES
         // ============================================
+        let publicidadesBanners = [];
+        let publicidadeCurrentIndex = 0;
+        let publicidadeInterval = null;
 
-        // Arrays para armazenar banners (serão preenchidos do banco de dados)
-        let mainBanners = [];
-        let leftSideBanners = [];
-        let rightSideBanners = [];
+        // Função para renderizar publicidades
+        function renderizarPublicidades() {
+            const slidesContainer = document.getElementById('publicidadesSlides');
+            const dotsContainer = document.getElementById('publicidadesDots');
+            const sliderSection = document.getElementById('publicidadesSlider');
 
-        // Variáveis globais para controle dos sliders
-        let mainBannerCurrentIndex = 0;
-        let mainBannerInterval = null;
+            if (!slidesContainer || !sliderSection) return;
 
-        // Função para renderizar banner principal
-        function renderMainBanner() {
-            const slidesContainer = document.getElementById('mainBannerSlides');
-            const dotsContainer = document.getElementById('mainBannerDots');
-            const bannerSection = document.getElementById('mainBannerSection');
-
-            if (!slidesContainer || !bannerSection) return;
-
-            const activeBanners = mainBanners.filter(b => b.ativo);
-
-            if (activeBanners.length === 0) {
-                bannerSection.style.display = 'none';
+            if (publicidadesBanners.length === 0) {
+                sliderSection.style.display = 'none';
                 return;
             }
 
-            bannerSection.style.display = 'block';
+            sliderSection.style.display = 'block';
             slidesContainer.innerHTML = '';
             dotsContainer.innerHTML = '';
 
-            activeBanners.forEach((banner, index) => {
-                // Criar slide
+            publicidadesBanners.forEach((banner, index) => {
                 const slide = document.createElement('div');
-                slide.className = `main-banner-slide ${index === 0 ? 'active' : ''}`;
-                // Garantir que o link seja único para cada banner
-                const bannerLink = banner.link || '';
-                const descricao = banner.descricao || '';
-                // Escapar HTML para evitar XSS
-                const descricaoEscapada = descricao
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/"/g, '&quot;')
-                    .replace(/'/g, '&#39;');
+                slide.className = `publicidades-slide ${index === 0 ? 'active' : ''}`;
+                
+                const link = banner.link ? `<a href="${banner.link}" target="_blank" rel="noopener noreferrer">` : '';
+                const linkClose = banner.link ? '</a>' : '';
                 
                 slide.innerHTML = `
-                    <a href="${bannerLink}" target="_blank" rel="noopener noreferrer" data-banner-link="${bannerLink}" class="banner-tooltip-container">
-                        ${descricao ? `<div class="banner-tooltip">${descricaoEscapada}</div>` : ''}
-                        <img src="${banner.imagem}" alt="Publicidade ${banner.id}" onerror="this.src='https://via.placeholder.com/1280x720/f5f5f5/999999?text=Imagem+nao+carregada'">
-                    </a>
+                    ${link}
+                        <img src="${banner.imagem}" alt="${banner.descricao}" onerror="this.style.display='none'">
+                    ${linkClose}
                 `;
                 slidesContainer.appendChild(slide);
 
-                // Criar dot
                 const dot = document.createElement('div');
-                dot.className = `main-banner-dot ${index === 0 ? 'active' : ''}`;
-                dot.onclick = () => goToMainBanner(index);
+                dot.className = `publicidades-dot ${index === 0 ? 'active' : ''}`;
+                dot.onclick = () => goToPublicidade(index);
                 dotsContainer.appendChild(dot);
             });
 
-            // Iniciar slider automático
-            startMainBannerSlider();
+            iniciarSliderPublicidades();
         }
 
-        // Função para navegar banner principal
-        function navigateMainBanner(direction) {
-            const activeBanners = mainBanners.filter(b => b.ativo);
-            if (activeBanners.length === 0) return;
+        // Função para navegar publicidades
+        function navigatePublicidade(direction) {
+            if (publicidadesBanners.length === 0) return;
 
-            mainBannerCurrentIndex += direction;
-
-            if (mainBannerCurrentIndex >= activeBanners.length) {
-                mainBannerCurrentIndex = 0;
-            } else if (mainBannerCurrentIndex < 0) {
-                mainBannerCurrentIndex = activeBanners.length - 1;
+            if (typeof direction === 'string') {
+                publicidadeCurrentIndex += direction === 'next' ? 1 : -1;
+            } else {
+                publicidadeCurrentIndex += direction;
             }
 
-            goToMainBanner(mainBannerCurrentIndex);
+            if (publicidadeCurrentIndex >= publicidadesBanners.length) {
+                publicidadeCurrentIndex = 0;
+            } else if (publicidadeCurrentIndex < 0) {
+                publicidadeCurrentIndex = publicidadesBanners.length - 1;
+            }
+
+            goToPublicidade(publicidadeCurrentIndex);
         }
 
-        // Função para ir para banner específico
-        function goToMainBanner(index) {
-            const slides = document.querySelectorAll('.main-banner-slide');
-            const dots = document.querySelectorAll('.main-banner-dot');
-            const activeBanners = mainBanners.filter(b => b.ativo);
+        // Função para ir para publicidade específica
+        function goToPublicidade(index) {
+            const slides = document.querySelectorAll('.publicidades-slide');
+            const dots = document.querySelectorAll('.publicidades-dot');
 
-            if (index >= activeBanners.length || index < 0) return;
+            if (index >= publicidadesBanners.length || index < 0) return;
 
-            mainBannerCurrentIndex = index;
+            publicidadeCurrentIndex = index;
 
             slides.forEach((slide, i) => {
                 slide.classList.toggle('active', i === index);
@@ -1731,32 +1935,31 @@
                 dot.classList.toggle('active', i === index);
             });
 
-            // Reiniciar slider automático
-            restartMainBannerSlider();
+            reiniciarSliderPublicidades();
         }
 
-        // Função para iniciar slider automático do banner principal
-        function startMainBannerSlider() {
-            stopMainBannerSlider();
-            const activeBanners = mainBanners.filter(b => b.ativo);
-            if (activeBanners.length <= 1) return;
+        // Função para iniciar slider automático
+        function iniciarSliderPublicidades() {
+            pararSliderPublicidades();
+            if (publicidadesBanners.length <= 1) return;
 
-            mainBannerInterval = setInterval(() => {
-                navigateMainBanner(1);
-            }, 5000); // 5 segundos
+            publicidadeInterval = setInterval(() => {
+                navigatePublicidade(1);
+            }, 5000);
         }
 
-        // Função para reiniciar slider automático
-        function restartMainBannerSlider() {
-            startMainBannerSlider();
-        }
-
-        // Função para parar slider automático
-        function stopMainBannerSlider() {
-            if (mainBannerInterval) {
-                clearInterval(mainBannerInterval);
-                mainBannerInterval = null;
+        // Função para parar slider
+        function pararSliderPublicidades() {
+            if (publicidadeInterval) {
+                clearInterval(publicidadeInterval);
+                publicidadeInterval = null;
             }
+        }
+
+        // Função para reiniciar slider
+        function reiniciarSliderPublicidades() {
+            pararSliderPublicidades();
+            iniciarSliderPublicidades();
         }
 
 
@@ -1851,43 +2054,21 @@
                     });
                 }
 
-                // Obter cliente Supabase usando a função padronizada
+                // Obter cliente Supabase - sempre usar getSupabaseClient para garantir instância única
                 let supabaseClient = null;
                 
-                // Tentar usar getSupabaseClient do supabase-config.js primeiro
+                // Prioridade 1: tentar usar getSupabaseClient (que gerencia singleton)
                 if (typeof window.getSupabaseClient === 'function') {
                     supabaseClient = window.getSupabaseClient();
                 }
                 
-                // Fallback: tentar authService
+                // Prioridade 2: se getSupabaseClient não retornou nada, tentar authService
                 if (!supabaseClient && typeof window.authService !== 'undefined' && window.authService && window.authService.isInitialized) {
                     supabaseClient = window.authService.getSupabase();
                 }
                 
-                // Fallback final: criar cliente diretamente com valores hardcoded
-                if (!supabaseClient && typeof window.supabase !== 'undefined') {
-                    // Usar configuração centralizada
-                    let supabaseConfig;
-                    if (typeof window.getSupabaseConfig === 'function') {
-                        supabaseConfig = window.getSupabaseConfig();
-                    } else if (typeof SUPABASE_CONFIG !== 'undefined') {
-                        supabaseConfig = SUPABASE_CONFIG;
-                    } else if (typeof window.SUPABASE_CONFIG !== 'undefined') {
-                        supabaseConfig = window.SUPABASE_CONFIG;
-                    }
-                    
-                    if (!supabaseConfig || !supabaseConfig.url || !supabaseConfig.anonKey) {
-                        console.error('Configuração Supabase não disponível');
-                        return;
-                    }
-                    
-                    const supabaseUrl = supabaseConfig.url;
-                    const supabaseAnonKey = supabaseConfig.anonKey;
-                    supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
-                }
-
+                // Se ainda não conseguiu, não criar nova instância para evitar múltiplas instâncias
                 if (!supabaseClient) {
-                    // Se não conseguir conectar, não mostrar banners
                     return;
                 }
 
@@ -1900,20 +2081,27 @@
                 const agoraISO = agora.toISOString();
                 
                 // Filtrar publicidades não expiradas (considerando data e hora completa)
-                // Primeiro buscar todas aprovadas e visíveis
-                let query = supabaseClient
+                // Primeiro buscar todas aprovadas e visíveis que NÃO são do admin
+                // Se o campo admin não existir ou for null, considerar como false (não admin)
+                // Buscar todas publicidades aprovadas e visíveis
+                // Filtrar por expiração: data_fim_publicacao é NULL ou >= agora
+                const { data: publicidades, error } = await supabaseClient
                     .from('publicidades')
                     .select('*')
                     .eq('aprovada', true)
-                    .eq('visivel', true);
-                
-                // Filtrar por expiração: data_fim_publicacao é NULL ou >= agora
-                const { data: publicidades, error } = await query
+                    .eq('visivel', true)
                     .or(`data_fim_publicacao.is.null,data_fim_publicacao.gte.${agoraISO}`)
                     .order('criada_em', { ascending: false });
                 
                 // Filtro adicional no JavaScript para garantir comparação correta (com hora/minuto)
+                // E também filtrar por admin (apenas false ou null)
                 const publicidadesFiltradas = (publicidades || []).filter(pub => {
+                    // Filtrar por admin: apenas publicidades que NÃO são admin
+                    if (pub.admin === true) {
+                        return false;
+                    }
+                    
+                    // Filtrar por expiração
                     if (!pub.data_fim_publicacao) {
                         return true; // Sem data de expiração = sempre válida
                     }
@@ -1926,34 +2114,29 @@
                 }
 
                 // Processar banners principais
-                const todosMainBanners = [];
+                const todosBanners = [];
                 (publicidadesFiltradas || []).forEach(pub => {
                     if (pub.banners_principais && Array.isArray(pub.banners_principais)) {
                         pub.banners_principais.forEach(banner => {
-                            // Verificar se banner tem imagem e está ativo (ou se ativo não está definido, considerar ativo)
-                            const bannerAtivo = banner.ativo !== false; // Se não especificar, considera ativo
-                            if (bannerAtivo && banner.imagem) {
-                                // Usar link do banner individual, senão usar link_externo da publicidade
-                                const bannerLink = banner.link || pub.link_externo || '';
-                                todosMainBanners.push({
+                            if (banner.ativo !== false && banner.imagem) {
+                                todosBanners.push({
                                     id: `${pub.id}-${banner.imagem}`,
                                     imagem: banner.imagem,
-                                    link: bannerLink,
-                                    descricao: pub.descricao || pub.titulo || '',
-                                    ativo: true
+                                    link: banner.link || pub.link_externo || '',
+                                    descricao: pub.descricao || pub.titulo || ''
                                 });
                             }
                         });
                     }
                 });
 
-                // Atualizar array global apenas se houver banners principais
-                if (todosMainBanners.length > 0) {
-                    mainBanners = todosMainBanners;
+                if (todosBanners.length === 0) {
+                    document.getElementById('publicidadesSlider').style.display = 'none';
+                    return;
                 }
 
-                // Renderizar banner principal
-                renderMainBanner();
+                publicidadesBanners = todosBanners;
+                renderizarPublicidades();
 
                 // Configurar realtime subscription após carregar pela primeira vez
                 if (publicidadesSupabaseClient && !publicidadesSubscription) {
@@ -2049,16 +2232,19 @@
             
             // Aguardar um pouco para garantir que os elementos foram renderizados
             setTimeout(() => {
-                const mainBanner = document.getElementById('mainBannerSlider');
-
-                if (mainBanner) {
-                    mainBanner.addEventListener('mouseenter', stopMainBannerSlider);
-                    mainBanner.addEventListener('mouseleave', startMainBannerSlider);
-                }
-
                 // Carregar publicidades
                 carregarPublicidades();
             }, 500);
+        });
+
+        // Scroll para o topo quando a página for carregada
+        window.addEventListener('load', function() {
+            window.scrollTo(0, 0);
+        });
+
+        // Também scroll para o topo quando o DOM estiver pronto
+        document.addEventListener('DOMContentLoaded', function() {
+            window.scrollTo(0, 0);
         });
     </script>
 </body>
