@@ -252,18 +252,11 @@
             cursor: pointer;
             transition: all 0.3s;
             white-space: nowrap;
-            opacity: 0.5;
-            pointer-events: none;
-        }
-
-        .btn-search:enabled,
-        .btn-search.active {
             opacity: 1;
             pointer-events: auto;
         }
 
-        .btn-search:hover:enabled,
-        .btn-search:hover.active {
+        .btn-search:hover {
             background: #cc0010;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(230, 0, 18, 0.3);
@@ -630,7 +623,7 @@
             </div>
             <div class="search-box">
                 <div class="search-bar">
-                    <input type="text" class="search-input" id="searchInput" placeholder="Descreva o que você está procurando..." onkeypress="if(event.key === 'Enter') buscarImoveis()">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Descreva o que você está procurando..." onkeypress="if(event.key === 'Enter') buscarImoveis()" onclick="buscarImoveis()">
                     <button class="btn-search" onclick="buscarImoveis()">Buscar</button>
                 </div>
             </div>
@@ -1137,33 +1130,7 @@
         });
 
         // Carregar header quando a página carregar
-        // Função para controlar estado do botão de busca
-        function atualizarEstadoBotaoBusca() {
-            const searchInput = document.getElementById('searchInput');
-            const btnSearch = document.querySelector('.btn-search');
-            
-            if (searchInput && btnSearch) {
-                const temTexto = searchInput.value.trim().length > 0;
-                
-                if (temTexto) {
-                    btnSearch.classList.add('active');
-                    btnSearch.disabled = false;
-                } else {
-                    btnSearch.classList.remove('active');
-                    btnSearch.disabled = true;
-                }
-            }
-        }
-
         document.addEventListener('DOMContentLoaded', function() {
-            // Configurar controle do botão de busca
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) {
-                searchInput.addEventListener('input', atualizarEstadoBotaoBusca);
-                searchInput.addEventListener('keyup', atualizarEstadoBotaoBusca);
-                // Estado inicial
-                atualizarEstadoBotaoBusca();
-            }
             loadHeader();
         });
     </script>
